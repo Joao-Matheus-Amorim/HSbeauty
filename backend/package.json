@@ -1,0 +1,29 @@
+{
+  "name": "hsback",
+  "version": "1.0.0",
+  "description": "Backend da plataforma de agendamento para saloes de beleza",
+  "keywords": [
+    "nodejs",
+    "express",
+    "agendamento",
+    "salao",
+    "beleza",
+    "backend",
+    "api"
+  ],
+  "homepage": "https://github.com/Joao-Matheus-Amorim/HSbeauty#readme",
+  "bugs": {
+    "url": "https://github.com/Joao-Matheus-Amorim/HSbeauty/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Joao-Matheus-Amorim/HSbeauty.git"
+  },
+  "license": "ISC",
+  "author": "Joao Matheus Amorim",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  }
+}

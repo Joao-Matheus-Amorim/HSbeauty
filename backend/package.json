@@ -25,5 +25,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "prisma": "^7.7.0"
   }
 }

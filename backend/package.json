@@ -29,5 +29,12 @@
   "devDependencies": {
     "@types/node": "^25.6.0",
     "prisma": "^7.7.0"
+  },
+  "dependencies": {
+    "@prisma/adapter-neon": "^7.7.0",
+    "@prisma/adapter-pg": "^7.7.0",
+    "@prisma/client": "^7.7.0",
+    "express": "^5.2.1",
+    "pg": "^8.20.0"
   }
 }

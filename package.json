@@ -1,0 +1,31 @@
+{
+  "name": "hsbeauty",
+  "version": "1.0.0",
+  "description": "Sistema web de agendamento para salões de beleza, estúdios e profissionais autônomos.",
+  "main": "src/server.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"No tests specified\"",
+    "start": "node src/server.js",
+    "dev": "node src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Joao-Matheus-Amorim/HSbeauty.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Joao-Matheus-Amorim/HSbeauty/issues"
+  },
+  "homepage": "https://github.com/Joao-Matheus-Amorim/HSbeauty#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  }
+}

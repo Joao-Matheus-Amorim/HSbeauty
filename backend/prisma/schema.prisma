@@ -1,36 +1,28 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
-  
 }
 
 datasource db {
-  provider  = "postgresql"
-
+  provider = "postgresql"
 }
-model Servico {
-  id        Int      @id @default(autoincrement())
-  nome      String
-  preco     Float
-  duracao   Int
-  ativo     Boolean  @default(true)
-  criadoEm  DateTime @default(now())
 
+model Servico {
+  id           Int           @id @default(autoincrement())
+  nome         String
+  preco        Float
+  duracao      Int
+  ativo        Boolean       @default(true)
+  criadoEm     DateTime      @default(now())
   agendamentos Agendamento[]
 }
 
 model Agendamento {
-  id         Int      @id @default(autoincrement())
-  nomeCliente String
-  telefone   String
-  data       DateTime
-  servicoId  Int
-  status     String   @default("pendente")
-  criadoEm  DateTime  @default(now())
+  id           Int      @id @default(autoincrement())
+  clienteNome  String
+  dataHora     DateTime
+  status       String   @default("pendente")
+  criadoEm     DateTime @default(now())
 
-  servico    Servico  @relation(fields: [servicoId], references: [id])
+  servicoId    Int
+  servico      Servico  @relation(fields: [servicoId], references: [id])
 }

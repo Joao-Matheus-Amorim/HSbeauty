@@ -1,34 +1,384 @@
-GET http://localhost:3000/servicos
+import 'dotenv/config';
+import express from 'express';
+import { PrismaClient } from '@prisma/client';
+import { PrismaNeon } from '@prisma/adapter-neon';
 
-###
+const app = express();
+app.use(express.json());
 
-GET http://localhost:3000/servicos/1
+const adapter = new PrismaNeon({
+  connectionString: process.env.DATABASE_URL,
+});
 
-###
+const prisma = new PrismaClient({ adapter });
+const PORT = process.env.PORT || 3000;
 
-GET http://localhost:3000/servicos?ativo=true
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', mensagem: 'API HSBeauty rodando' });
+});
 
-###
+app.get('/servicos', async (req, res) => {
+  try {
+    const { ativo } = req.query;
+    const where = {};
 
-POST http://localhost:3000/servicos
-Content-Type: application/json
+    if (ativo === 'true') where.ativo = true;
+    if (ativo === 'false') where.ativo = false;
 
-{
-  "nome": "Pedicure",
-  "preco": 40,
-  "duracao": 50
-}
+    const servicos = await prisma.servico.findMany({
+      where,
+      orderBy: { id: 'asc' },
+    });
 
-###
+    res.json(servicos);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao buscar serviços' });
+  }
+});
 
-PUT http://localhost:3000/servicos/4
-Content-Type: application/json
+app.get('/servicos/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
 
-{
-  "preco": 65,
-  "duracao": 70
-}
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
 
-###
+    const servico = await prisma.servico.findUnique({
+      where: { id },
+    });
 
-DELETE http://localhost:3000/servicos/4
+    if (!servico) {
+      return res.status(404).json({ erro: 'Serviço não encontrado' });
+    }
+
+    res.json(servico);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao buscar serviço' });
+  }
+});
+
+app.post('/servicos', async (req, res) => {
+  try {
+    const { nome, preco, duracao, ativo } = req.body;
+
+    if (!nome || typeof nome !== 'string' || !nome.trim()) {
+      return res.status(400).json({ erro: 'Nome é obrigatório' });
+    }
+
+    const precoNumero = Number(preco);
+    if (Number.isNaN(precoNumero) || precoNumero <= 0) {
+      return res.status(400).json({ erro: 'Preço inválido' });
+    }
+
+    const duracaoNumero = Number(duracao);
+    if (!Number.isInteger(duracaoNumero) || duracaoNumero <= 0) {
+      return res.status(400).json({ erro: 'Duração inválida' });
+    }
+
+    const novoServico = await prisma.servico.create({
+      data: {
+        nome: nome.trim(),
+        preco: precoNumero,
+        duracao: duracaoNumero,
+        ...(typeof ativo === 'boolean' ? { ativo } : {}),
+      },
+    });
+
+    res.status(201).json(novoServico);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao criar serviço' });
+  }
+});
+
+app.put('/servicos/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
+
+    const servicoExistente = await prisma.servico.findUnique({
+      where: { id },
+    });
+
+    if (!servicoExistente) {
+      return res.status(404).json({ erro: 'Serviço não encontrado' });
+    }
+
+    const { nome, preco, duracao, ativo } = req.body;
+    const data = {};
+
+    if (nome !== undefined) {
+      if (typeof nome !== 'string' || !nome.trim()) {
+        return res.status(400).json({ erro: 'Nome inválido' });
+      }
+      data.nome = nome.trim();
+    }
+
+    if (preco !== undefined) {
+      const precoNumero = Number(preco);
+      if (Number.isNaN(precoNumero) || precoNumero <= 0) {
+        return res.status(400).json({ erro: 'Preço inválido' });
+      }
+      data.preco = precoNumero;
+    }
+
+    if (duracao !== undefined) {
+      const duracaoNumero = Number(duracao);
+      if (!Number.isInteger(duracaoNumero) || duracaoNumero <= 0) {
+        return res.status(400).json({ erro: 'Duração inválida' });
+      }
+      data.duracao = duracaoNumero;
+    }
+
+    if (ativo !== undefined) {
+      if (typeof ativo !== 'boolean') {
+        return res.status(400).json({ erro: 'Ativo deve ser true ou false' });
+      }
+      data.ativo = ativo;
+    }
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ erro: 'Nenhum campo enviado para atualização' });
+    }
+
+    const servicoAtualizado = await prisma.servico.update({
+      where: { id },
+      data,
+    });
+
+    res.json(servicoAtualizado);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao atualizar serviço' });
+  }
+});
+
+app.delete('/servicos/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
+
+    const servicoExistente = await prisma.servico.findUnique({
+      where: { id },
+    });
+
+    if (!servicoExistente) {
+      return res.status(404).json({ erro: 'Serviço não encontrado' });
+    }
+
+    const servicoDesativado = await prisma.servico.update({
+      where: { id },
+      data: { ativo: false },
+    });
+
+    res.json({
+      mensagem: 'Serviço desativado com sucesso',
+      servico: servicoDesativado,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao desativar serviço' });
+  }
+});
+
+app.get('/agendamentos', async (req, res) => {
+  try {
+    const agendamentos = await prisma.agendamento.findMany({
+      include: { servico: true },
+      orderBy: { id: 'asc' },
+    });
+
+    res.json(agendamentos);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao buscar agendamentos' });
+  }
+});
+
+app.get('/agendamentos/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
+
+    const agendamento = await prisma.agendamento.findUnique({
+      where: { id },
+      include: { servico: true },
+    });
+
+    if (!agendamento) {
+      return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    }
+
+    res.json(agendamento);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao buscar agendamento' });
+  }
+});
+
+app.post('/agendamentos', async (req, res) => {
+  try {
+    const { clienteNome, dataHora, servicoId, status } = req.body;
+
+    if (!clienteNome || typeof clienteNome !== 'string' || !clienteNome.trim()) {
+      return res.status(400).json({ erro: 'Nome do cliente é obrigatório' });
+    }
+
+    if (!dataHora) {
+      return res.status(400).json({ erro: 'Data e hora são obrigatórias' });
+    }
+
+    const dataConvertida = new Date(dataHora);
+    if (Number.isNaN(dataConvertida.getTime())) {
+      return res.status(400).json({ erro: 'Data/hora inválida' });
+    }
+
+    const servicoIdNumero = Number(servicoId);
+    if (!Number.isInteger(servicoIdNumero)) {
+      return res.status(400).json({ erro: 'servicoId inválido' });
+    }
+
+    const servicoExistente = await prisma.servico.findUnique({
+      where: { id: servicoIdNumero },
+    });
+
+    if (!servicoExistente) {
+      return res.status(404).json({ erro: 'Serviço não encontrado' });
+    }
+
+    const novoAgendamento = await prisma.agendamento.create({
+      data: {
+        clienteNome: clienteNome.trim(),
+        dataHora: dataConvertida,
+        servicoId: servicoIdNumero,
+        ...(status && typeof status === 'string' && status.trim()
+          ? { status: status.trim() }
+          : {}),
+      },
+      include: { servico: true },
+    });
+
+    res.status(201).json(novoAgendamento);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao criar agendamento' });
+  }
+});
+
+app.put('/agendamentos/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
+
+    const agendamentoExistente = await prisma.agendamento.findUnique({
+      where: { id },
+    });
+
+    if (!agendamentoExistente) {
+      return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    }
+
+    const { clienteNome, dataHora, servicoId, status } = req.body;
+    const data = {};
+
+    if (clienteNome !== undefined) {
+      if (typeof clienteNome !== 'string' || !clienteNome.trim()) {
+        return res.status(400).json({ erro: 'Nome do cliente inválido' });
+      }
+      data.clienteNome = clienteNome.trim();
+    }
+
+    if (dataHora !== undefined) {
+      const dataConvertida = new Date(dataHora);
+      if (Number.isNaN(dataConvertida.getTime())) {
+        return res.status(400).json({ erro: 'Data/hora inválida' });
+      }
+      data.dataHora = dataConvertida;
+    }
+
+    if (servicoId !== undefined) {
+      const servicoIdNumero = Number(servicoId);
+      if (!Number.isInteger(servicoIdNumero)) {
+        return res.status(400).json({ erro: 'servicoId inválido' });
+      }
+
+      const servicoExistente = await prisma.servico.findUnique({
+        where: { id: servicoIdNumero },
+      });
+
+      if (!servicoExistente) {
+        return res.status(404).json({ erro: 'Serviço não encontrado' });
+      }
+
+      data.servicoId = servicoIdNumero;
+    }
+
+    if (status !== undefined) {
+      if (typeof status !== 'string' || !status.trim()) {
+        return res.status(400).json({ erro: 'Status inválido' });
+      }
+      data.status = status.trim();
+    }
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ erro: 'Nenhum campo enviado para atualização' });
+    }
+
+    const agendamentoAtualizado = await prisma.agendamento.update({
+      where: { id },
+      data,
+      include: { servico: true },
+    });
+
+    res.json(agendamentoAtualizado);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao atualizar agendamento' });
+  }
+});
+
+app.delete('/agendamentos/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
+
+    const agendamentoExistente = await prisma.agendamento.findUnique({
+      where: { id },
+    });
+
+    if (!agendamentoExistente) {
+      return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    }
+
+    await prisma.agendamento.delete({
+      where: { id },
+    });
+
+    res.json({ mensagem: 'Agendamento removido com sucesso' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao remover agendamento' });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
+});

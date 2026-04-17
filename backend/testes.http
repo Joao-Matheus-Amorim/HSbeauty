@@ -1,0 +1,34 @@
+GET http://localhost:3000/servicos
+
+###
+
+GET http://localhost:3000/servicos/1
+
+###
+
+GET http://localhost:3000/servicos?ativo=true
+
+###
+
+POST http://localhost:3000/servicos
+Content-Type: application/json
+
+{
+  "nome": "Pedicure",
+  "preco": 40,
+  "duracao": 50
+}
+
+###
+
+PUT http://localhost:3000/servicos/4
+Content-Type: application/json
+
+{
+  "preco": 65,
+  "duracao": 70
+}
+
+###
+
+DELETE http://localhost:3000/servicos/4

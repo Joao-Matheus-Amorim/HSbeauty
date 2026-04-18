@@ -7,33 +7,33 @@ datasource db {
 }
 
 model Servico {
-  id           Int           @id @default(autoincrement())
+  id           Int            @id @default(autoincrement())
   nome         String
   preco        Float
   duracao      Int
-  ativo        Boolean       @default(true)
-  criadoEm     DateTime      @default(now())
+  ativo        Boolean        @default(true)
+  criadoEm     DateTime       @default(now())
 
   agendamentos Agendamento[]
 }
 
 model Agendamento {
-  id         Int      @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   nomeCliente String
-  telefone   String
-  data       DateTime
-  servicoId  Int
-  status     String   @default("pendente")
-  criadoEm   DateTime @default(now())
+  telefone    String
+  data        DateTime
+  servicoId   Int
+  status      String   @default("pendente")
+  criadoEm    DateTime @default(now())
 
-  servico    Servico  @relation(fields: [servicoId], references: [id])
+  servico     Servico  @relation(fields: [servicoId], references: [id])
 }
 
 model BloqueioHorario {
-  id        Int      @id @default(autoincrement())
-  inicio    DateTime
-  fim       DateTime
-  motivo    String?
-  ativo     Boolean  @default(true)
-  criadoEm  DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  inicio     DateTime
+  fim        DateTime
+  motivo     String?
+  ativo      Boolean  @default(true)
+  criadoEm   DateTime @default(now())
 }

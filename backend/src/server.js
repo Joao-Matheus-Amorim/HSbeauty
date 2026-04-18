@@ -62,6 +62,10 @@ function isWithinBusinessHours(start, end) {
   return start >= open && end <= close;
 }
 
+function hasConflict(startA, endA, items) {
+  return items.some((item) => overlaps(startA, endA, item.inicio, item.fim));
+}
+
 async function getDayOccupancy(dateString, fallbackDuracao) {
   const { start: dayStart, end: dayEnd } = parseDayBounds(dateString);
 
@@ -103,10 +107,6 @@ async function getDayOccupancy(dateString, fallbackDuracao) {
   ];
 
   return { dayStart, dayEnd, agendamentos, bloqueios, ocupados };
-}
-
-function hasConflict(startA, endA, items) {
-  return items.some((item) => overlaps(startA, endA, item.inicio, item.fim));
 }
 
 async function calculateAvailability(dateString, servico) {
@@ -410,13 +410,13 @@ app.post('/agendamentos', async (req, res) => {
     const dataString = dataAgendamento.toISOString().slice(0, 10);
     const { ocupados } = await getDayOccupancy(dataString, servico.duracao);
 
-const conflito = ocupados.some((item) =>
-  overlaps(inicioSlot, fimSlot, item.inicio, item.fim)
-);
+    const conflito = ocupados.some((item) =>
+      overlaps(inicioSlot, fimSlot, item.inicio, item.fim)
+    );
 
-if (conflito) {
-  return res.status(409).json({ erro: 'Horário indisponível' });
-}
+    if (conflito) {
+      return res.status(409).json({ erro: 'Horário indisponível' });
+    }
 
     const novoAgendamento = await prisma.agendamento.create({
       data: {

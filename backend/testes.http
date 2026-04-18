@@ -31,4 +31,10 @@ Content-Type: application/json
 
 ###
 
-DELETE http://localhost:3000/servicos/4
+DELETE http://localhost:3000/servicos/1
+
+GET http://localhost:3000/servicos?ativo=true
+
+GET http://localhost:3000/servicos?ativo=false
+
+-------------------------

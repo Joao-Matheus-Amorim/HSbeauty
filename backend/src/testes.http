@@ -1,0 +1,95 @@
+### SERVIÇOS
+GET http://localhost:3000/servicos
+
+###
+
+GET http://localhost:3000/servicos?ativo=true
+
+###
+
+GET http://localhost:3000/servicos?ativo=false
+
+###
+
+GET http://localhost:3000/servicos/1
+
+###
+
+POST http://localhost:3000/servicos
+Content-Type: application/json
+
+{
+  "nome": "Manicure",
+  "preco": 35,
+  "duracao": 150,
+  "ativo": true
+}
+
+###
+
+PUT http://localhost:3000/servicos/1
+Content-Type: application/json
+
+{
+  "nome": "Manicure",
+  "preco": 35,
+  "duracao": 150,
+  "ativo": true
+}
+
+###
+
+DELETE http://localhost:3000/servicos/1
+
+
+### AGENDAMENTOS
+GET http://localhost:3000/agendamentos
+
+###
+
+GET http://localhost:3000/agendamentos/1
+
+###
+
+POST http://localhost:3000/agendamentos
+Content-Type: application/json
+
+{
+  "nomeCliente": "João Silva",
+  "telefone": "11999999999",
+  "data": "2026-04-20T12:00:00.000Z",
+  "servicoId": 1,
+  "status": "pendente"
+}
+
+###
+
+PUT http://localhost:3000/agendamentos/1
+Content-Type: application/json
+
+{
+  "status": "confirmado"
+}
+
+###
+
+DELETE http://localhost:3000/agendamentos/1
+
+
+### DISPONIBILIDADE E BLOQUEIOS
+GET http://localhost:3000/api/disponibilidade?data=2026-04-20&servicoId=1
+
+###
+
+GET http://localhost:3000/api/bloqueios
+
+###
+
+POST http://localhost:3000/api/bloqueios
+Content-Type: application/json
+
+{
+  "inicio": "2026-04-20T12:00:00.000Z",
+  "fim": "2026-04-20T13:00:00.000Z",
+  "motivo": "Almoço"
+}

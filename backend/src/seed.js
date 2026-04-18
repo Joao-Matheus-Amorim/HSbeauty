@@ -9,9 +9,10 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   await prisma.servico.createMany({
     data: [
-      { nome: 'Corte feminino', preco: 60, duracao: 60 },
-      { nome: 'Escova', preco: 45, duracao: 40 },
-      { nome: 'Manicure', preco: 35, duracao: 50 }
+      { nome: 'Unhas', preco: 35, duracao: 60 },
+      { nome: 'Cílios', preco: 140, duracao: 90 },
+      { nome: 'Sobrancelhas', preco: 70, duracao: 45 },
+      { nome: 'Depilação', preco: 50, duracao: 45 }
     ]
   });
 }

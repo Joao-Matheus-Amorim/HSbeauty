@@ -1,5 +1,22 @@
 const API_URL = 'http://localhost:3000';
 
+export async function listarServicos({ ativo } = {}) {
+  const params = new URLSearchParams();
+
+  if (typeof ativo === 'boolean') {
+    params.set('ativo', String(ativo));
+  }
+
+  const query = params.toString();
+  const response = await fetch(`${API_URL}/servicos${query ? `?${query}` : ''}`);
+
+  if (!response.ok) {
+    throw new Error('Erro ao carregar serviços');
+  }
+
+  return response.json();
+}
+
 export async function listarAgendamentos() {
   const response = await fetch(`${API_URL}/agendamentos`);
 

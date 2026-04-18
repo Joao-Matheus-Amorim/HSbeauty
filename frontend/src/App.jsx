@@ -34,18 +34,11 @@ const normalizeServiceName = (name) => {
 const getServiceImage = (name) => {
 	const normalized = normalizeServiceName(name)
 	if (normalized === 'unhas') return unhasImage
-	if (normalized === 'cilios') return ciliosImage
+	if (normalized === 'cilios') return ownerSecondary
 	if (normalized === 'sobrancelhas') return ciliosImage
 	if (normalized === 'depilacao') return depilacaoImage
 	return ownerProfile
 }
-
-const formatMoney = (value) =>
-	new Intl.NumberFormat('pt-BR', {
-		style: 'currency',
-		currency: 'BRL',
-		maximumFractionDigits: 0,
-	}).format(Number(value) || 0)
 
 function App() {
 	const [services, setServices] = useState(fallbackServices)
@@ -137,9 +130,9 @@ function App() {
 				</section>
 
 				<section className="services-section" id="services">
-					<h3>Nossos Servicos</h3>
+					<h3>Nossos Serviços</h3>
 					<p className="services-caption">
-						A beleza da casa: unhas, cílios, sobrancelhas e depilação.
+						Rituais de beleza para unhas, cílios, sobrancelhas e depilação com acabamento leve e sofisticado.
 					</p>
 					<div className="services-grid">
 						{orderedServices.map((service) => (
@@ -151,9 +144,7 @@ function App() {
 								/>
 								<div className="service-card-body">
 									<h4>{service.nome}</h4>
-									<p>a partir de {formatMoney(service.preco)}</p>
-									<span>{service.duracao} min</span>
-									<button className="gold-pill small">Agendar</button>
+									<button className="service-action">Reservar horário</button>
 								</div>
 							</article>
 						))}
@@ -162,13 +153,21 @@ function App() {
 
 				<section className="results-section glass-panel">
 					<h3>Galeria de Resultados</h3>
-					<p>Pronta para se sentir ainda mais linda?</p>
+					<p>Resultados reais com acabamento de alta definição para valorizar seu estilo.</p>
 					<div className="gallery-strip">
 						<img src={ownerSecondary} alt="Resultado de atendimento HSBeauty" loading="lazy" />
 						<img src={ciliosImage} alt="Cílios feitos no studio" loading="lazy" />
 					</div>
-					<button className="gold-pill wide">🟢 Agendar agora no WhatsApp</button>
-					<button className="gold-pill wide secondary">🗓 Agendar Agora  ›</button>
+					<div className="cta-stack">
+						<a className="cta-button cta-primary" href="https://wa.me/5500000000000" target="_blank" rel="noreferrer">
+							<span>Agendar no WhatsApp</span>
+							<small>Atendimento rapido e direto</small>
+						</a>
+						<button className="cta-button cta-secondary">
+							<span>Escolher servico e horario</span>
+							<small>Monte seu atendimento personalizado</small>
+						</button>
+					</div>
 				</section>
 
 				<footer className="bottom-note">

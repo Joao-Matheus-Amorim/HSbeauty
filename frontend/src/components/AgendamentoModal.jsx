@@ -1,8 +1,38 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { listarServicos, buscarDisponibilidade, criarAgendamento } from '../services/agendamentos';
 import './AgendamentoModal.css';
 
 const WHATSAPP = import.meta.env.VITE_WHATSAPP || '5521999999999';
+const DURACAO_PADRAO_MINUTOS = 150;
+
+function formatDateOnly(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function getCurrentWeekRange() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const day = today.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+
+  const start = new Date(today);
+  start.setDate(today.getDate() + diffToMonday);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(0, 0, 0, 0);
+
+  return {
+    start,
+    end,
+    min: formatDateOnly(start),
+    max: formatDateOnly(end),
+  };
+}
 
 export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [step, setStep] = useState(1); // 1: serviço+data, 2: horário, 3: dados, 4: confirmado
@@ -17,7 +47,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [erro, setErro] = useState('');
   const [agendado, setAgendado] = useState(null);
 
-  const hoje = new Date().toISOString().slice(0, 10);
+  const semanaAtual = useMemo(() => getCurrentWeekRange(), []);
 
   useEffect(() => {
     listarServicos({ ativo: true }).then(setServicos).catch(() => {});
@@ -29,6 +59,11 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
   async function buscarSlots() {
     if (!servicoId || !data) return;
+    if (data < semanaAtual.min || data > semanaAtual.max) {
+      setErro('Escolha uma data da semana atual.');
+      return;
+    }
+
     setLoading(true);
     setErro('');
     setSlots([]);
@@ -74,10 +109,12 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
       <div className="modal-box" role="dialog" aria-modal="true" aria-label="Agendar serviço">
         <button className="modal-close" onClick={onClose} aria-label="Fechar">✕</button>
 
-        {/* ─── Passo 1: Serviço + Data ─────────────────────────── */}
         {step === 1 && (
           <div className="modal-step">
             <h2 className="modal-title">Escolha o serviço</h2>
+            <p className="modal-sub">
+              Agendamentos disponíveis apenas na semana atual. Todos os serviços duram 2h30.
+            </p>
 
             <label className="modal-label">
               Serviço
@@ -89,7 +126,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
                 <option value="">Selecione...</option>
                 {servicos.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.nome} — R$ {Number(s.preco).toFixed(2).replace('.', ',')} ({s.duracao} min)
+                    {s.nome} — R$ {Number(s.preco).toFixed(2).replace('.', ',')} ({DURACAO_PADRAO_MINUTOS} min)
                   </option>
                 ))}
               </select>
@@ -100,11 +137,16 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
               <input
                 className="modal-input"
                 type="date"
-                min={hoje}
+                min={semanaAtual.min}
+                max={semanaAtual.max}
                 value={data}
                 onChange={(e) => setData(e.target.value)}
               />
             </label>
+
+            <p className="modal-sub">
+              Semana liberada: {new Date(`${semanaAtual.min}T12:00`).toLocaleDateString('pt-BR')} até {new Date(`${semanaAtual.max}T12:00`).toLocaleDateString('pt-BR')}. Expediente: 09:00 às 18:00.
+            </p>
 
             {erro && <p className="modal-erro">{erro}</p>}
 
@@ -118,17 +160,16 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
           </div>
         )}
 
-        {/* ─── Passo 2: Horários ───────────────────────────────── */}
         {step === 2 && (
           <div className="modal-step">
             <button className="modal-back" onClick={() => setStep(1)}>← Voltar</button>
             <h2 className="modal-title">Escolha o horário</h2>
             <p className="modal-sub">
-              {servicoSelecionado?.nome} · {data ? new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : ''}
+              {servicoSelecionado?.nome} · 2h30 · {data ? new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : ''}
             </p>
 
             {slots.length === 0 ? (
-              <p className="modal-vazio">Nenhum horário disponível nesta data. Tente outro dia.</p>
+              <p className="modal-vazio">Nenhum horário disponível nesta data. Tente outro dia da semana atual.</p>
             ) : (
               <div className="slots-grid">
                 {slots.map((slot) => (
@@ -155,13 +196,12 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
           </div>
         )}
 
-        {/* ─── Passo 3: Dados pessoais ─────────────────────────── */}
         {step === 3 && (
           <div className="modal-step">
             <button className="modal-back" onClick={() => setStep(2)}>← Voltar</button>
             <h2 className="modal-title">Seus dados</h2>
             <p className="modal-sub">
-              {servicoSelecionado?.nome} · {slotSelecionado?.horario} · {data ? new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}
+              {servicoSelecionado?.nome} · {slotSelecionado?.horario} · 2h30 · {data ? new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}
             </p>
 
             <label className="modal-label">
@@ -198,7 +238,6 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
           </div>
         )}
 
-        {/* ─── Passo 4: Confirmado ─────────────────────────────── */}
         {step === 4 && agendado && (
           <div className="modal-step modal-step--success">
             <div className="success-icon">✨</div>
@@ -208,6 +247,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             </p>
             <div className="confirmacao-box">
               <p><strong>Serviço:</strong> {agendado.servico?.nome}</p>
+              <p><strong>Duração:</strong> 2h30</p>
               <p><strong>Data/Hora:</strong> {new Date(agendado.data).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</p>
               <p><strong>Status:</strong> {agendado.status}</p>
             </div>

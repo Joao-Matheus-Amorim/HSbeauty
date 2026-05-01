@@ -129,11 +129,11 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
         <button className="modal-close" onClick={onClose} aria-label="Fechar">✕</button>
 
         {step === 1 && (
-          <div className="modal-step">
-            <h2 className="modal-title">Escolha o serviço</h2>
-            <p className="modal-sub">
-              Agendamentos disponíveis apenas nesta semana. Todos os serviços duram 2h30.
-            </p>
+          <div className="modal-step modal-step--compact">
+            <div className="modal-heading">
+              <span className="modal-eyebrow">Agendamento</span>
+              <h2 className="modal-title">Escolha seu horário</h2>
+            </div>
 
             <label className="modal-label">
               Serviço
@@ -152,7 +152,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             </label>
 
             <div className="modal-label">
-              Dia da semana
+              Dia
               <div className="week-days-grid">
                 {semanaAtual.days.map((dia) => (
                   <button
@@ -168,10 +168,6 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
               </div>
             </div>
 
-            <p className="modal-sub">
-              Semana liberada: {new Date(`${semanaAtual.min}T12:00`).toLocaleDateString('pt-BR')} até {new Date(`${semanaAtual.max}T12:00`).toLocaleDateString('pt-BR')}. Expediente: 09:00 às 18:00.
-            </p>
-
             {erro && <p className="modal-erro">{erro}</p>}
 
             <button
@@ -179,7 +175,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
               onClick={buscarSlots}
               disabled={!servicoId || !data || loading}
             >
-              {loading ? 'Buscando...' : 'Ver horários disponíveis'}
+              {loading ? 'Buscando...' : 'Ver horários'}
             </button>
           </div>
         )}

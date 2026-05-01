@@ -22,6 +22,17 @@ function getCurrentWeekRange() {
   start.setDate(today.getDate() + diffToMonday);
   start.setHours(0, 0, 0, 0);
 
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    const value = formatDateOnly(date);
+    return {
+      value,
+      weekday: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''),
+      dayMonth: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+    };
+  });
+
   const end = new Date(start);
   end.setDate(start.getDate() + 6);
   end.setHours(0, 0, 0, 0);
@@ -29,13 +40,14 @@ function getCurrentWeekRange() {
   return {
     start,
     end,
+    days,
     min: formatDateOnly(start),
     max: formatDateOnly(end),
   };
 }
 
 export default function AgendamentoModal({ servicoInicial, onClose }) {
-  const [step, setStep] = useState(1); // 1: serviço+data, 2: horário, 3: dados, 4: confirmado
+  const [step, setStep] = useState(1);
   const [servicos, setServicos] = useState([]);
   const [servicoId, setServicoId] = useState(servicoInicial?.id || '');
   const [data, setData] = useState('');
@@ -57,10 +69,17 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
     if (servicoInicial) setServicoId(servicoInicial.id);
   }, [servicoInicial]);
 
+  function selecionarData(value) {
+    setData(value);
+    setSlots([]);
+    setSlotSelecionado(null);
+    setErro('');
+  }
+
   async function buscarSlots() {
     if (!servicoId || !data) return;
     if (data < semanaAtual.min || data > semanaAtual.max) {
-      setErro('Escolha uma data da semana atual.');
+      setErro('Escolha um dia da semana atual.');
       return;
     }
 
@@ -113,7 +132,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
           <div className="modal-step">
             <h2 className="modal-title">Escolha o serviço</h2>
             <p className="modal-sub">
-              Agendamentos disponíveis apenas na semana atual. Todos os serviços duram 2h30.
+              Agendamentos disponíveis apenas nesta semana. Todos os serviços duram 2h30.
             </p>
 
             <label className="modal-label">
@@ -132,17 +151,22 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
               </select>
             </label>
 
-            <label className="modal-label">
-              Data
-              <input
-                className="modal-input"
-                type="date"
-                min={semanaAtual.min}
-                max={semanaAtual.max}
-                value={data}
-                onChange={(e) => setData(e.target.value)}
-              />
-            </label>
+            <div className="modal-label">
+              Dia da semana
+              <div className="week-days-grid">
+                {semanaAtual.days.map((dia) => (
+                  <button
+                    type="button"
+                    key={dia.value}
+                    className={`week-day-btn${data === dia.value ? ' selected' : ''}`}
+                    onClick={() => selecionarData(dia.value)}
+                  >
+                    <span>{dia.weekday}</span>
+                    <strong>{dia.dayMonth}</strong>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <p className="modal-sub">
               Semana liberada: {new Date(`${semanaAtual.min}T12:00`).toLocaleDateString('pt-BR')} até {new Date(`${semanaAtual.max}T12:00`).toLocaleDateString('pt-BR')}. Expediente: 09:00 às 18:00.
@@ -169,7 +193,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             </p>
 
             {slots.length === 0 ? (
-              <p className="modal-vazio">Nenhum horário disponível nesta data. Tente outro dia da semana atual.</p>
+              <p className="modal-vazio">Nenhum horário disponível neste dia. Tente outro dia da semana.</p>
             ) : (
               <div className="slots-grid">
                 {slots.map((slot) => (

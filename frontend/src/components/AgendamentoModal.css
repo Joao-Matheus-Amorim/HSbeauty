@@ -120,6 +120,54 @@
   border-color: #d9a244;
 }
 
+.week-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.week-day-btn {
+  min-height: 58px;
+  padding: 7px 4px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(194, 133, 165, 0.35);
+  background: rgba(255, 255, 255, 0.86);
+  color: #60354a;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transition: all 0.18s;
+}
+
+.week-day-btn span {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.week-day-btn strong {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.week-day-btn:hover {
+  border-color: #d9a244;
+  background: rgba(241, 212, 139, 0.22);
+}
+
+.week-day-btn.selected {
+  border-color: #d9a244;
+  background: linear-gradient(145deg, #f1d48b, #d9a244);
+  color: #fff8f0;
+  box-shadow: 0 6px 14px rgba(124, 75, 20, 0.18);
+}
+
 .modal-erro {
   font-family: 'Manrope', sans-serif;
   font-size: 0.82rem;
@@ -217,4 +265,10 @@
   font-family: 'Cormorant Garamond', serif;
   font-size: 1rem;
   color: #4a2835;
+}
+
+@media (max-width: 390px) {
+  .week-days-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }

@@ -4,6 +4,13 @@ import './AgendamentoModal.css';
 
 const WHATSAPP = import.meta.env.VITE_WHATSAPP || '5521999999999';
 
+const servicosPadrao = [
+  { id: 1, nome: 'Unhas', preco: 35, ativo: true },
+  { id: 2, nome: 'Cílios', preco: 140, ativo: true },
+  { id: 3, nome: 'Sobrancelhas', preco: 70, ativo: true },
+  { id: 4, nome: 'Depilação', preco: 50, ativo: true },
+];
+
 function formatDateOnly(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -47,7 +54,7 @@ function getCurrentWeekRange() {
 
 export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [step, setStep] = useState(1);
-  const [servicos, setServicos] = useState([]);
+  const [servicos, setServicos] = useState(servicosPadrao);
   const [servicoId, setServicoId] = useState(servicoInicial?.id || '');
   const [data, setData] = useState('');
   const [slots, setSlots] = useState([]);
@@ -61,7 +68,24 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   const semanaAtual = useMemo(() => getCurrentWeekRange(), []);
 
   useEffect(() => {
-    listarServicos({ ativo: true }).then(setServicos).catch(() => {});
+    let mounted = true;
+
+    listarServicos({ ativo: true })
+      .then((lista) => {
+        if (!mounted) return;
+        if (Array.isArray(lista) && lista.length > 0) {
+          setServicos(lista);
+        } else {
+          setServicos(servicosPadrao);
+        }
+      })
+      .catch(() => {
+        if (mounted) setServicos(servicosPadrao);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -98,7 +122,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
       setSlots(res.slotsDisponiveis || []);
       setStep(2);
     } catch (e) {
-      setErro(e.message);
+      setErro(e.message || 'Erro ao buscar disponibilidade');
     } finally {
       setLoading(false);
     }
@@ -121,7 +145,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
       setAgendado(resultado);
       setStep(4);
     } catch (e) {
-      setErro(e.message);
+      setErro(e.message || 'Erro ao criar agendamento');
     } finally {
       setLoading(false);
     }

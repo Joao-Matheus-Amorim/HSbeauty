@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "concurrently --names \"BACK,FRONT\" --prefix-colors \"bgMagenta.bold,bgCyan.bold\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
     "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "prisma:generate": "npx prisma generate --schema=backend/prisma/schema.prisma",
     "setup": "npm run install:all && node scripts/setup.js"
   },
   "dependencies": {

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { listarServicos, buscarDisponibilidade, criarAgendamento } from '../services/agendamentos';
 import './AgendamentoModal.css';
 
-const WHATSAPP = import.meta.env.VITE_WHATSAPP || '5521999999999';
+const WHATSAPP = '5521970976928';
 
 const servicosPadrao = [
   { id: 1, nome: 'Unhas', preco: 35, ativo: true },

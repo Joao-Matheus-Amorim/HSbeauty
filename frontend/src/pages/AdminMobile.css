@@ -1,12 +1,10 @@
-/* HSBeauty Admin — mobile app layout with right menu */
+/* HSBeauty Admin mobile */
 
 :root {
-  --admin-bg: #fff7fb;
   --admin-card: rgba(255, 255, 255, 0.92);
   --admin-text: #2c1810;
   --admin-muted: #8a7466;
   --admin-gold: #b5936a;
-  --admin-dark: #1e0f07;
   --admin-shadow: 0 16px 38px rgba(60, 32, 18, 0.14);
 }
 
@@ -40,8 +38,6 @@
     background: rgba(255, 255, 255, 0.86);
     border-bottom: 1px solid rgba(255, 255, 255, 0.72);
     box-shadow: 0 12px 28px rgba(60, 32, 18, 0.08);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
   }
 
   .admin-mobile-header h1 {
@@ -120,7 +116,6 @@
     font-size: 0.62rem;
     font-weight: 800;
     cursor: pointer;
-    touch-action: manipulation;
   }
 
   .admin-rail-btn span {
@@ -149,14 +144,11 @@
 
   .admin-section-hero,
   .admin-filter-card,
-  .admin-table-card,
-  .bg-white {
+  .admin-table-card {
     background: var(--admin-card) !important;
     border: 1px solid rgba(255, 255, 255, 0.72) !important;
     border-radius: 26px !important;
     box-shadow: var(--admin-shadow) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
   }
 
   .admin-section-hero {
@@ -212,16 +204,6 @@
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     gap: 8px !important;
-  }
-
-  input,
-  select,
-  textarea {
-    min-height: 46px;
-    border-radius: 17px !important;
-    font-size: 16px !important;
-    background: rgba(255, 255, 255, 0.86) !important;
-    border: 1px solid rgba(181, 147, 106, 0.18) !important;
   }
 
   .admin-table-card {

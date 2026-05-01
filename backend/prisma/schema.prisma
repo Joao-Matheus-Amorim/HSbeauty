@@ -5,16 +5,18 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Servico {
   id           Int            @id @default(autoincrement())
-  nome         String
+  nome         String         @unique
+  descricao    String?
   preco        Float
-  duracao      Int
+  duracao      Int            // Duração em minutos
+  categoria    String?
   ativo        Boolean        @default(true)
   criadoEm     DateTime       @default(now())
+  atualizadoEm DateTime       @updatedAt
 
   agendamentos Agendamento[]
 }
@@ -23,25 +25,36 @@ model Agendamento {
   id          Int      @id @default(autoincrement())
   nomeCliente String
   telefone    String
+  email       String?
   data        DateTime
+  hora        String   // Formato HH:mm
   servicoId   Int
-  status      String   @default("pendente")
-  criadoEm   DateTime @default(now())
+  status      String   @default("pendente") // pendente, confirmado, cancelado, concluído
+  observacoes String?
+  criadoEm    DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 
-  servico     Servico  @relation(fields: [servicoId], references: [id])
+  servico     Servico  @relation(fields: [servicoId], references: [id], onDelete: Cascade)
 }
 
 model BloqueioHorario {
   id       Int      @id @default(autoincrement())
-  inicio   DateTime
-  fim      DateTime
+  dataInicio DateTime
+  dataFim  DateTime
+  horaInicio String? // Formato HH:mm (opcional para bloqueios de dia inteiro)
+  horaFim    String? // Formato HH:mm
   motivo   String?
   ativo    Boolean  @default(true)
   criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 }
 
 model Admin {
-  id    Int    @id @default(autoincrement())
-  email String @unique
-  senha String
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  senha     String
+  nome      String?
+  ativo     Boolean  @default(true)
+  criadoEm  DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 }

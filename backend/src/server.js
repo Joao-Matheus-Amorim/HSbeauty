@@ -8,9 +8,32 @@ import { PrismaNeon } from '@prisma/adapter-neon';
 
 const { PrismaClient } = pkg;
 
+// JWT_SECRET é obrigatório — não há fallback inseguro
+if (!process.env.JWT_SECRET) {
+  console.error('ERRO: A variável de ambiente JWT_SECRET não está definida. Defina-a antes de iniciar o servidor.');
+  process.exit(1);
+}
+
 const app = express();
 app.use(express.json());
-app.use(cors());
+
+// CORS restritivo: usa CORS_ORIGIN do .env; em dev aceita localhost:5173
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Permite chamadas sem origin (ex: Postman, curl, mobile)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error(`CORS: origem não permitida — ${origin}`));
+    },
+    credentials: true,
+  })
+);
 
 const adapter = new PrismaNeon({
   connectionString: process.env.DATABASE_URL,
@@ -18,7 +41,7 @@ const adapter = new PrismaNeon({
 
 const prisma = new PrismaClient({ adapter });
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'hsbeauty-secret-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -276,13 +299,32 @@ app.delete('/servicos/:id', authMiddleware, async (req, res) => {
 
 // ─── Agendamentos ─────────────────────────────────────────────────────────────
 
+// Suporte a paginação via ?page=1&limit=50
 app.get('/agendamentos', authMiddleware, async (req, res) => {
   try {
-    const agendamentos = await prisma.agendamento.findMany({
-      orderBy: { id: 'asc' },
-      include: { servico: true },
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 50));
+    const skip = (page - 1) * limit;
+
+    const [agendamentos, total] = await Promise.all([
+      prisma.agendamento.findMany({
+        orderBy: { data: 'desc' },
+        include: { servico: true },
+        skip,
+        take: limit,
+      }),
+      prisma.agendamento.count(),
+    ]);
+
+    res.json({
+      data: agendamentos,
+      paginacao: {
+        total,
+        pagina: page,
+        limite: limit,
+        totalPaginas: Math.ceil(total / limit),
+      },
     });
-    res.json(agendamentos);
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: 'Erro ao buscar agendamentos' });
@@ -317,6 +359,7 @@ app.post('/agendamentos', async (req, res) => {
       return res.status(400).json({ erro: 'Serviço inválido' });
     const servico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
     if (!servico) return res.status(404).json({ erro: 'Serviço não encontrado' });
+    if (!servico.ativo) return res.status(400).json({ erro: 'Este serviço não está disponível no momento' });
     const inicioSlot = new Date(dataAgendamento);
     const fimSlot = addMinutes(inicioSlot, Number(servico.duracao));
     if (!isWithinBusinessHours(inicioSlot, fimSlot))
@@ -324,7 +367,7 @@ app.post('/agendamentos', async (req, res) => {
     const dataString = dataAgendamento.toISOString().slice(0, 10);
     const { ocupados } = await getDayOccupancy(dataString, servico.duracao);
     const conflito = ocupados.some((item) => overlaps(inicioSlot, fimSlot, item.inicio, item.fim));
-    if (conflito) return res.status(409).json({ erro: 'Horário indisponível' });
+    if (conflito) return res.status(409).json({ erro: 'Este horário não está mais disponível. Por favor, escolha outro.' });
     const novoAgendamento = await prisma.agendamento.create({
       data: {
         nomeCliente: nomeCliente.trim(),

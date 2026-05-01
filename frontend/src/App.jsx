@@ -11,10 +11,10 @@ import AgendamentoModal from './components/AgendamentoModal'
 const WHATSAPP = import.meta.env.VITE_WHATSAPP || '5521970976928'
 
 const fallbackServices = [
-	{ id: 1, nome: 'Unhas', preco: 35, duracao: 60, ativo: true },
-	{ id: 2, nome: 'Cílios', preco: 140, duracao: 90, ativo: true },
-	{ id: 3, nome: 'Sobrancelhas', preco: 70, duracao: 45, ativo: true },
-	{ id: 4, nome: 'Depilação', preco: 50, duracao: 45, ativo: true },
+	{ id: 1, nome: 'Unhas', preco: 35, duracao: 150, ativo: true },
+	{ id: 2, nome: 'Cílios', preco: 140, duracao: 150, ativo: true },
+	{ id: 3, nome: 'Sobrancelhas', preco: 70, duracao: 150, ativo: true },
+	{ id: 4, nome: 'Depilação', preco: 50, duracao: 150, ativo: true },
 ]
 
 const serviceNameOrder = ['unhas', 'cilios', 'sobrancelhas', 'depilacao']
@@ -94,7 +94,7 @@ function App() {
 							<span className="menu-icon" />
 						</button>
 						<button className="gold-pill" onClick={() => abrirModal()}>
-							Agendar ›
+							Agendar como cliente ›
 						</button>
 					</div>
 					<img src={heroBanner} alt="HSBeauty banner principal" className="hero-banner-art" />
@@ -116,19 +116,25 @@ function App() {
 				<section className="services-section" id="services">
 					<h3>Nossos Serviços</h3>
 					<p className="services-caption">
-						Rituais de beleza para unhas, cílios, sobrancelhas e depilação com acabamento leve e sofisticado.
+						Escolha um serviço abaixo para reservar como cliente.
 					</p>
 					<div className="services-grid">
 						{orderedServices.map((service) => (
-							<article className="service-card" key={service.id || service.nome}>
+							<button
+								type="button"
+								className="service-card service-card-button"
+								key={service.id || service.nome}
+								onClick={() => abrirModal(service)}
+								aria-label={`Reservar ${service.nome} como cliente`}
+							>
 								<img src={getServiceImage(service.nome)} alt={service.nome} loading="lazy" />
 								<div className="service-card-body">
 									<h4>{service.nome}</h4>
-									<button className="service-action" onClick={() => abrirModal(service)}>
-										Reservar horário
-									</button>
+									<span className="service-action fake-button">
+										Reservar como cliente
+									</span>
 								</div>
-							</article>
+							</button>
 						))}
 					</div>
 				</section>
@@ -146,15 +152,15 @@ function App() {
 							<small>Atendimento rápido e direto</small>
 						</a>
 						<button className="cta-button cta-secondary" onClick={() => abrirModal()}>
-							<span>Escolher serviço e horário</span>
-							<small>Monte seu atendimento personalizado</small>
+							<span>Reservar como cliente</span>
+							<small>Escolha serviço, dia e horário</small>
 						</button>
 					</div>
 				</section>
 
 				<footer className="bottom-note">
 					<img src={ownerProfile} alt="Gestora HSBeauty" loading="lazy" />
-					<p>HSBeauty Studio - Gestora e prestadora dos serviços</p>
+					<p>HSBeauty Studio - atendimento para clientes</p>
 				</footer>
 			</section>
 		</main>

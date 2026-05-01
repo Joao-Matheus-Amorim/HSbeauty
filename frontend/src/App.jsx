@@ -78,7 +78,7 @@ function App() {
 		setModalAberto(true)
 	}
 
-	function reservarComoCliente(servico = null, event) {
+	function reservar(servico = null, event) {
 		if (event) {
 			event.preventDefault()
 			event.stopPropagation()
@@ -88,7 +88,7 @@ function App() {
 
 	function handleCardKeyDown(event, service) {
 		if (event.key === 'Enter' || event.key === ' ') {
-			reservarComoCliente(service, event)
+			reservar(service, event)
 		}
 	}
 
@@ -107,8 +107,8 @@ function App() {
 						<button className="icon-button" aria-label="Abrir menu" type="button">
 							<span className="menu-icon" />
 						</button>
-						<button className="gold-pill" type="button" onClick={(event) => reservarComoCliente(null, event)}>
-							Agendar como cliente ›
+						<button className="gold-pill" type="button" onClick={(event) => reservar(null, event)}>
+							Agendar ›
 						</button>
 					</div>
 					<img src={heroBanner} alt="HSBeauty banner principal" className="hero-banner-art" />
@@ -130,18 +130,18 @@ function App() {
 				<section className="services-section" id="services">
 					<h3>Nossos Serviços</h3>
 					<p className="services-caption">
-						Escolha um serviço abaixo para reservar como cliente.
+						Escolha um serviço abaixo para reservar.
 					</p>
 					<div className="services-grid">
 						{orderedServices.map((service) => (
 							<article
 								className="service-card service-card-button"
 								key={service.id || service.nome}
-								onClick={(event) => reservarComoCliente(service, event)}
+								onClick={(event) => reservar(service, event)}
 								onKeyDown={(event) => handleCardKeyDown(event, service)}
 								role="button"
 								tabIndex={0}
-								aria-label={`Reservar ${service.nome} como cliente`}
+								aria-label={`Reservar ${service.nome}`}
 							>
 								<img src={getServiceImage(service.nome)} alt={service.nome} loading="lazy" />
 								<div className="service-card-body">
@@ -149,9 +149,9 @@ function App() {
 									<button
 										type="button"
 										className="service-action"
-										onClick={(event) => reservarComoCliente(service, event)}
+										onClick={(event) => reservar(service, event)}
 									>
-										Reservar como cliente
+										Reservar
 									</button>
 								</div>
 							</article>
@@ -171,8 +171,8 @@ function App() {
 							<span>Agendar no WhatsApp</span>
 							<small>Atendimento rápido e direto</small>
 						</a>
-						<button className="cta-button cta-secondary" type="button" onClick={(event) => reservarComoCliente(null, event)}>
-							<span>Reservar como cliente</span>
+						<button className="cta-button cta-secondary" type="button" onClick={(event) => reservar(null, event)}>
+							<span>Reservar</span>
 							<small>Escolha serviço, dia e horário</small>
 						</button>
 					</div>

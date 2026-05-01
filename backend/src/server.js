@@ -5,6 +5,12 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pkg from '@prisma/client';
 import { PrismaNeon } from '@prisma/adapter-neon';
+import adminRouter, {
+  setupAdminDashboard,
+  setupAdminAgendamentos,
+  setupAdminServicos,
+  setupAdminHorarios,
+} from './admin-routes.js';
 
 const { PrismaClient } = pkg;
 
@@ -455,7 +461,16 @@ app.delete('/bloqueios/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// ─── Disponibilidade ──────────────────────────────────────────────────────────
+// ─── Admin Routes ─────────────────────────────────────────────────────────
+
+setupAdminDashboard(prisma, authMiddleware);
+setupAdminAgendamentos(prisma, authMiddleware);
+setupAdminServicos(prisma, authMiddleware);
+setupAdminHorarios(prisma, authMiddleware);
+
+app.use('/admin', adminRouter);
+
+// ─── Disponibilidade ──────────────────────────────────────────────────────
 
 app.get('/disponibilidade', async (req, res) => {
   try {

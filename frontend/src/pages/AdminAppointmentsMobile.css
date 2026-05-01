@@ -10,7 +10,7 @@
   --hs-line: rgba(181, 147, 106, 0.18);
   --hs-gold: #b5936a;
   --hs-brown: #5c3425;
-  --hs-shadow-card: 0 18px 42px rgba(60, 32, 18, 0.13);
+  --hs-shadow-card: 0 12px 28px rgba(60, 32, 18, 0.11);
   --hs-shadow-soft: 0 10px 24px rgba(60, 32, 18, 0.09);
   --hs-green: #15803d;
   --hs-red: #b91c1c;
@@ -18,7 +18,6 @@
   --hs-amber: #b45309;
 }
 
-/* Estrutura da tela de agendamentos */
 .admin-appointments-screen {
   width: 100%;
 }
@@ -170,277 +169,239 @@
 
 .admin-appointments-list {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
-/* Card principal */
 .admin-appointment-card {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border-radius: 30px;
-  padding: 16px;
+  border-radius: 24px;
+  padding: 12px;
   color: var(--hs-text);
   background:
-    radial-gradient(circle at 92% 0%, rgba(181, 147, 106, 0.18), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(255, 250, 247, 0.94));
-  border: 1px solid rgba(181, 147, 106, 0.2);
-  border-left: 6px solid var(--hs-gold);
+    radial-gradient(circle at 92% 0%, rgba(181, 147, 106, 0.14), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(255, 250, 247, 0.95));
+  border: 1px solid rgba(181, 147, 106, 0.18);
+  border-left: 5px solid var(--hs-gold);
   box-shadow: var(--hs-shadow-card);
+}
+
+.admin-mini-appointment-card {
+  min-height: auto;
 }
 
 .admin-appointment-card-glow {
   position: absolute;
-  right: -44px;
-  top: -54px;
-  width: 145px;
-  height: 145px;
+  right: -48px;
+  top: -62px;
+  width: 138px;
+  height: 138px;
   border-radius: 999px;
-  opacity: 0.5;
+  opacity: 0.38;
   z-index: -1;
   background: radial-gradient(circle, rgba(181, 147, 106, 0.34), transparent 68%);
 }
 
-.admin-appointment-card.is-pending {
-  border-left-color: #f59e0b;
-}
+.admin-appointment-card.is-pending { border-left-color: #f59e0b; }
+.admin-appointment-card.is-confirmed { border-left-color: #22c55e; }
+.admin-appointment-card.is-canceled { border-left-color: #ef4444; opacity: 0.88; }
+.admin-appointment-card.is-done { border-left-color: #3b82f6; }
 
-.admin-appointment-card.is-confirmed {
-  border-left-color: #22c55e;
-}
-
-.admin-appointment-card.is-canceled {
-  border-left-color: #ef4444;
-  opacity: 0.86;
-}
-
-.admin-appointment-card.is-done {
-  border-left-color: #3b82f6;
-}
-
-.admin-appointment-card-header {
+.admin-appointment-card-header,
+.admin-mini-card-header {
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr) auto;
-  gap: 10px;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  gap: 9px;
   align-items: center;
 }
 
 .admin-client-avatar {
-  width: 46px;
-  height: 46px;
-  border-radius: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 15px;
   display: grid;
   place-items: center;
   color: #fff7ec;
   background: linear-gradient(145deg, #d6b071, #9a6720);
-  box-shadow: inset 0 1px 2px rgba(255,255,255,0.35), 0 10px 18px rgba(154, 103, 32, 0.18);
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.35), 0 8px 14px rgba(154, 103, 32, 0.15);
 }
 
 .admin-client-main {
   min-width: 0;
 }
 
-.admin-card-overline,
-.admin-info-pill span,
-.admin-card-details span {
+.admin-card-overline {
   display: block;
   color: var(--hs-muted);
-  font-size: 0.66rem;
+  font-size: 0.58rem;
   font-weight: 950;
   letter-spacing: 0.08em;
-  line-height: 1.05;
+  line-height: 1;
   text-transform: uppercase;
 }
 
 .admin-client-main h3 {
-  margin-top: 2px;
+  margin-top: 1px;
   overflow: hidden;
   color: var(--hs-text);
-  font-size: 1.08rem;
+  font-size: 0.98rem;
   font-weight: 950;
   line-height: 1.08;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.admin-mini-phone {
+  margin-top: 2px;
+  color: #6f5b4e;
+  font-size: 0.76rem;
+  font-weight: 850;
+  line-height: 1.1;
+}
+
 .admin-status-badge {
-  min-height: 34px;
-  max-width: 132px;
+  min-height: 28px;
+  max-width: 96px;
   border-radius: 999px;
-  padding: 8px 10px;
+  padding: 6px 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 950;
   line-height: 1;
   text-align: center;
-  white-space: normal;
+  white-space: nowrap;
   border: 1px solid transparent;
 }
 
-.admin-status-badge.is-pending {
-  color: #92400e;
-  background: #fff7ed;
-  border-color: rgba(245, 158, 11, 0.32);
-}
+.admin-status-badge.is-pending { color: #92400e; background: #fff7ed; border-color: rgba(245, 158, 11, 0.32); }
+.admin-status-badge.is-confirmed { color: #166534; background: #ecfdf5; border-color: rgba(34, 197, 94, 0.3); }
+.admin-status-badge.is-canceled { color: #991b1b; background: #fff1f2; border-color: rgba(239, 68, 68, 0.28); }
+.admin-status-badge.is-done { color: #1d4ed8; background: #eff6ff; border-color: rgba(59, 130, 246, 0.28); }
 
-.admin-status-badge.is-confirmed {
-  color: #166534;
-  background: #ecfdf5;
-  border-color: rgba(34, 197, 94, 0.3);
-}
-
-.admin-status-badge.is-canceled {
-  color: #991b1b;
-  background: #fff1f2;
-  border-color: rgba(239, 68, 68, 0.28);
-}
-
-.admin-status-badge.is-done {
-  color: #1d4ed8;
-  background: #eff6ff;
-  border-color: rgba(59, 130, 246, 0.28);
-}
-
-.admin-appointment-info-grid {
-  margin-top: 14px;
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(88px, 0.8fr) minmax(80px, 0.75fr);
-  gap: 9px;
-}
-
-.admin-info-pill {
-  min-width: 0;
-  min-height: 66px;
-  border: 1px solid rgba(181, 147, 106, 0.17);
-  border-radius: 20px;
-  padding: 10px;
+.admin-mini-summary-row {
+  margin-top: 9px;
   display: flex;
-  align-items: center;
-  gap: 9px;
-  background: rgba(255, 250, 247, 0.88);
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
 }
 
-.admin-info-pill svg {
+.admin-mini-summary-row::-webkit-scrollbar {
+  display: none;
+}
+
+.admin-mini-chip {
+  min-height: 30px;
+  max-width: 150px;
+  border: 1px solid rgba(181, 147, 106, 0.16);
+  border-radius: 999px;
+  padding: 0 9px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--hs-brown);
+  background: rgba(255, 250, 247, 0.86);
+  font-size: 0.74rem;
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.admin-mini-chip svg {
   flex: 0 0 auto;
   color: var(--hs-gold);
 }
 
-.admin-info-pill div {
-  min-width: 0;
+.admin-mini-chip.is-service {
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.admin-info-pill strong,
-.admin-card-details strong {
-  display: block;
+.admin-mini-chip.is-time {
+  color: #7c2d12;
+  background: #fff7ed;
+}
+
+.admin-mini-chip.is-price {
+  color: #166534;
+  background: #ecfdf5;
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.admin-mini-meta-row {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
   overflow: hidden;
-  color: var(--hs-text);
-  font-size: 0.91rem;
-  font-weight: 950;
-  line-height: 1.12;
+  color: var(--hs-muted);
+  font-size: 0.69rem;
+  font-weight: 800;
+}
+
+.admin-mini-meta-row span {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.admin-card-details {
-  margin-top: 10px;
+.admin-mini-meta-row span:first-child {
+  flex: 0 0 auto;
+}
+
+.admin-mini-actions {
+  margin-top: 9px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
 }
 
-.admin-card-details > div {
-  min-height: 58px;
-  border-radius: 18px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(181, 147, 106, 0.14);
-}
-
-.admin-contact-actions {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px;
-}
-
-.admin-contact-btn {
-  min-height: 46px;
-  border-radius: 17px;
-  padding: 0 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  text-decoration: none;
-  font-size: 0.84rem;
-  font-weight: 950;
+.admin-mini-action {
+  min-width: 0;
+  min-height: 38px;
   border: 1px solid transparent;
-}
-
-.admin-contact-btn.whatsapp {
-  color: #116b35;
-  background: #dcfce7;
-  border-color: rgba(34, 197, 94, 0.28);
-}
-
-.admin-contact-btn.email {
-  color: #5c3425;
-  background: #fff7ed;
-  border-color: rgba(181, 147, 106, 0.24);
-}
-
-.admin-contact-btn.disabled {
-  color: #a1a1aa;
-  background: #f4f4f5;
-  border-color: #e4e4e7;
-}
-
-.admin-card-actions {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px;
-}
-
-.admin-card-actions:empty {
-  display: none;
-}
-
-.admin-card-btn {
-  min-height: 52px;
-  border: 0;
-  border-radius: 19px;
-  padding: 0 12px;
+  border-radius: 15px;
+  padding: 0 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  color: #fff;
-  font-size: 0.9rem;
+  gap: 4px;
+  text-decoration: none;
+  font-size: 0.68rem;
   font-weight: 950;
+  line-height: 1;
   cursor: pointer;
-  box-shadow: 0 12px 24px rgba(60, 32, 18, 0.12);
 }
 
-.admin-card-btn.confirm {
-  background: linear-gradient(145deg, #22c55e, #15803d);
+.admin-mini-action svg {
+  flex: 0 0 auto;
 }
 
-.admin-card-btn.done {
-  background: linear-gradient(145deg, #3b82f6, #1d4ed8);
-}
+.admin-mini-action.whatsapp { color: #116b35; background: #dcfce7; border-color: rgba(34, 197, 94, 0.25); }
+.admin-mini-action.call { color: #1d4ed8; background: #eff6ff; border-color: rgba(59, 130, 246, 0.22); }
+.admin-mini-action.email { color: #5c3425; background: #fff7ed; border-color: rgba(181, 147, 106, 0.22); }
+.admin-mini-action.disabled { color: #a1a1aa; background: #f4f4f5; border-color: #e4e4e7; }
+.admin-mini-action.confirm { color: #fff; background: linear-gradient(145deg, #22c55e, #15803d); box-shadow: 0 8px 16px rgba(21, 128, 61, 0.18); }
+.admin-mini-action.done { color: #fff; background: linear-gradient(145deg, #3b82f6, #1d4ed8); box-shadow: 0 8px 16px rgba(29, 78, 216, 0.18); }
+.admin-mini-action.cancel { color: #fff; background: linear-gradient(145deg, #fb7185, #b91c1c); box-shadow: 0 8px 16px rgba(185, 28, 28, 0.16); }
 
-.admin-card-btn.cancel {
-  background: linear-gradient(145deg, #fb7185, #b91c1c);
-}
-
-.admin-card-btn:active,
-.admin-contact-btn:active,
+.admin-mini-action:active,
 .admin-status-tab:active,
 .admin-refresh-btn:active {
   transform: scale(0.98);
+}
+
+.admin-appointment-info-grid,
+.admin-info-pill,
+.admin-card-details,
+.admin-contact-actions,
+.admin-card-actions {
+  display: none;
 }
 
 .admin-pagination {
@@ -483,11 +444,15 @@
 
   .admin-mobile-header {
     right: 0 !important;
-    min-height: 86px !important;
-    padding: 16px 14px 12px !important;
+    min-height: 76px !important;
+    padding: 13px 14px 10px !important;
     background: rgba(255, 255, 255, 0.92) !important;
     -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
+  }
+
+  .admin-mobile-header h1 {
+    font-size: 1.16rem !important;
   }
 
   .admin-mobile-header p {
@@ -500,112 +465,122 @@
     right: 10px !important;
     bottom: max(10px, env(safe-area-inset-bottom)) !important;
     width: auto !important;
-    height: 76px !important;
-    padding: 8px !important;
+    height: 72px !important;
+    padding: 7px !important;
     flex-direction: row !important;
     justify-content: stretch !important;
-    gap: 8px !important;
+    gap: 7px !important;
     border-left: 0 !important;
-    border-radius: 26px !important;
+    border-radius: 25px !important;
     background: rgba(30, 15, 7, 0.94) !important;
     -webkit-backdrop-filter: blur(18px);
     backdrop-filter: blur(18px);
     box-shadow: 0 18px 44px rgba(30, 15, 7, 0.32) !important;
   }
 
-  .admin-rail-logo {
-    display: none !important;
-  }
+  .admin-rail-logo { display: none !important; }
 
   .admin-rail-nav {
     flex: 1 !important;
     display: grid !important;
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 6px !important;
+    gap: 5px !important;
     align-content: stretch !important;
     height: 100% !important;
   }
 
   .admin-rail-btn,
   .admin-rail-logout {
-    min-height: 60px !important;
-    height: 60px !important;
-    border-radius: 20px !important;
-    font-size: 0.62rem !important;
+    min-height: 58px !important;
+    height: 58px !important;
+    border-radius: 19px !important;
+    font-size: 0.6rem !important;
   }
 
   .admin-rail-logout {
-    width: 54px !important;
-    flex: 0 0 54px !important;
+    width: 50px !important;
+    flex: 0 0 50px !important;
   }
 
   .admin-main {
-    padding-top: 98px !important;
+    padding-top: 86px !important;
     padding-right: 0 !important;
-    padding-bottom: 102px !important;
+    padding-bottom: 98px !important;
   }
 
   .admin-content {
-    padding: 10px 10px 8px !important;
+    padding: 8px 9px 8px !important;
   }
 
   .admin-appointments-screen {
-    gap: 12px !important;
+    gap: 9px !important;
   }
 
   .admin-section-hero {
-    padding: 15px !important;
-    border-radius: 28px !important;
+    padding: 12px !important;
+    border-radius: 24px !important;
   }
 
   .admin-section-hero h2 {
-    font-size: clamp(1.5rem, 7vw, 1.9rem) !important;
+    font-size: clamp(1.28rem, 6vw, 1.55rem) !important;
   }
 
   .admin-section-hero p {
     max-width: 25ch;
-    font-size: 0.86rem !important;
+    font-size: 0.78rem !important;
+    margin-top: 4px !important;
+  }
+
+  .admin-section-kicker {
+    font-size: 0.6rem !important;
   }
 
   .admin-refresh-btn {
-    width: 48px !important;
-    height: 48px !important;
-    border-radius: 18px !important;
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 16px !important;
   }
 
   .admin-status-tabs {
     display: grid !important;
     grid-auto-flow: column !important;
-    grid-auto-columns: minmax(124px, 1fr) !important;
+    grid-auto-columns: minmax(108px, 1fr) !important;
     grid-template-columns: none !important;
-    gap: 8px !important;
+    gap: 7px !important;
     overflow-x: auto !important;
-    padding: 2px 2px 8px !important;
+    padding: 1px 1px 6px !important;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
   }
 
-  .admin-status-tabs::-webkit-scrollbar {
-    display: none;
-  }
+  .admin-status-tabs::-webkit-scrollbar { display: none; }
 
   .admin-status-tab {
-    min-height: 66px !important;
-    border-radius: 22px !important;
+    min-height: 52px !important;
+    border-radius: 18px !important;
+    padding: 9px !important;
     scroll-snap-align: start;
+  }
+
+  .admin-status-tab strong {
+    font-size: 0.78rem !important;
+  }
+
+  .admin-status-tab span {
+    font-size: 0.62rem !important;
   }
 
   .admin-filter-card {
     grid-template-columns: 1fr !important;
-    gap: 9px !important;
-    padding: 12px !important;
-    border-radius: 26px !important;
+    gap: 7px !important;
+    padding: 9px !important;
+    border-radius: 22px !important;
   }
 
   .admin-search-field,
   .admin-date-field {
-    min-height: 50px;
-    border-radius: 19px;
+    min-height: 43px;
+    border-radius: 16px;
   }
 
   .admin-search-field input,
@@ -614,80 +589,73 @@
   }
 
   .admin-appointments-list {
-    gap: 12px;
+    gap: 9px;
   }
 
   .admin-appointment-card {
-    border-radius: 28px;
-    padding: 14px;
-    border-left-width: 5px;
+    border-radius: 22px;
+    padding: 10px;
+    border-left-width: 4px;
   }
 
-  .admin-appointment-card-header {
-    grid-template-columns: 44px minmax(0, 1fr);
-    align-items: start;
+  .admin-appointment-card-header,
+  .admin-mini-card-header {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 8px;
   }
 
   .admin-client-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 17px;
-  }
-
-  .admin-status-badge {
-    grid-column: 1 / -1;
-    justify-self: stretch;
-    max-width: none;
-    min-height: 36px;
-    margin-top: 2px;
+    width: 36px;
+    height: 36px;
+    border-radius: 14px;
   }
 
   .admin-client-main h3 {
-    font-size: 1.1rem;
+    font-size: 0.96rem;
   }
 
-  .admin-appointment-info-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+  .admin-mini-phone {
+    font-size: 0.72rem;
   }
 
-  .admin-info-pill.is-service {
-    grid-column: 1 / -1;
+  .admin-status-badge {
+    min-height: 27px;
+    max-width: 90px;
+    padding: 5px 7px;
+    font-size: 0.62rem;
   }
 
-  .admin-info-pill {
-    min-height: 62px;
-    border-radius: 19px;
+  .admin-mini-summary-row {
+    margin-top: 8px;
   }
 
-  .admin-card-details {
-    gap: 8px;
+  .admin-mini-chip {
+    min-height: 29px;
+    padding: 0 8px;
+    font-size: 0.7rem;
   }
 
-  .admin-card-details > div {
-    min-height: 56px;
-    border-radius: 18px;
+  .admin-mini-meta-row {
+    margin-top: 5px;
+    font-size: 0.66rem;
   }
 
-  .admin-contact-actions {
-    grid-template-columns: 1fr;
-    gap: 8px;
+  .admin-mini-actions {
+    margin-top: 8px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 5px;
   }
 
-  .admin-contact-btn {
-    min-height: 48px;
-    border-radius: 18px;
+  .admin-mini-action {
+    min-height: 36px;
+    border-radius: 14px;
+    font-size: 0.62rem;
+    gap: 3px;
   }
 
-  .admin-card-actions {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
-  .admin-card-btn {
-    min-height: 54px;
-    border-radius: 20px;
-    font-size: 0.94rem;
+  .admin-mini-action svg {
+    width: 14px;
+    height: 14px;
   }
 
   .admin-pagination {
@@ -704,7 +672,7 @@
 
 @media (max-width: 380px) {
   .admin-mobile-header h1 {
-    font-size: 1.12rem !important;
+    font-size: 1.08rem !important;
   }
 
   .admin-section-hero p {
@@ -712,25 +680,26 @@
   }
 
   .admin-appointment-card {
-    padding: 12px;
-  }
-
-  .admin-info-pill {
     padding: 9px;
   }
 
-  .admin-info-pill strong,
-  .admin-card-details strong {
-    font-size: 0.86rem;
+  .admin-mini-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .admin-card-overline,
-  .admin-info-pill span,
-  .admin-card-details span {
-    font-size: 0.61rem;
+  .admin-mini-action {
+    font-size: 0.64rem;
+  }
+
+  .admin-mini-action.cancel {
+    grid-column: span 2;
+  }
+
+  .admin-card-overline {
+    font-size: 0.56rem;
   }
 
   .admin-rail-btn span {
-    font-size: 0.58rem;
+    font-size: 0.56rem;
   }
 }

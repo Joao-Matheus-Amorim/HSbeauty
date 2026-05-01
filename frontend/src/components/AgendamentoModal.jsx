@@ -3,7 +3,6 @@ import { listarServicos, buscarDisponibilidade, criarAgendamento } from '../serv
 import './AgendamentoModal.css';
 
 const WHATSAPP = import.meta.env.VITE_WHATSAPP || '5521999999999';
-const DURACAO_PADRAO_MINUTOS = 150;
 
 function formatDateOnly(date) {
   const y = date.getFullYear();
@@ -68,6 +67,13 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   useEffect(() => {
     if (servicoInicial) setServicoId(servicoInicial.id);
   }, [servicoInicial]);
+
+  function selecionarServico(id) {
+    setServicoId(id);
+    setSlots([]);
+    setSlotSelecionado(null);
+    setErro('');
+  }
 
   function selecionarData(value) {
     setData(value);
@@ -135,21 +141,22 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
               <h2 className="modal-title">Escolha seu horário</h2>
             </div>
 
-            <label className="modal-label">
+            <div className="modal-label">
               Serviço
-              <select
-                className="modal-select"
-                value={servicoId}
-                onChange={(e) => setServicoId(e.target.value)}
-              >
-                <option value="">Selecione...</option>
+              <div className="service-choice-grid">
                 {servicos.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.nome} — R$ {Number(s.preco).toFixed(2).replace('.', ',')} ({DURACAO_PADRAO_MINUTOS} min)
-                  </option>
+                  <button
+                    type="button"
+                    key={s.id}
+                    className={`service-choice-btn${String(servicoId) === String(s.id) ? ' selected' : ''}`}
+                    onClick={() => selecionarServico(s.id)}
+                  >
+                    <span>{s.nome}</span>
+                    <strong>R$ {Number(s.preco).toFixed(2).replace('.', ',')}</strong>
+                  </button>
                 ))}
-              </select>
-            </label>
+              </div>
+            </div>
 
             <div className="modal-label">
               Dia

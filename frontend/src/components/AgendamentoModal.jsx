@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { listarServicos, buscarDisponibilidade, criarAgendamento } from '../services/agendamentos';
 import './AgendamentoModal.css';
 
@@ -66,6 +67,14 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [agendado, setAgendado] = useState(null);
 
   const semanaAtual = useMemo(() => getCurrentWeekRange(), []);
+
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -153,7 +162,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
   const servicoSelecionado = servicos.find((s) => String(s.id) === String(servicoId));
 
-  return (
+  const modal = (
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-box" role="dialog" aria-modal="true" aria-label="Agendar serviço">
         <button className="modal-close" onClick={onClose} aria-label="Fechar">✕</button>
@@ -316,4 +325,6 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

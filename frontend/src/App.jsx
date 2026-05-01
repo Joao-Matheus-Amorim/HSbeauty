@@ -8,7 +8,7 @@ import depilacaoImage from '../Saved Pictures/depil1.png'
 import { listarServicos } from './services/agendamentos'
 import AgendamentoModal from './components/AgendamentoModal'
 
-const WHATSAPP = import.meta.env.VITE_WHATSAPP || '5521999999999'
+const WHATSAPP = import.meta.env.VITE_WHATSAPP || '5521970976928'
 
 const fallbackServices = [
 	{ id: 1, nome: 'Unhas', preco: 35, duracao: 60, ativo: true },
@@ -44,18 +44,6 @@ function App() {
 	const [services, setServices] = useState(fallbackServices)
 	const [modalAberto, setModalAberto] = useState(false)
 	const [servicoModal, setServicoModal] = useState(null)
-
-	const hashPath = window.location.hash
-	if (hashPath === '#admin') {
-		import('./pages/Admin.jsx').then(({ default: Admin }) => {
-			const root = document.getElementById('root')
-			if (root) {
-				import('react-dom/client').then(({ createRoot }) => {
-					createRoot(root).render(<Admin />)
-				})
-			}
-		})
-	}
 
 	useEffect(() => {
 		let mounted = true

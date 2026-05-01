@@ -7,8 +7,12 @@ const hash = window.location.hash
 
 if (hash === '#admin') {
   import('./pages/Admin.jsx').then(({ default: Admin }) => {
-    createRoot(document.getElementById('root')).render(<StrictMode><Admin /></StrictMode>)
+    createRoot(document.getElementById('root')).render(
+      <StrictMode><Admin /></StrictMode>
+    )
   })
 } else {
-  createRoot(document.getElementById('root')).render(<StrictMode><App /></StrictMode>)
+  createRoot(document.getElementById('root')).render(
+    <StrictMode><App /></StrictMode>
+  )
 }

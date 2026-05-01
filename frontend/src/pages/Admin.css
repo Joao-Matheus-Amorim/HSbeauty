@@ -1,0 +1,270 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Manrope:wght@500;600;700&display=swap');
+
+.admin-login-wrap {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #fef4f7, #f2dde4);
+  padding: 16px;
+}
+
+.admin-login-form {
+  width: 100%;
+  max-width: 380px;
+  padding: 32px 24px;
+  border-radius: 20px;
+  background: rgba(255, 248, 252, 0.95);
+  border: 1px solid rgba(212, 164, 76, 0.28);
+  box-shadow: 0 12px 36px rgba(60, 32, 18, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-login-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #60354a;
+  text-align: center;
+}
+
+.admin-login-sub {
+  text-align: center;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
+  color: #8b5469;
+  margin-top: -8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.admin-wrap {
+  min-height: 100dvh;
+  background: linear-gradient(160deg, #fef4f7, #f2dde4);
+  font-family: 'Manrope', sans-serif;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: rgba(255, 246, 250, 0.92);
+  border-bottom: 1px solid rgba(212, 164, 76, 0.22);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+}
+
+.admin-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #60354a;
+}
+
+.admin-logout {
+  border: 1.5px solid rgba(139, 84, 105, 0.4);
+  background: none;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #8b5469;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.admin-logout:hover { background: rgba(139, 84, 105, 0.1); }
+
+.admin-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1.5px solid rgba(212, 164, 76, 0.22);
+  background: rgba(255, 246, 250, 0.7);
+  overflow-x: auto;
+}
+
+.admin-tab {
+  flex: 1;
+  min-width: 100px;
+  padding: 13px 8px;
+  border: none;
+  background: none;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #8b5469;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-bottom: 2.5px solid transparent;
+  transition: color 0.18s, border-color 0.18s;
+}
+.admin-tab.active {
+  color: #60354a;
+  border-bottom-color: #d9a244;
+}
+
+.admin-section {
+  padding: 20px 16px 40px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.admin-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.admin-section h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #60354a;
+  margin-bottom: 14px;
+}
+
+.admin-cards {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.admin-card {
+  background: rgba(255, 248, 252, 0.95);
+  border: 1px solid rgba(212, 164, 76, 0.22);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 12px rgba(60, 32, 18, 0.07);
+}
+
+.admin-card.inativo { opacity: 0.55; }
+
+.admin-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.admin-card-top strong {
+  font-size: 1rem;
+  color: #4a2835;
+}
+
+.admin-card p {
+  font-size: 0.88rem;
+  color: #7d5565;
+  margin-bottom: 2px;
+}
+
+.admin-card-tel {
+  font-size: 0.82rem;
+  color: #9a6720;
+}
+
+.admin-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.badge-pendente   { background: rgba(217, 162, 68, 0.2);  color: #7a4f16; }
+.badge-confirmado { background: rgba(67, 140, 80, 0.15); color: #2e5c10; }
+.badge-cancelado  { background: rgba(192, 57, 79, 0.15);  color: #8a2035; }
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: rgba(255, 248, 252, 0.9);
+  border: 1px solid rgba(212, 164, 76, 0.22);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 8px;
+}
+
+.admin-label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #60354a;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.admin-input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(194, 133, 165, 0.4);
+  background: rgba(255, 255, 255, 0.9);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  color: #4a2835;
+  outline: none;
+  transition: border-color 0.18s;
+}
+.admin-input:focus { border-color: #d9a244; }
+
+.admin-erro {
+  font-size: 0.82rem;
+  color: #c0394f;
+  background: rgba(192, 57, 79, 0.08);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.admin-info {
+  font-size: 0.88rem;
+  color: #8b5469;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.admin-btn {
+  border: 1.5px solid rgba(139, 84, 105, 0.35);
+  background: none;
+  border-radius: 999px;
+  padding: 9px 20px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #7d5452;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.18s;
+}
+.admin-btn:hover { background: rgba(139, 84, 105, 0.08); transform: translateY(-1px); }
+
+.admin-btn.primary {
+  background: linear-gradient(145deg, #e6be6a, #c58d32 52%, #8c5a1a);
+  border: none;
+  color: #fff8f0;
+  box-shadow: 0 4px 12px rgba(124, 75, 20, 0.22);
+}
+.admin-btn.primary:hover { filter: brightness(1.05); }
+
+.admin-btn.small { padding: 6px 14px; font-size: 0.76rem; }
+.admin-btn.green  { border-color: rgba(67,140,80,0.5); color: #2e5c10; }
+.admin-btn.green:hover { background: rgba(67,140,80,0.1); }
+.admin-btn.orange { border-color: rgba(217,162,68,0.5); color: #7a4f16; }
+.admin-btn.orange:hover { background: rgba(217,162,68,0.1); }
+.admin-btn.red    { border-color: rgba(192,57,79,0.5); color: #8a2035; }
+.admin-btn.red:hover { background: rgba(192,57,79,0.1); }

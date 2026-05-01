@@ -5,7 +5,10 @@ import ownerSecondary from '../Saved Pictures/maiara1.png'
 import unhasImage from '../Saved Pictures/unha1.png'
 import ciliosImage from '../Saved Pictures/sobranchelha2.png'
 import depilacaoImage from '../Saved Pictures/depil1.png'
-import { listarServicos } from './services/agendamendos'
+import { listarServicos } from './services/agendamentos'
+import AgendamentoModal from './components/AgendamentoModal'
+
+const WHATSAPP = import.meta.env.VITE_WHATSAPP || '5521999999999'
 
 const fallbackServices = [
 	{ id: 1, nome: 'Unhas', preco: 35, duracao: 60, ativo: true },
@@ -17,10 +20,7 @@ const fallbackServices = [
 const serviceNameOrder = ['unhas', 'cilios', 'sobrancelhas', 'depilacao']
 
 const removeAccents = (value) =>
-	value
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.toLowerCase()
+	value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 
 const normalizeServiceName = (name) => {
 	const normalized = removeAccents(name || '')
@@ -42,77 +42,73 @@ const getServiceImage = (name) => {
 
 function App() {
 	const [services, setServices] = useState(fallbackServices)
+	const [modalAberto, setModalAberto] = useState(false)
+	const [servicoModal, setServicoModal] = useState(null)
+
+	const hashPath = window.location.hash
+	if (hashPath === '#admin') {
+		import('./pages/Admin.jsx').then(({ default: Admin }) => {
+			const root = document.getElementById('root')
+			if (root) {
+				import('react-dom/client').then(({ createRoot }) => {
+					createRoot(root).render(<Admin />)
+				})
+			}
+		})
+	}
 
 	useEffect(() => {
 		let mounted = true
-
 		async function loadServices() {
 			try {
 				const apiServices = await listarServicos({ ativo: true })
 				if (!Array.isArray(apiServices) || !apiServices.length) return
-
 				const wantedServices = apiServices
 					.filter((item) => serviceNameOrder.includes(normalizeServiceName(item.nome)))
-					.sort(
-						(a, b) =>
-							serviceNameOrder.indexOf(normalizeServiceName(a.nome)) -
-							serviceNameOrder.indexOf(normalizeServiceName(b.nome))
-					)
-
-				const fallbackByType = new Map(
-					fallbackServices.map((item) => [normalizeServiceName(item.nome), item])
-				)
-				const apiByType = new Map(
-					wantedServices.map((item) => [normalizeServiceName(item.nome), item])
-				)
-
-				const mergedServices = serviceNameOrder
-					.map((type) => apiByType.get(type) || fallbackByType.get(type))
-					.filter(Boolean)
-
-				if (mounted && mergedServices.length) {
-					setServices(mergedServices)
-				}
+					.sort((a, b) => serviceNameOrder.indexOf(normalizeServiceName(a.nome)) - serviceNameOrder.indexOf(normalizeServiceName(b.nome)))
+				const fallbackByType = new Map(fallbackServices.map((item) => [normalizeServiceName(item.nome), item]))
+				const apiByType = new Map(wantedServices.map((item) => [normalizeServiceName(item.nome), item]))
+				const mergedServices = serviceNameOrder.map((type) => apiByType.get(type) || fallbackByType.get(type)).filter(Boolean)
+				if (mounted && mergedServices.length) setServices(mergedServices)
 			} catch {
-				if (mounted) {
-					setServices(fallbackServices)
-				}
+				if (mounted) setServices(fallbackServices)
 			}
 		}
-
 		loadServices()
-
-		return () => {
-			mounted = false
-		}
+		return () => { mounted = false }
 	}, [])
 
 	const orderedServices = useMemo(
-		() =>
-			services
-				.filter((item) => serviceNameOrder.includes(normalizeServiceName(item.nome)))
-				.sort(
-					(a, b) =>
-						serviceNameOrder.indexOf(normalizeServiceName(a.nome)) -
-						serviceNameOrder.indexOf(normalizeServiceName(b.nome))
-				),
+		() => services
+			.filter((item) => serviceNameOrder.includes(normalizeServiceName(item.nome)))
+			.sort((a, b) => serviceNameOrder.indexOf(normalizeServiceName(a.nome)) - serviceNameOrder.indexOf(normalizeServiceName(b.nome))),
 		[services]
 	)
 
+	function abrirModal(servico = null) {
+		setServicoModal(servico)
+		setModalAberto(true)
+	}
+
 	return (
 		<main className="beauty-app">
+			{modalAberto && (
+				<AgendamentoModal
+					servicoInicial={servicoModal}
+					onClose={() => setModalAberto(false)}
+				/>
+			)}
+
 			<section className="phone-frame" aria-label="Landing page HSBeauty">
 				<section className="hero hero-art">
 					<div className="topbar topbar-overlay glass-panel">
 						<button className="icon-button" aria-label="Abrir menu">
 							<span className="menu-icon" />
 						</button>
-
-						<a className="gold-pill" href="#services">
+						<button className="gold-pill" onClick={() => abrirModal()}>
 							Agendar ›
-						</a>
+						</button>
 					</div>
-
 					<img src={heroBanner} alt="HSBeauty banner principal" className="hero-banner-art" />
 				</section>
 
@@ -124,7 +120,7 @@ function App() {
 				<section className="meta-row glass-panel">
 					<span>⭐ 5.0 (150+)</span>
 					<span>Piabeta / Mage</span>
-					<a href="https://wa.me/5500000000000" target="_blank" rel="noreferrer">
+					<a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer">
 						🟢 Chamar no WhatsApp
 					</a>
 				</section>
@@ -137,14 +133,12 @@ function App() {
 					<div className="services-grid">
 						{orderedServices.map((service) => (
 							<article className="service-card" key={service.id || service.nome}>
-								<img
-									src={getServiceImage(service.nome)}
-									alt={service.nome}
-									loading="lazy"
-								/>
+								<img src={getServiceImage(service.nome)} alt={service.nome} loading="lazy" />
 								<div className="service-card-body">
 									<h4>{service.nome}</h4>
-									<button className="service-action">Reservar horário</button>
+									<button className="service-action" onClick={() => abrirModal(service)}>
+										Reservar horário
+									</button>
 								</div>
 							</article>
 						))}
@@ -159,12 +153,12 @@ function App() {
 						<img src={ciliosImage} alt="Cílios feitos no studio" loading="lazy" />
 					</div>
 					<div className="cta-stack">
-						<a className="cta-button cta-primary" href="https://wa.me/5500000000000" target="_blank" rel="noreferrer">
+						<a className="cta-button cta-primary" href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer">
 							<span>Agendar no WhatsApp</span>
-							<small>Atendimento rapido e direto</small>
+							<small>Atendimento rápido e direto</small>
 						</a>
-						<button className="cta-button cta-secondary">
-							<span>Escolher servico e horario</span>
+						<button className="cta-button cta-secondary" onClick={() => abrirModal()}>
+							<span>Escolher serviço e horário</span>
 							<small>Monte seu atendimento personalizado</small>
 						</button>
 					</div>

@@ -18,7 +18,7 @@ export default function Admin() {
     return token ? getAdminFromSession() : null;
   });
 
-  const [tab, setTab] = useState('dashboard');
+  const [tab, setTab] = useState('agendamentos');
 
   if (!admin) return <AdminLogin onLogin={setAdmin} />;
 

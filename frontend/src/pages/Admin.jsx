@@ -2,6 +2,9 @@ import { useState } from 'react';
 import AdminLogin from './AdminLogin';
 import AdminLayout from '../components/AdminLayout';
 import Dashboard from '../components/Dashboard';
+import AppointmentManager from '../components/AppointmentManager';
+import ServiceManager from '../components/ServiceManager';
+import ScheduleManager from '../components/ScheduleManager';
 import './Admin.css';
 
 function getAdminFromSession() {
@@ -32,9 +35,9 @@ export default function Admin() {
       onLogout={handleLogout}
     >
       {tab === 'dashboard' && <Dashboard onNavigate={setTab} />}
-      {tab === 'agendamentos' && <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-gray-300 text-gray-400">Em implementação: Gestão de Agendamentos</div>}
-      {tab === 'horarios' && <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-gray-300 text-gray-400">Em implementação: Gestão de Horários</div>}
-      {tab === 'servicos' && <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-gray-300 text-gray-400">Em implementação: Gestão de Serviços</div>}
+      {tab === 'agendamentos' && <AppointmentManager />}
+      {tab === 'horarios' && <ScheduleManager />}
+      {tab === 'servicos' && <ServiceManager />}
     </AdminLayout>
   );
 }

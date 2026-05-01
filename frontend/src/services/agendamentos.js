@@ -5,7 +5,7 @@ function getAuthHeaders() {
   return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
 }
 
-// ─── Público ──────────────────────────────────────────────────────────────────
+// ─── Público ─────────────────────────────────────────────────────────────────────────────
 
 export async function listarServicos({ ativo } = {}) {
   const params = new URLSearchParams();
@@ -19,7 +19,10 @@ export async function listarServicos({ ativo } = {}) {
 export async function buscarDisponibilidade(data, servicoId) {
   const params = new URLSearchParams({ data, servicoId: String(servicoId) });
   const response = await fetch(`${API_URL}/disponibilidade?${params}`);
-  if (!response.ok) throw new Error('Erro ao buscar disponibilidade');
+  if (!response.ok) {
+    const json = await response.json().catch(() => ({}));
+    throw new Error(json.erro || 'Erro ao buscar disponibilidade');
+  }
   return response.json();
 }
 
@@ -34,7 +37,7 @@ export async function criarAgendamento(dados) {
   return json;
 }
 
-// ─── Admin (requer token) ─────────────────────────────────────────────────────
+// ─── Admin (requer token) ──────────────────────────────────────────────────────────
 
 export async function loginAdmin(email, senha) {
   const response = await fetch(`${API_URL}/auth/login`, {
@@ -47,10 +50,12 @@ export async function loginAdmin(email, senha) {
   return json;
 }
 
-export async function listarAgendamentos() {
-  const response = await fetch(`${API_URL}/agendamentos`, { headers: getAuthHeaders() });
+// Suporte a paginação: { page, limit }
+export async function listarAgendamentos({ page = 1, limit = 50 } = {}) {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  const response = await fetch(`${API_URL}/agendamentos?${params}`, { headers: getAuthHeaders() });
   if (!response.ok) throw new Error('Erro ao carregar agendamentos');
-  return response.json();
+  return response.json(); // { data, paginacao: { total, pagina, limite, totalPaginas } }
 }
 
 export async function atualizarAgendamento(id, dados) {
@@ -59,8 +64,9 @@ export async function atualizarAgendamento(id, dados) {
     headers: getAuthHeaders(),
     body: JSON.stringify(dados),
   });
-  if (!response.ok) throw new Error('Erro ao atualizar agendamento');
-  return response.json();
+  const json = await response.json();
+  if (!response.ok) throw new Error(json.erro || 'Erro ao atualizar agendamento');
+  return json;
 }
 
 export async function excluirAgendamento(id) {

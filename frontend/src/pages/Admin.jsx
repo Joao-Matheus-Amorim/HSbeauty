@@ -48,9 +48,9 @@ function AdminDashboard({ admin, onLogout }) {
           <span className="admin-brand">HSBeauty Admin</span>
         </div>
         <nav className="admin-nav">
-          <button className={`admin-nav-btn${tab === 'agendamentos' ? ' active' : ''}`} onClick={() => setTab('agendamentos')}>📅 Agendamentos</button>
-          <button className={`admin-nav-btn${tab === 'bloqueios' ? ' active' : ''}`} onClick={() => setTab('bloqueios')}>🔒 Bloqueios</button>
-          <button className={`admin-nav-btn${tab === 'servicos' ? ' active' : ''}`} onClick={() => setTab('servicos')}>✂️ Serviços</button>
+          <button className={`admin-nav-btn${tab === 'agendamentos' ? ' active' : ''}`} onClick={() => setTab('agendamentos')}>Agendamentos</button>
+          <button className={`admin-nav-btn${tab === 'bloqueios' ? ' active' : ''}`} onClick={() => setTab('bloqueios')}>Bloqueios</button>
+          <button className={`admin-nav-btn${tab === 'servicos' ? ' active' : ''}`} onClick={() => setTab('servicos')}>Servicos</button>
         </nav>
         <div className="admin-header-right">
           <span className="admin-email">{admin?.email}</span>
@@ -67,10 +67,13 @@ function AdminDashboard({ admin, onLogout }) {
   );
 }
 
-// ─── Tab Agendamentos ─────────────────────────────────────────────────────────
+// ─── Tab Agendamentos ──────────────────────────────────────────────────────────
 
 function TabAgendamentos() {
   const [agendamentos, setAgendamentos] = useState([]);
+  const [paginacao, setPaginacao] = useState({ total: 0, pagina: 1, totalPaginas: 1 });
+  const [pagina, setPagina] = useState(1);
+  const LIMITE = 50;
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   const [filtro, setFiltro] = useState('');
@@ -78,12 +81,13 @@ function TabAgendamentos() {
   const [editStatus, setEditStatus] = useState('');
   const [saving, setSaving] = useState(false);
 
-  async function carregar() {
+  async function carregar(p = pagina) {
     setLoading(true);
     setErro('');
     try {
-      const data = await listarAgendamentos();
-      setAgendamentos(data);
+      const res = await listarAgendamentos({ page: p, limit: LIMITE });
+      setAgendamentos(res.data || []);
+      setPaginacao(res.paginacao || { total: 0, pagina: p, totalPaginas: 1 });
     } catch (e) {
       setErro(e.message);
     } finally {
@@ -91,14 +95,14 @@ function TabAgendamentos() {
     }
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { carregar(pagina); }, [pagina]);
 
   async function salvarStatus(id) {
     setSaving(true);
     try {
       await atualizarAgendamento(id, { status: editStatus });
       setEditando(null);
-      carregar();
+      carregar(pagina);
     } catch (e) {
       setErro(e.message);
     } finally {
@@ -110,7 +114,7 @@ function TabAgendamentos() {
     if (!confirm('Cancelar este agendamento?')) return;
     try {
       await atualizarAgendamento(id, { status: 'cancelado' });
-      carregar();
+      carregar(pagina);
     } catch (e) {
       setErro(e.message);
     }
@@ -120,7 +124,7 @@ function TabAgendamentos() {
     if (!confirm('Excluir permanentemente este agendamento?')) return;
     try {
       await excluirAgendamento(id);
-      carregar();
+      carregar(pagina);
     } catch (e) {
       setErro(e.message);
     }
@@ -142,16 +146,16 @@ function TabAgendamentos() {
   return (
     <section className="admin-section">
       <div className="admin-section-header">
-        <h2>Agendamentos <span className="admin-count">{filtrados.length}</span></h2>
+        <h2>Agendamentos <span className="admin-count">{paginacao.total}</span></h2>
         <div className="admin-section-actions">
           <input
             className="admin-search"
             type="search"
-            placeholder="Buscar por nome, telefone, serviço..."
+            placeholder="Buscar por nome, telefone, servico..."
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
           />
-          <button className="admin-btn outline small" onClick={carregar}>↺ Atualizar</button>
+          <button className="admin-btn outline small" onClick={() => carregar(pagina)}>Atualizar</button>
         </div>
       </div>
 
@@ -169,10 +173,10 @@ function TabAgendamentos() {
                 <th>#</th>
                 <th>Cliente</th>
                 <th>Telefone</th>
-                <th>Serviço</th>
+                <th>Servico</th>
                 <th>Data/Hora</th>
                 <th>Status</th>
-                <th>Ações</th>
+                <th>Acoes</th>
               </tr>
             </thead>
             <tbody>
@@ -195,8 +199,8 @@ function TabAgendamentos() {
                         <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} className="admin-select-sm">
                           {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
-                        <button className="admin-btn primary tiny" onClick={() => salvarStatus(a.id)} disabled={saving}>✓</button>
-                        <button className="admin-btn outline tiny" onClick={() => setEditando(null)}>✕</button>
+                        <button className="admin-btn primary tiny" onClick={() => salvarStatus(a.id)} disabled={saving}>Ok</button>
+                        <button className="admin-btn outline tiny" onClick={() => setEditando(null)}>X</button>
                       </div>
                     ) : (
                       <span
@@ -219,6 +223,29 @@ function TabAgendamentos() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Paginacao */}
+      {paginacao.totalPaginas > 1 && (
+        <div className="admin-pagination">
+          <button
+            className="admin-btn outline small"
+            onClick={() => setPagina((p) => Math.max(1, p - 1))}
+            disabled={paginacao.pagina <= 1 || loading}
+          >
+            Anterior
+          </button>
+          <span className="admin-pagination-info">
+            Pagina {paginacao.pagina} de {paginacao.totalPaginas}
+          </span>
+          <button
+            className="admin-btn outline small"
+            onClick={() => setPagina((p) => Math.min(paginacao.totalPaginas, p + 1))}
+            disabled={paginacao.pagina >= paginacao.totalPaginas || loading}
+          >
+            Proxima
+          </button>
         </div>
       )}
     </section>
@@ -252,7 +279,7 @@ function TabBloqueios() {
 
   async function handleCriar(e) {
     e.preventDefault();
-    if (!form.inicio || !form.fim) { setErro('Informe início e fim'); return; }
+    if (!form.inicio || !form.fim) { setErro('Informe inicio e fim'); return; }
     setSaving(true);
     setErro('');
     setSucesso('');
@@ -280,12 +307,12 @@ function TabBloqueios() {
 
   return (
     <section className="admin-section">
-      <h2>Bloqueios de Horário</h2>
-      <p className="admin-desc">Bloqueios impedem novos agendamentos no período informado.</p>
+      <h2>Bloqueios de Horario</h2>
+      <p className="admin-desc">Bloqueios impedem novos agendamentos no periodo informado.</p>
 
       <form onSubmit={handleCriar} className="admin-form-inline">
         <label className="admin-label">
-          Início
+          Inicio
           <input className="admin-input" type="datetime-local" value={form.inicio} onChange={(e) => setForm({ ...form, inicio: e.target.value })} />
         </label>
         <label className="admin-label">
@@ -296,7 +323,7 @@ function TabBloqueios() {
           Motivo (opcional)
           <input className="admin-input" type="text" placeholder="Ex: Feriado, viagem..." value={form.motivo} onChange={(e) => setForm({ ...form, motivo: e.target.value })} />
         </label>
-        <button className="admin-btn primary" type="submit" disabled={saving}>{saving ? 'Salvando...' : '+ Bloquear horário'}</button>
+        <button className="admin-btn primary" type="submit" disabled={saving}>{saving ? 'Salvando...' : '+ Bloquear horario'}</button>
       </form>
 
       {erro && <p className="admin-erro">{erro}</p>}
@@ -310,7 +337,7 @@ function TabBloqueios() {
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
-              <tr><th>#</th><th>Início</th><th>Fim</th><th>Motivo</th><th>Ações</th></tr>
+              <tr><th>#</th><th>Inicio</th><th>Fim</th><th>Motivo</th><th>Acoes</th></tr>
             </thead>
             <tbody>
               {bloqueios.map((b) => (
@@ -332,7 +359,7 @@ function TabBloqueios() {
   );
 }
 
-// ─── Tab Serviços ─────────────────────────────────────────────────────────────
+// ─── Tab Servicos ─────────────────────────────────────────────────────────────
 
 function TabServicos() {
   const [servicos, setServicos] = useState([]);
@@ -382,10 +409,10 @@ function TabServicos() {
       };
       if (editando) {
         await atualizarServico(editando, dados);
-        setSucesso('Serviço atualizado!');
+        setSucesso('Servico atualizado!');
       } else {
         await criarServico(dados);
-        setSucesso('Serviço criado!');
+        setSucesso('Servico criado!');
       }
       cancelarEdicao();
       carregar();
@@ -397,7 +424,7 @@ function TabServicos() {
   }
 
   async function desativar(id) {
-    if (!confirm('Desativar este serviço?')) return;
+    if (!confirm('Desativar este servico?')) return;
     try {
       await desativarServico(id);
       carregar();
@@ -408,7 +435,7 @@ function TabServicos() {
 
   return (
     <section className="admin-section">
-      <h2>{editando ? 'Editar Serviço' : 'Serviços'}</h2>
+      <h2>{editando ? 'Editar Servico' : 'Servicos'}</h2>
 
       <form onSubmit={salvar} className="admin-form-inline">
         <label className="admin-label">
@@ -416,11 +443,11 @@ function TabServicos() {
           <input className="admin-input" type="text" placeholder="Ex: Unhas em gel" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} required />
         </label>
         <label className="admin-label">
-          Preço (R$)
+          Preco (R$)
           <input className="admin-input" type="number" min="0" step="0.01" placeholder="35.00" value={form.preco} onChange={(e) => setForm({ ...form, preco: e.target.value })} required />
         </label>
         <label className="admin-label">
-          Duração (min)
+          Duracao (min)
           <input className="admin-input" type="number" min="1" placeholder="60" value={form.duracao} onChange={(e) => setForm({ ...form, duracao: e.target.value })} required />
         </label>
         <label className="admin-label admin-label-check">
@@ -428,7 +455,7 @@ function TabServicos() {
           Ativo
         </label>
         <div className="admin-form-btns">
-          <button className="admin-btn primary" type="submit" disabled={saving}>{saving ? 'Salvando...' : editando ? 'Salvar edição' : '+ Criar serviço'}</button>
+          <button className="admin-btn primary" type="submit" disabled={saving}>{saving ? 'Salvando...' : editando ? 'Salvar edicao' : '+ Criar servico'}</button>
           {editando && <button className="admin-btn outline" type="button" onClick={cancelarEdicao}>Cancelar</button>}
         </div>
       </form>
@@ -442,7 +469,7 @@ function TabServicos() {
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
-              <tr><th>#</th><th>Nome</th><th>Preço</th><th>Duração</th><th>Status</th><th>Ações</th></tr>
+              <tr><th>#</th><th>Nome</th><th>Preco</th><th>Duracao</th><th>Status</th><th>Acoes</th></tr>
             </thead>
             <tbody>
               {servicos.map((s) => (

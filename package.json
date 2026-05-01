@@ -1,0 +1,14 @@
+{
+  "name": "hsbeauty",
+  "version": "1.0.0",
+  "description": "Monorepo HSBeauty — backend (porta 3000) + frontend (porta 5173)",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names \"BACK,FRONT\" --prefix-colors \"bgMagenta.bold,bgCyan.bold\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "setup": "npm run install:all && node scripts/setup.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

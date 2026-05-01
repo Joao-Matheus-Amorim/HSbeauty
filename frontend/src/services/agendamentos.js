@@ -1,4 +1,23 @@
-const API_URL = import.meta.env.VITE_API_URL || 'https://hsbeauty.onrender.com';
+const PRODUCTION_API_URL = 'https://hsbeauty.onrender.com';
+const LOCAL_API_URL = 'http://localhost:3000';
+
+function resolveApiUrl() {
+  const envUrl = import.meta.env.VITE_API_URL;
+  const isBrowser = typeof window !== 'undefined';
+  const isLocalHost = isBrowser && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
+  if (isLocalHost) {
+    return envUrl || LOCAL_API_URL;
+  }
+
+  if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
+    return PRODUCTION_API_URL;
+  }
+
+  return envUrl;
+}
+
+const API_URL = resolveApiUrl();
 
 function getAuthHeaders() {
   const token = sessionStorage.getItem('hs_token');

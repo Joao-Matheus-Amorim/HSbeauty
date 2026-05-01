@@ -3,8 +3,10 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import pkg from '@prisma/client';
 import { PrismaNeon } from '@prisma/adapter-neon';
+
+const { PrismaClient } = pkg;
 
 const app = express();
 app.use(express.json());
@@ -453,10 +455,6 @@ app.delete('/bloqueios/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Aliases para compatibilidade retroativa
-app.post('/api/bloqueios', authMiddleware, async (req, res) => res.redirect(307, '/bloqueios'));
-app.get('/api/bloqueios', authMiddleware, async (req, res) => res.redirect(307, '/bloqueios'));
-
 // ─── Disponibilidade ──────────────────────────────────────────────────────────
 
 app.get('/disponibilidade', async (req, res) => {
@@ -476,9 +474,6 @@ app.get('/disponibilidade', async (req, res) => {
     res.status(500).json({ erro: 'Erro ao calcular disponibilidade' });
   }
 });
-
-// Alias retroativo
-app.get('/api/disponibilidade', async (req, res) => res.redirect(307, `/disponibilidade?${new URLSearchParams(req.query).toString()}`));
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);

@@ -20,7 +20,7 @@ const fallbackServices = [
 const serviceNameOrder = ['unhas', 'cilios', 'sobrancelhas', 'depilacao']
 
 const removeAccents = (value) =>
-	value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+	String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 
 const normalizeServiceName = (name) => {
 	const normalized = removeAccents(name || '')
@@ -78,6 +78,20 @@ function App() {
 		setModalAberto(true)
 	}
 
+	function reservarComoCliente(servico = null, event) {
+		if (event) {
+			event.preventDefault()
+			event.stopPropagation()
+		}
+		abrirModal(servico)
+	}
+
+	function handleCardKeyDown(event, service) {
+		if (event.key === 'Enter' || event.key === ' ') {
+			reservarComoCliente(service, event)
+		}
+	}
+
 	return (
 		<main className="beauty-app">
 			{modalAberto && (
@@ -90,10 +104,10 @@ function App() {
 			<section className="phone-frame" aria-label="Landing page HSBeauty">
 				<section className="hero hero-art">
 					<div className="topbar topbar-overlay glass-panel">
-						<button className="icon-button" aria-label="Abrir menu">
+						<button className="icon-button" aria-label="Abrir menu" type="button">
 							<span className="menu-icon" />
 						</button>
-						<button className="gold-pill" onClick={() => abrirModal()}>
+						<button className="gold-pill" type="button" onClick={(event) => reservarComoCliente(null, event)}>
 							Agendar como cliente ›
 						</button>
 					</div>
@@ -120,21 +134,27 @@ function App() {
 					</p>
 					<div className="services-grid">
 						{orderedServices.map((service) => (
-							<button
-								type="button"
+							<article
 								className="service-card service-card-button"
 								key={service.id || service.nome}
-								onClick={() => abrirModal(service)}
+								onClick={(event) => reservarComoCliente(service, event)}
+								onKeyDown={(event) => handleCardKeyDown(event, service)}
+								role="button"
+								tabIndex={0}
 								aria-label={`Reservar ${service.nome} como cliente`}
 							>
 								<img src={getServiceImage(service.nome)} alt={service.nome} loading="lazy" />
 								<div className="service-card-body">
 									<h4>{service.nome}</h4>
-									<span className="service-action fake-button">
+									<button
+										type="button"
+										className="service-action"
+										onClick={(event) => reservarComoCliente(service, event)}
+									>
 										Reservar como cliente
-									</span>
+									</button>
 								</div>
-							</button>
+							</article>
 						))}
 					</div>
 				</section>
@@ -151,7 +171,7 @@ function App() {
 							<span>Agendar no WhatsApp</span>
 							<small>Atendimento rápido e direto</small>
 						</a>
-						<button className="cta-button cta-secondary" onClick={() => abrirModal()}>
+						<button className="cta-button cta-secondary" type="button" onClick={(event) => reservarComoCliente(null, event)}>
 							<span>Reservar como cliente</span>
 							<small>Escolha serviço, dia e horário</small>
 						</button>

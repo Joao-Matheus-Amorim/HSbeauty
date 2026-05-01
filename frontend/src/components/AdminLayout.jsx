@@ -5,6 +5,7 @@ import {
   Clock,
   Scissors,
   LogOut,
+  Menu,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -15,16 +16,16 @@ function cn(...inputs) {
 
 export default function AdminLayout({ children, activeTab, onTabChange, admin, onLogout }) {
   const menuItems = [
-    { id: 'dashboard', label: 'Início', desktopLabel: 'Dashboard', icon: LayoutDashboard },
     { id: 'agendamentos', label: 'Agenda', desktopLabel: 'Agendamentos', icon: Calendar },
     { id: 'horarios', label: 'Horários', desktopLabel: 'Horários', icon: Clock },
     { id: 'servicos', label: 'Serviços', desktopLabel: 'Serviços', icon: Scissors },
+    { id: 'dashboard', label: 'Resumo', desktopLabel: 'Resumo', icon: LayoutDashboard },
   ];
 
   const activeItem = menuItems.find((item) => item.id === activeTab);
 
   return (
-    <div className="min-h-screen bg-[#f8f5f2] font-sans text-[#2c1810] md:flex">
+    <div className="min-h-screen bg-[#f8f5f2] font-sans text-[#2c1810] md:flex admin-shell">
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex w-64 flex-col bg-[#1e0f07] text-white sticky top-0 h-screen overflow-hidden">
         <div className="p-6 flex items-center gap-3 border-b border-white/10">
@@ -74,28 +75,44 @@ export default function AdminLayout({ children, activeTab, onTabChange, admin, o
         </div>
       </aside>
 
+      {/* Mobile right rail */}
+      <aside className="admin-right-rail md:hidden" aria-label="Menu do painel">
+        <div className="admin-rail-logo">HS</div>
+        <nav className="admin-rail-nav">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onTabChange(item.id)}
+                className={cn('admin-rail-btn', isActive && 'is-active')}
+                aria-label={item.desktopLabel}
+                title={item.desktopLabel}
+              >
+                <Icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+        <button onClick={onLogout} className="admin-rail-logout" aria-label="Sair">
+          <LogOut className="w-5 h-5" />
+        </button>
+      </aside>
+
       {/* Mobile top bar */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#1e0f07] text-white border-b border-white/10">
-        <div className="h-16 px-4 flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 bg-[#b5936a] rounded-xl flex items-center justify-center font-serif font-bold shrink-0">HS</div>
-            <div className="min-w-0">
-              <p className="font-bold leading-tight">{activeItem?.desktopLabel || 'Painel'}</p>
-              <p className="text-xs text-[#a08060] truncate">{admin?.email}</p>
-            </div>
-          </div>
-          <button
-            onClick={onLogout}
-            className="h-10 w-10 rounded-xl bg-white/5 text-[#e8c99a] flex items-center justify-center active:scale-95"
-            aria-label="Sair"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
+      <header className="admin-mobile-header md:hidden">
+        <div>
+          <span className="admin-mobile-eyebrow">HSBeauty</span>
+          <h1>{activeItem?.desktopLabel || 'Painel'}</h1>
+          <p>{admin?.email}</p>
         </div>
+        <Menu className="w-6 h-6 text-[#b5936a]" />
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 min-w-0 pt-16 pb-24 md:pt-0 md:pb-0">
+      <main className="flex-1 min-w-0 pt-16 pb-24 md:pt-0 md:pb-0 admin-main">
         <header className="hidden md:flex h-20 items-center justify-between px-8 bg-white border-b border-[#ede8e1] sticky top-0 z-30">
           <div>
             <h1 className="text-2xl font-bold capitalize">{activeItem?.desktopLabel}</h1>
@@ -110,33 +127,10 @@ export default function AdminLayout({ children, activeTab, onTabChange, admin, o
           </div>
         </header>
 
-        <div className="p-3 sm:p-4 md:p-8 overflow-x-hidden">
+        <div className="p-3 sm:p-4 md:p-8 overflow-x-hidden admin-content">
           {children}
         </div>
       </main>
-
-      {/* Mobile bottom navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-[#e5ddd4] bg-white/95 backdrop-blur-xl px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 shadow-[0_-10px_30px_rgba(30,15,7,0.12)]">
-        <div className="grid grid-cols-4 gap-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onTabChange(item.id)}
-                className={cn(
-                  'min-h-[56px] rounded-2xl flex flex-col items-center justify-center gap-1 text-[11px] font-bold transition-all active:scale-95',
-                  isActive ? 'bg-[#1e0f07] text-[#f5d7a0]' : 'text-[#8b735f] hover:bg-[#f8f5f2]'
-                )}
-              >
-                <Icon className="w-5 h-5" />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
     </div>
   );
 }

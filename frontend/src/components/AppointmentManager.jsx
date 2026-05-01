@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, 
-  Filter, 
-  Calendar as CalendarIcon, 
-  MoreHorizontal, 
   Check, 
   X, 
-  Trash2, 
   Phone, 
   Mail,
   RefreshCcw,
@@ -27,7 +23,7 @@ export default function AppointmentManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
-    status: '',
+    status: 'pendente',
     dataInicio: '',
     dataFim: '',
     search: ''
@@ -37,6 +33,7 @@ export default function AppointmentManager() {
 
   async function loadAppointments() {
     setLoading(true);
+    setError(null);
     try {
       const { status, dataInicio, dataFim } = filters;
       const data = await listarAgendamentosAdmin({ 
@@ -46,8 +43,8 @@ export default function AppointmentManager() {
         page, 
         limit: 10 
       });
-      setAppointments(data.agendamentos);
-      setPagination(data.paginacao);
+      setAppointments(data.agendamentos || []);
+      setPagination(data.paginacao || {});
     } catch (err) {
       setError(err.message);
     } finally {
@@ -82,53 +79,66 @@ export default function AppointmentManager() {
     if (!filters.search) return appointments;
     const s = filters.search.toLowerCase();
     return appointments.filter(a => 
-      a.nomeCliente.toLowerCase().includes(s) || 
-      a.telefone.includes(s) || 
-      a.servico?.nome.toLowerCase().includes(s)
+      a.nomeCliente?.toLowerCase().includes(s) || 
+      a.telefone?.includes(s) || 
+      a.servico?.nome?.toLowerCase().includes(s)
     );
   }, [appointments, filters.search]);
 
+  const title = filters.status === 'pendente' ? 'Para confirmar' : 'Agendamentos';
+
   return (
-    <div className="space-y-6">
-      {/* Toolbar */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-center">
+    <div className="space-y-6 admin-appointments-screen">
+      <div className="admin-section-hero">
+        <div>
+          <span className="admin-section-kicker">Agenda</span>
+          <h2>{title}</h2>
+          <p>
+            {filters.status === 'pendente'
+              ? 'Confirme ou cancele os pedidos que chegaram pelo site.'
+              : 'Veja e gerencie todos os agendamentos.'}
+          </p>
+        </div>
+        <button 
+          onClick={loadAppointments}
+          className="admin-refresh-btn"
+          aria-label="Atualizar agenda"
+        >
+          <RefreshCcw className={clsx('w-5 h-5', loading && 'animate-spin')} />
+        </button>
+      </div>
+
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-center admin-filter-card">
         <div className="flex-1 min-w-[200px] relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input 
             type="text" 
-            placeholder="Buscar por cliente, telefone ou serviço..."
+            placeholder="Buscar cliente, telefone ou serviço..."
             className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-[#b5936a] text-sm"
             value={filters.search}
             onChange={e => setFilters({...filters, search: e.target.value})}
           />
         </div>
 
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap admin-filter-actions">
           <select 
             className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#b5936a]"
             value={filters.status}
-            onChange={e => setFilters({...filters, status: e.target.value})}
+            onChange={e => { setPage(1); setFilters({...filters, status: e.target.value}); }}
           >
-            <option value="">Todos os Status</option>
-            <option value="pendente">Pendentes</option>
+            <option value="pendente">Precisa confirmar</option>
             <option value="confirmado">Confirmados</option>
             <option value="concluído">Concluídos</option>
             <option value="cancelado">Cancelados</option>
+            <option value="">Todos</option>
           </select>
 
           <input 
             type="date" 
             className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#b5936a]"
             value={filters.dataInicio}
-            onChange={e => setFilters({...filters, dataInicio: e.target.value})}
+            onChange={e => { setPage(1); setFilters({...filters, dataInicio: e.target.value}); }}
           />
-
-          <button 
-            onClick={loadAppointments}
-            className="p-2 bg-gray-50 text-gray-500 rounded-xl hover:bg-gray-100 transition-colors"
-          >
-            <RefreshCcw className={clsx("w-5 h-5", loading && "animate-spin")} />
-          </button>
         </div>
       </div>
 
@@ -139,8 +149,7 @@ export default function AppointmentManager() {
         </div>
       )}
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden admin-table-card">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -159,15 +168,17 @@ export default function AppointmentManager() {
                 </tr>
               ) : filteredAppointments.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-gray-400">Nenhum agendamento encontrado.</td>
+                  <td colSpan="5" className="px-6 py-12 text-center text-gray-400">
+                    {filters.status === 'pendente' ? 'Nenhum agendamento pendente para confirmar.' : 'Nenhum agendamento encontrado.'}
+                  </td>
                 </tr>
               ) : (
                 filteredAppointments.map((appointment) => (
-                  <tr key={appointment.id} className="hover:bg-gray-50/50 transition-colors group">
+                  <tr key={appointment.id} className="hover:bg-gray-50/50 transition-colors group admin-appointment-row">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="font-bold text-gray-900">{appointment.nomeCliente}</span>
-                        <div className="flex gap-3 mt-1">
+                        <div className="flex gap-3 mt-1 admin-contact-row">
                           <a 
                             href={`https://wa.me/55${appointment.telefone.replace(/\D/g, '')}`} 
                             target="_blank" 
@@ -200,21 +211,22 @@ export default function AppointmentManager() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={clsx(
-                        "px-3 py-1 rounded-full text-xs font-bold border",
-                        STATUS_CONFIG[appointment.status]?.color || "bg-gray-100 text-gray-600 border-gray-200"
+                        'px-3 py-1 rounded-full text-xs font-bold border',
+                        STATUS_CONFIG[appointment.status]?.color || 'bg-gray-100 text-gray-600 border-gray-200'
                       )}>
                         {STATUS_CONFIG[appointment.status]?.label || appointment.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity admin-row-actions">
                         {appointment.status === 'pendente' && (
                           <button 
                             onClick={() => handleStatusUpdate(appointment.id, 'confirmado')}
-                            className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100"
+                            className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 admin-action-confirm"
                             title="Confirmar"
                           >
                             <Check className="w-4 h-4" />
+                            <span>Confirmar</span>
                           </button>
                         )}
                         {appointment.status === 'confirmado' && (
@@ -229,24 +241,24 @@ export default function AppointmentManager() {
                         {appointment.status !== 'cancelado' && (
                           <button 
                             onClick={() => handleCancel(appointment.id)}
-                            className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
+                            className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 admin-action-cancel"
                             title="Cancelar"
                           >
                             <X className="w-4 h-4" />
+                            <span>Cancelar</span>
                           </button>
                         )}
                       </div>
                     </td>
                   </tr>
                 )
-              ))}
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination */}
         {pagination.totalPaginas > 1 && (
-          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between admin-pagination">
             <span className="text-sm text-gray-500">
               Página {pagination.pagina} de {pagination.totalPaginas}
             </span>

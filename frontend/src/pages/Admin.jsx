@@ -7,6 +7,7 @@ import ServiceManager from '../components/ServiceManager';
 import ScheduleManager from '../components/ScheduleManager';
 import './Admin.css';
 import './AdminMobile.css';
+import './AdminAppointmentsMobile.css';
 
 function getAdminFromSession() {
   try { return JSON.parse(sessionStorage.getItem('hs_admin')); } catch { return null; }

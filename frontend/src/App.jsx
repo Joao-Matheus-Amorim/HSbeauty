@@ -8,7 +8,7 @@ import depilacaoImage from '../Saved Pictures/depil1.png'
 import { listarServicos } from './services/agendamentos'
 import AgendamentoModal from './components/AgendamentoModal'
 
-const WHATSAPP = import.meta.env.VITE_WHATSAPP || '5521970976928'
+const WHATSAPP = '5521970976928'
 
 const fallbackServices = [
 	{ id: 1, nome: 'Unhas', preco: 35, duracao: 150, ativo: true },

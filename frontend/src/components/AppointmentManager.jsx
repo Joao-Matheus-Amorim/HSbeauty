@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Search, 
-  Check, 
-  X, 
-  Phone, 
+import {
+  Search,
+  Check,
+  X,
+  Phone,
   Mail,
   RefreshCcw,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import { listarAgendamentosAdmin, atualizarAgendamentoAdmin, cancelarAgendamentoAdmin } from '../services/admin';
 import { clsx } from 'clsx';
@@ -26,7 +27,7 @@ export default function AppointmentManager() {
     status: 'pendente',
     dataInicio: '',
     dataFim: '',
-    search: ''
+    search: '',
   });
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({});
@@ -36,12 +37,12 @@ export default function AppointmentManager() {
     setError(null);
     try {
       const { status, dataInicio, dataFim } = filters;
-      const data = await listarAgendamentosAdmin({ 
-        status, 
-        dataInicio, 
-        dataFim, 
-        page, 
-        limit: 10 
+      const data = await listarAgendamentosAdmin({
+        status,
+        dataInicio,
+        dataFim,
+        page,
+        limit: 10,
       });
       setAppointments(data.agendamentos || []);
       setPagination(data.paginacao || {});
@@ -78,9 +79,9 @@ export default function AppointmentManager() {
   const filteredAppointments = useMemo(() => {
     if (!filters.search) return appointments;
     const s = filters.search.toLowerCase();
-    return appointments.filter(a => 
-      a.nomeCliente?.toLowerCase().includes(s) || 
-      a.telefone?.includes(s) || 
+    return appointments.filter((a) =>
+      a.nomeCliente?.toLowerCase().includes(s) ||
+      a.telefone?.includes(s) ||
       a.servico?.nome?.toLowerCase().includes(s)
     );
   }, [appointments, filters.search]);
@@ -99,11 +100,7 @@ export default function AppointmentManager() {
               : 'Veja e gerencie todos os agendamentos.'}
           </p>
         </div>
-        <button 
-          onClick={loadAppointments}
-          className="admin-refresh-btn"
-          aria-label="Atualizar agenda"
-        >
+        <button onClick={loadAppointments} className="admin-refresh-btn" aria-label="Atualizar agenda">
           <RefreshCcw className={clsx('w-5 h-5', loading && 'animate-spin')} />
         </button>
       </div>
@@ -111,20 +108,23 @@ export default function AppointmentManager() {
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-center admin-filter-card">
         <div className="flex-1 min-w-[200px] relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Buscar cliente, telefone ou serviço..."
             className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-[#b5936a] text-sm"
             value={filters.search}
-            onChange={e => setFilters({...filters, search: e.target.value})}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
           />
         </div>
 
         <div className="flex gap-2 flex-wrap admin-filter-actions">
-          <select 
+          <select
             className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#b5936a]"
             value={filters.status}
-            onChange={e => { setPage(1); setFilters({...filters, status: e.target.value}); }}
+            onChange={(e) => {
+              setPage(1);
+              setFilters({ ...filters, status: e.target.value });
+            }}
           >
             <option value="pendente">Precisa confirmar</option>
             <option value="confirmado">Confirmados</option>
@@ -133,11 +133,14 @@ export default function AppointmentManager() {
             <option value="">Todos</option>
           </select>
 
-          <input 
-            type="date" 
+          <input
+            type="date"
             className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#b5936a]"
             value={filters.dataInicio}
-            onChange={e => { setPage(1); setFilters({...filters, dataInicio: e.target.value}); }}
+            onChange={(e) => {
+              setPage(1);
+              setFilters({ ...filters, dataInicio: e.target.value });
+            }}
           />
         </div>
       </div>
@@ -179,9 +182,9 @@ export default function AppointmentManager() {
                       <div className="flex flex-col">
                         <span className="font-bold text-gray-900">{appointment.nomeCliente}</span>
                         <div className="flex gap-3 mt-1 admin-contact-row">
-                          <a 
-                            href={`https://wa.me/55${appointment.telefone.replace(/\D/g, '')}`} 
-                            target="_blank" 
+                          <a
+                            href={`https://wa.me/55${appointment.telefone.replace(/\D/g, '')}`}
+                            target="_blank"
                             rel="noreferrer"
                             className="text-xs text-green-600 flex items-center gap-1 hover:underline"
                           >
@@ -210,17 +213,19 @@ export default function AppointmentManager() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={clsx(
-                        'px-3 py-1 rounded-full text-xs font-bold border',
-                        STATUS_CONFIG[appointment.status]?.color || 'bg-gray-100 text-gray-600 border-gray-200'
-                      )}>
+                      <span
+                        className={clsx(
+                          'px-3 py-1 rounded-full text-xs font-bold border',
+                          STATUS_CONFIG[appointment.status]?.color || 'bg-gray-100 text-gray-600 border-gray-200'
+                        )}
+                      >
                         {STATUS_CONFIG[appointment.status]?.label || appointment.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity admin-row-actions">
                         {appointment.status === 'pendente' && (
-                          <button 
+                          <button
                             onClick={() => handleStatusUpdate(appointment.id, 'confirmado')}
                             className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 admin-action-confirm"
                             title="Confirmar"
@@ -230,7 +235,7 @@ export default function AppointmentManager() {
                           </button>
                         )}
                         {appointment.status === 'confirmado' && (
-                          <button 
+                          <button
                             onClick={() => handleStatusUpdate(appointment.id, 'concluído')}
                             className="p-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100"
                             title="Marcar como Concluído"
@@ -239,7 +244,7 @@ export default function AppointmentManager() {
                           </button>
                         )}
                         {appointment.status !== 'cancelado' && (
-                          <button 
+                          <button
                             onClick={() => handleCancel(appointment.id)}
                             className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 admin-action-cancel"
                             title="Cancelar"
@@ -251,7 +256,7 @@ export default function AppointmentManager() {
                       </div>
                     </td>
                   </tr>
-                )
+                ))
               )}
             </tbody>
           </table>
@@ -263,16 +268,16 @@ export default function AppointmentManager() {
               Página {pagination.pagina} de {pagination.totalPaginas}
             </span>
             <div className="flex gap-2">
-              <button 
+              <button
                 disabled={pagination.pagina === 1}
-                onClick={() => setPage(p => p - 1)}
+                onClick={() => setPage((p) => p - 1)}
                 className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm disabled:opacity-50"
               >
                 Anterior
               </button>
-              <button 
+              <button
                 disabled={pagination.pagina === pagination.totalPaginas}
-                onClick={() => setPage(p => p + 1)}
+                onClick={() => setPage((p) => p + 1)}
                 className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm disabled:opacity-50"
               >
                 Próxima
@@ -282,25 +287,5 @@ export default function AppointmentManager() {
         )}
       </div>
     </div>
-  );
-}
-
-function CheckCircle2(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
   );
 }

@@ -19,6 +19,18 @@ function formatDateOnly(date) {
   return `${y}-${m}-${d}`;
 }
 
+function formatDateTime(value) {
+  return new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function buildWhatsAppLink(agendamento) {
+  const servico = agendamento?.servico?.nome || 'serviço';
+  const dataHora = agendamento?.data ? formatDateTime(agendamento.data) : '';
+  const nomeCliente = agendamento?.nomeCliente || '';
+  const mensagem = `Olá! Acabei de agendar: ${servico} em ${dataHora}. Meu nome é ${nomeCliente}.`;
+  return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensagem)}`;
+}
+
 function getCurrentWeekRange() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -308,12 +320,12 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             <div className="confirmacao-box">
               <p><strong>Serviço:</strong> {agendado.servico?.nome}</p>
               <p><strong>Duração:</strong> 2h30</p>
-              <p><strong>Data/Hora:</strong> {new Date(agendado.data).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</p>
+              <p><strong>Data/Hora:</strong> {formatDateTime(agendado.data)}</p>
               <p><strong>Status:</strong> {agendado.status}</p>
             </div>
             <a
               className="modal-btn whatsapp"
-              href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Olá! Acabei de agendar: ${agendado.servico?.nome} em ${new Date(agendado.data).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}. Meu nome é ${agendado.nomeCliente}.`)}`}
+              href={buildWhatsAppLink(agendado)}
               target="_blank"
               rel="noreferrer"
             >

@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Servico {
@@ -25,22 +24,22 @@ model Agendamento {
   data        DateTime
   servicoId   Int
   status      String   @default("pendente")
-  criadoEm   DateTime @default(now())
+  criadoEm    DateTime @default(now())
 
   servico     Servico  @relation(fields: [servicoId], references: [id])
 }
 
 model BloqueioHorario {
-  id         Int      @id @default(autoincrement())
-  inicio     DateTime
-  fim        DateTime
-  motivo     String?
-  ativo      Boolean  @default(true)
-  criadoEm   DateTime @default(now())
+  id       Int      @id @default(autoincrement())
+  inicio   DateTime
+  fim      DateTime
+  motivo   String?
+  ativo    Boolean  @default(true)
+  criadoEm DateTime @default(now())
 }
 
 model Admin {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  senha    String
+  id    Int    @id @default(autoincrement())
+  email String @unique
+  senha String
 }

@@ -19,7 +19,7 @@ import { clsx } from 'clsx';
 
 const STATUS_CONFIG = {
   pendente: {
-    label: 'Precisa confirmar',
+    label: 'Confirmar',
     badge: 'admin-status-badge is-pending',
     card: 'is-pending',
   },
@@ -51,6 +51,14 @@ function cleanPhone(phone = '') {
   return String(phone).replace(/\D/g, '');
 }
 
+function formatPhone(phone = '') {
+  const digits = cleanPhone(phone);
+  if (!digits) return 'Sem telefone';
+  if (digits.length === 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  if (digits.length === 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return phone;
+}
+
 function formatPrice(value) {
   return Number(value || 0).toFixed(2).replace('.', ',');
 }
@@ -73,103 +81,94 @@ function AppointmentCard({ appointment, onConfirm, onComplete, onCancel }) {
   const status = STATUS_CONFIG[appointment.status] || STATUS_CONFIG.pendente;
   const phone = cleanPhone(appointment.telefone);
   const whatsappHref = phone ? `https://wa.me/55${phone}` : null;
+  const telHref = phone ? `tel:+55${phone}` : null;
   const serviceName = appointment.servico?.nome || 'Serviço';
   const servicePrice = formatPrice(appointment.servico?.preco);
+  const primaryAction = appointment.status === 'pendente'
+    ? { label: 'Confirmar', icon: Check, className: 'confirm', onClick: () => onConfirm(appointment.id) }
+    : appointment.status === 'confirmado'
+      ? { label: 'Concluir', icon: CheckCircle2, className: 'done', onClick: () => onComplete(appointment.id) }
+      : null;
+  const PrimaryIcon = primaryAction?.icon;
 
   return (
-    <article className={clsx('admin-appointment-card', status.card)}>
+    <article className={clsx('admin-appointment-card admin-mini-appointment-card', status.card)}>
       <div className="admin-appointment-card-glow" />
 
-      <header className="admin-appointment-card-header">
+      <header className="admin-appointment-card-header admin-mini-card-header">
         <div className="admin-client-avatar">
           <UserRound className="w-5 h-5" />
         </div>
         <div className="admin-client-main">
           <span className="admin-card-overline">Cliente</span>
           <h3>{appointment.nomeCliente || 'Cliente sem nome'}</h3>
+          <p className="admin-mini-phone">{formatPhone(appointment.telefone)}</p>
         </div>
         <span className={status.badge}>{status.label}</span>
       </header>
 
-      <div className="admin-appointment-info-grid">
-        <div className="admin-info-pill is-service">
-          <Scissors className="w-4 h-4" />
-          <div>
-            <span>Serviço</span>
-            <strong>{serviceName}</strong>
-          </div>
-        </div>
-
-        <div className="admin-info-pill">
-          <CalendarDays className="w-4 h-4" />
-          <div>
-            <span>Dia</span>
-            <strong>{formatDate(appointment.data)}</strong>
-          </div>
-        </div>
-
-        <div className="admin-info-pill">
-          <Clock3 className="w-4 h-4" />
-          <div>
-            <span>Hora</span>
-            <strong>{appointment.hora || '--:--'}</strong>
-          </div>
-        </div>
+      <div className="admin-mini-summary-row" aria-label="Resumo do agendamento">
+        <span className="admin-mini-chip is-service">
+          <Scissors className="w-3.5 h-3.5" />
+          {serviceName}
+        </span>
+        <span className="admin-mini-chip">
+          <CalendarDays className="w-3.5 h-3.5" />
+          {formatDate(appointment.data)}
+        </span>
+        <span className="admin-mini-chip is-time">
+          <Clock3 className="w-3.5 h-3.5" />
+          {appointment.hora || '--:--'}
+        </span>
+        <span className="admin-mini-chip is-price">R$ {servicePrice}</span>
       </div>
 
-      <div className="admin-card-details">
-        <div>
-          <span>Valor</span>
-          <strong>R$ {servicePrice}</strong>
-        </div>
-        <div>
-          <span>Data completa</span>
-          <strong>{formatFullDate(appointment.data)}</strong>
-        </div>
+      <div className="admin-mini-meta-row">
+        <span>{formatFullDate(appointment.data)}</span>
+        {appointment.email && <span>{appointment.email}</span>}
       </div>
 
-      <div className="admin-contact-actions">
+      <div className="admin-mini-actions">
         {whatsappHref ? (
-          <a href={whatsappHref} target="_blank" rel="noreferrer" className="admin-contact-btn whatsapp">
+          <a href={whatsappHref} target="_blank" rel="noreferrer" className="admin-mini-action whatsapp">
             <MessageCircle className="w-4 h-4" />
-            WhatsApp
+            Whats
           </a>
         ) : (
-          <span className="admin-contact-btn disabled">
+          <span className="admin-mini-action disabled">
             <Phone className="w-4 h-4" />
-            Sem telefone
+            Sem tel
           </span>
         )}
+
+        {telHref && (
+          <a href={telHref} className="admin-mini-action call">
+            <Phone className="w-4 h-4" />
+            Ligar
+          </a>
+        )}
+
         {appointment.email && (
-          <a href={`mailto:${appointment.email}`} className="admin-contact-btn email">
+          <a href={`mailto:${appointment.email}`} className="admin-mini-action email" aria-label="Enviar email">
             <Mail className="w-4 h-4" />
             Email
           </a>
         )}
-      </div>
 
-      <footer className="admin-card-actions">
-        {appointment.status === 'pendente' && (
-          <button type="button" onClick={() => onConfirm(appointment.id)} className="admin-card-btn confirm">
-            <Check className="w-4 h-4" />
-            Confirmar
-          </button>
-        )}
-
-        {appointment.status === 'confirmado' && (
-          <button type="button" onClick={() => onComplete(appointment.id)} className="admin-card-btn done">
-            <CheckCircle2 className="w-4 h-4" />
-            Concluir
+        {primaryAction && (
+          <button type="button" onClick={primaryAction.onClick} className={clsx('admin-mini-action admin-mini-primary', primaryAction.className)}>
+            <PrimaryIcon className="w-4 h-4" />
+            {primaryAction.label}
           </button>
         )}
 
         {appointment.status !== 'cancelado' && (
-          <button type="button" onClick={() => onCancel(appointment.id)} className="admin-card-btn cancel">
+          <button type="button" onClick={() => onCancel(appointment.id)} className="admin-mini-action cancel">
             <X className="w-4 h-4" />
             Cancelar
           </button>
         )}
-      </footer>
+      </div>
     </article>
   );
 }

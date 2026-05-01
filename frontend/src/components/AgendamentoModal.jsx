@@ -72,7 +72,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   return (
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-box" role="dialog" aria-modal="true" aria-label="Agendar serviço">
-        <button className="modal-close" onClick={onClose} aria-label="Fechar">✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Fechar">Fechar</button>
 
         {/* ─── Passo 1: Serviço + Data ─────────────────────────── */}
         {step === 1 && (
@@ -201,7 +201,6 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
         {/* ─── Passo 4: Confirmado ─────────────────────────────── */}
         {step === 4 && agendado && (
           <div className="modal-step modal-step--success">
-            <div className="success-icon">✨</div>
             <h2 className="modal-title">Agendamento confirmado!</h2>
             <p className="modal-sub">
               Olá, <strong>{agendado.nomeCliente}</strong>! Seu agendamento foi realizado com sucesso.

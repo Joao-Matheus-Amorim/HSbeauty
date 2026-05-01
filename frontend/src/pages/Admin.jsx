@@ -48,9 +48,9 @@ function AdminDashboard({ admin, onLogout }) {
           <span className="admin-brand">HSBeauty Admin</span>
         </div>
         <nav className="admin-nav">
-          <button className={`admin-nav-btn${tab === 'agendamentos' ? ' active' : ''}`} onClick={() => setTab('agendamentos')}>📅 Agendamentos</button>
-          <button className={`admin-nav-btn${tab === 'bloqueios' ? ' active' : ''}`} onClick={() => setTab('bloqueios')}>🔒 Bloqueios</button>
-          <button className={`admin-nav-btn${tab === 'servicos' ? ' active' : ''}`} onClick={() => setTab('servicos')}>✂️ Serviços</button>
+          <button className={`admin-nav-btn${tab === 'agendamentos' ? ' active' : ''}`} onClick={() => setTab('agendamentos')}>Agendamentos</button>
+          <button className={`admin-nav-btn${tab === 'bloqueios' ? ' active' : ''}`} onClick={() => setTab('bloqueios')}>Bloqueios</button>
+          <button className={`admin-nav-btn${tab === 'servicos' ? ' active' : ''}`} onClick={() => setTab('servicos')}>Serviços</button>
         </nav>
         <div className="admin-header-right">
           <span className="admin-email">{admin?.email}</span>
@@ -195,8 +195,8 @@ function TabAgendamentos() {
                         <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} className="admin-select-sm">
                           {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
-                        <button className="admin-btn primary tiny" onClick={() => salvarStatus(a.id)} disabled={saving}>✓</button>
-                        <button className="admin-btn outline tiny" onClick={() => setEditando(null)}>✕</button>
+                        <button className="admin-btn primary tiny" onClick={() => salvarStatus(a.id)} disabled={saving}>Salvar</button>
+                        <button className="admin-btn outline tiny" onClick={() => setEditando(null)}>Cancelar</button>
                       </div>
                     ) : (
                       <span

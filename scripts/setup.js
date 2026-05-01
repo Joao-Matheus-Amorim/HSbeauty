@@ -26,10 +26,10 @@ for (const { src, dest } of files) {
   const srcPath = resolve(root, src);
   if (!existsSync(destPath)) {
     copyFileSync(srcPath, destPath);
-    console.log(`\x1b[33m⚠  Criado ${dest} — edite as variáveis!\x1b[0m`);
+    console.log(`\x1b[33m[AVISO]  Criado ${dest} — edite as variáveis!\x1b[0m`);
     avisos++;
   } else {
-    console.log(`\x1b[32m✓  ${dest} já existe\x1b[0m`);
+    console.log(`\x1b[32m[OK]  ${dest} já existe\x1b[0m`);
   }
 }
 
@@ -41,14 +41,14 @@ if (existsSync(backEnvPath)) {
   const hasEmpty = content.includes('DATABASE_URL=""') || content.includes("DATABASE_URL=''") || !content.includes('DATABASE_URL');
   const hasExample = /DATABASE_URL=postgresql:\/\/user:password/.test(content);
   if (hasEmpty) {
-    console.log('\x1b[31m✗  DATABASE_URL está vazia no backend/.env — preencha com sua string do Neon!\x1b[0m');
+    console.log('\x1b[31m[ERRO]  DATABASE_URL está vazia no backend/.env — preencha com sua string do Neon!\x1b[0m');
     avisos++;
   } else if (hasExample) {
-    console.log('\x1b[31m✗  DATABASE_URL ainda é o valor de exemplo — substitua pela sua string do Neon!\x1b[0m');
+    console.log('\x1b[31m[ERRO]  DATABASE_URL ainda é o valor de exemplo — substitua pela sua string do Neon!\x1b[0m');
     avisos++;
   } else {
     dbOk = true;
-    console.log('\x1b[32m✓  DATABASE_URL configurada\x1b[0m');
+    console.log('\x1b[32m[OK]  DATABASE_URL configurada\x1b[0m');
   }
 }
 
@@ -56,18 +56,18 @@ if (existsSync(backEnvPath)) {
 console.log('\n\x1b[36m[Prisma] Gerando client...\x1b[0m');
 try {
   run('npx prisma generate', resolve(root, 'backend'));
-  console.log('\x1b[32m✓  Prisma Client gerado\x1b[0m');
+  console.log('\x1b[32m[OK]  Prisma Client gerado\x1b[0m');
 } catch (e) {
-  console.log('\x1b[31m✗  Falha ao gerar Prisma Client — verifique o schema.prisma\x1b[0m');
+  console.log('\x1b[31m[ERRO]  Falha ao gerar Prisma Client — verifique o schema.prisma\x1b[0m');
   avisos++;
 }
 
 // 4. Resumo
 console.log('');
 if (avisos === 0) {
-  console.log('\x1b[32m✓ Setup completo! Rode: npm run dev\n\x1b[0m');
+  console.log('\x1b[32m[OK] Setup completo! Rode: npm run dev\n\x1b[0m');
 } else {
-  console.log(`\x1b[33m⚠  Setup concluído com ${avisos} aviso(s).\x1b[0m`);
+  console.log(`\x1b[33m[AVISO]  Setup concluído com ${avisos} aviso(s).\x1b[0m`);
   if (!dbOk) {
     console.log('\x1b[33m   1. Edite backend/.env e preencha DATABASE_URL com sua string do Neon\x1b[0m');
     console.log('\x1b[33m   2. Rode novamente: npm run setup\x1b[0m');

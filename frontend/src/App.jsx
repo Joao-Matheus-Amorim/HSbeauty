@@ -106,10 +106,10 @@ function App() {
 				</div>
 
 				<section className="meta-row glass-panel">
-					<span>⭐ 5.0 (150+)</span>
+					<span>Avaliação 5.0 (150+)</span>
 					<span>Piabeta / Mage</span>
 					<a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer">
-						🟢 Chamar no WhatsApp
+						Chamar no WhatsApp
 					</a>
 				</section>
 

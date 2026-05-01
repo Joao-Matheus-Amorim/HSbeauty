@@ -1,21 +1,21 @@
 # Roadmap — HSBeauty
 > Atualizado em: 18/04/2026
 
-## Fase 1 — Fundação ✅
+## Fase 1 — Fundação
 - [x] Estruturar repositório (frontend/, backend/, docs/)
 - [x] Criar documentação inicial (`docs/roadmap.md`, `docs/decisoes.md`)
 - [x] Inicializar frontend (React 19 + Vite)
 - [x] Inicializar backend (Node.js + Express + Prisma + Neon PostgreSQL)
 - [ ] Configurar banco local com Docker (opcional — usando Neon em nuvem)
 
-## Fase 2 — Banco de dados ✅
+## Fase 2 — Banco de dados
 - [x] Modelar tabelas: `Servico`, `Agendamento`, `BloqueioHorario`
 - [x] Migration inicial (`20260417182143_init`)
 - [x] Migration de agendamentos (`20260417191546_add_agendamentos`)
 - [x] Migration de bloqueios (`20260417233323_add_agendamento_bloqueios`)
 - [x] Criar seed inicial com serviços (`backend/src/seed.js`)
 
-## Fase 3 — Backend ✅
+## Fase 3 — Backend
 - [x] Configurar servidor Express com Prisma + Neon adapter
 - [x] CRUD completo de Serviços (`GET /servicos`, `POST`, `PUT`, `DELETE`)
 - [x] CRUD completo de Agendamentos (`GET /agendamentos`, `POST`, `PUT`, `DELETE`)
@@ -25,7 +25,7 @@
 - [x] Arquivo de testes HTTP (`backend/src/testes.http`)
 - [ ] Implementar autenticação (JWT / login para painel admin)
 
-## Fase 4 — Frontend 🚧 Em andamento
+## Fase 4 — Frontend (Em andamento)
 - [x] Definir paleta e identidade visual (blush, rosé, champagne, dourado)
 - [x] Criar estrutura de pastas (`pages/`, `services/`, `agendamentos/`)
 - [x] Criar página `Agendamentos.jsx` com listagem, confirmação, cancelamento e exclusão
@@ -41,6 +41,6 @@
 - [ ] Configurar variáveis de ambiente (`.env`) para produção
 - [ ] Subir frontend (Vercel / Netlify)
 - [ ] Subir backend (Railway / Render)
-- [ ] Banco já em nuvem (Neon PostgreSQL) ✅
+- [x] Banco já em nuvem (Neon PostgreSQL)
 - [ ] Configurar domínio e HTTPS
 - [ ] Testes finais de ponta a ponta

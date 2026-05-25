@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import crypto from 'crypto';
 import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
@@ -22,6 +23,8 @@ const SERVICE_DURATION_MINUTES = 150; // 2h30
 const BUSINESS_OPEN_HOUR = 9;
 const BUSINESS_CLOSE_HOUR = 18;
 const SLOT_STEP_MINUTES = 30;
+const ACCESS_TOKEN_EXPIRY = '15m';
+const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
   .split(',')
@@ -53,6 +56,8 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
   message: { erro: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
 });
+
+// ── Helpers de data ──────────────────────────────────────────────────────────
 
 function addMinutes(date, minutes) {
   return new Date(date.getTime() + minutes * 60000);
@@ -131,6 +136,22 @@ function isWithinBusinessHours(start, end) {
 function hasConflict(startA, endA, items) {
   return items.some((item) => overlaps(startA, endA, item.inicio, item.fim));
 }
+
+// ── Helpers de token ─────────────────────────────────────────────────────────
+
+function generateAccessToken(admin) {
+  return jwt.sign({ id: admin.id, email: admin.email }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
+}
+
+async function generateRefreshToken(adminId) {
+  const token = crypto.randomBytes(48).toString('hex');
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
+  await prisma.refreshToken.create({ data: { token, adminId, expiresAt } });
+  return token;
+}
+
+// ── Ocupancy helpers ─────────────────────────────────────────────────────────
 
 async function getDayOccupancy(dateString) {
   const { start: dayStart, end: dayEnd } = parseDayBounds(dateString);
@@ -211,6 +232,8 @@ async function calculateAvailability(dateString, servico) {
   };
 }
 
+// ── Auth middleware ───────────────────────────────────────────────────────────
+
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) return res.status(401).json({ erro: 'Token não fornecido' });
@@ -221,6 +244,8 @@ function authMiddleware(req, res, next) {
     return res.status(401).json({ erro: 'Token inválido ou expirado' });
   }
 }
+
+// ── Rotas ─────────────────────────────────────────────────────────────────────
 
 app.get('/', (req, res) => {
   res.json({ status: 'ok', mensagem: 'API HSBeauty rodando' });
@@ -243,6 +268,7 @@ app.post('/auth/register', async (req, res) => {
   }
 });
 
+// Login: retorna accessToken (15min) + refreshToken (7 dias)
 app.post('/auth/login', loginLimiter, async (req, res) => {
   try {
     const { email, senha } = req.body;
@@ -251,11 +277,73 @@ app.post('/auth/login', loginLimiter, async (req, res) => {
     if (!admin || admin.ativo === false) return res.status(401).json({ erro: 'Credenciais inválidas' });
     const ok = await bcrypt.compare(senha, admin.senha);
     if (!ok) return res.status(401).json({ erro: 'Credenciais inválidas' });
-    const token = jwt.sign({ id: admin.id, email: admin.email }, JWT_SECRET, { expiresIn: '8h' });
-    res.json({ token, admin: { id: admin.id, email: admin.email } });
+
+    const accessToken = generateAccessToken(admin);
+    const refreshToken = await generateRefreshToken(admin.id);
+
+    res.json({
+      accessToken,
+      refreshToken,
+      expiresIn: 900, // 15 minutos em segundos
+      admin: { id: admin.id, email: admin.email },
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: 'Erro ao fazer login' });
+  }
+});
+
+// Refresh: valida refreshToken e emite novo par de tokens (rotação)
+app.post('/auth/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(400).json({ erro: 'refreshToken é obrigatório' });
+
+    const stored = await prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+      include: { admin: true },
+    });
+
+    if (!stored || stored.revogado || stored.expiresAt < new Date()) {
+      return res.status(401).json({ erro: 'Refresh token inválido ou expirado' });
+    }
+
+    if (!stored.admin || stored.admin.ativo === false) {
+      return res.status(401).json({ erro: 'Usuário inativo' });
+    }
+
+    // Rotação: revoga o token atual e emite um novo par
+    await prisma.refreshToken.update({ where: { id: stored.id }, data: { revogado: true } });
+
+    const newAccessToken = generateAccessToken(stored.admin);
+    const newRefreshToken = await generateRefreshToken(stored.admin.id);
+
+    res.json({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      expiresIn: 900,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao renovar token' });
+  }
+});
+
+// Logout: revoga o refreshToken
+app.post('/auth/logout', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(400).json({ erro: 'refreshToken é obrigatório' });
+
+    const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
+    if (stored && !stored.revogado) {
+      await prisma.refreshToken.update({ where: { id: stored.id }, data: { revogado: true } });
+    }
+
+    res.json({ mensagem: 'Logout realizado com sucesso' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: 'Erro ao fazer logout' });
   }
 });
 

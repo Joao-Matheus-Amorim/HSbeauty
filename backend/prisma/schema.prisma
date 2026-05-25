@@ -38,23 +38,38 @@ model Agendamento {
 }
 
 model BloqueioHorario {
-  id       Int      @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   dataInicio DateTime
-  dataFim  DateTime
-  horaInicio String? // Formato HH:mm (opcional para bloqueios de dia inteiro)
-  horaFim    String? // Formato HH:mm
-  motivo   String?
-  ativo    Boolean  @default(true)
-  criadoEm DateTime @default(now())
+  dataFim    DateTime
+  horaInicio String?  // Formato HH:mm (opcional para bloqueios de dia inteiro)
+  horaFim    String?  // Formato HH:mm
+  motivo     String?
+  ativo      Boolean  @default(true)
+  criadoEm   DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 }
 
 model Admin {
+  id           Int            @id @default(autoincrement())
+  email        String         @unique
+  senha        String
+  nome         String?
+  ativo        Boolean        @default(true)
+  criadoEm     DateTime       @default(now())
+  atualizadoEm DateTime       @updatedAt
+
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
-  senha     String
-  nome      String?
-  ativo     Boolean  @default(true)
+  token     String   @unique
+  adminId   Int
+  expiresAt DateTime
+  revogado  Boolean  @default(false)
   criadoEm  DateTime @default(now())
-  atualizadoEm DateTime @updatedAt
+
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
 }

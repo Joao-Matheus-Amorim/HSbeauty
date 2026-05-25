@@ -258,20 +258,10 @@ app.get('/', (req, res) => {
   res.json({ status: 'ok', mensagem: 'API HSBeauty rodando' });
 });
 
-app.post('/auth/register', async (req, res) => {
-  if (process.env.ALLOW_ADMIN_REGISTER !== 'true') return res.status(403).json({ erro: 'Registro de admin desativado' });
-  try {
-    const { email, senha } = req.body;
-    if (!email || !senha) return res.status(400).json({ erro: 'Email e senha são obrigatórios' });
-    const existe = await prisma.admin.findUnique({ where: { email } });
-    if (existe) return res.status(409).json({ erro: 'Email já cadastrado' });
-    const hash = await bcrypt.hash(senha, 10);
-    const admin = await prisma.admin.create({ data: { email, senha: hash } });
-    res.status(201).json({ id: admin.id, email: admin.email });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao registrar admin' });
-  }
+app.all('/auth/register', (_req, res) => {
+  return res.status(410).json({
+    erro: 'Registro de admin via HTTP desativado. Use o script CLI backend/scripts/create-admin.js.',
+  });
 });
 
 app.post('/auth/login', loginLimiter, async (req, res) => {

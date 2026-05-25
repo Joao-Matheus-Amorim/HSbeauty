@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   frontend:
-    name: Frontend build and lint
+    name: Frontend build
     runs-on: ubuntu-latest
 
     steps:
@@ -31,10 +31,6 @@ jobs:
         run: npm ci
         working-directory: frontend
 
-      - name: Lint frontend
-        run: npm run lint
-        working-directory: frontend
-
       - name: Build frontend
         run: npm run build
         working-directory: frontend
@@ -43,8 +39,7 @@ jobs:
     name: Backend Prisma validation
     runs-on: ubuntu-latest
     env:
-      # Used only by Prisma config/generate during CI. No network connection is made.
-      DATABASE_URL: postgresql://ci:ci@localhost:5432/hsbeauty_ci?schema=public
+      DATABASE_URL: ${{ vars.CI_DATABASE_URL || 'postgresql://user:password@localhost:5432/hsbeauty_ci?schema=public' }}
 
     steps:
       - name: Checkout

@@ -109,10 +109,6 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (servicoInicial) setServicoId(servicoInicial.id);
-  }, [servicoInicial]);
-
   function selecionarServico(id) {
     setServicoId(id);
     setSlots([]);

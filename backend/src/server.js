@@ -15,28 +15,33 @@ import adminRouter, {
 } from './admin-routes.js';
 import { legacyAdminRouteDeprecation } from './legacy-route-deprecation.js';
 import { logError, sendError } from './http-response.js';
+import {
+  addMinutes,
+  buildDateTime,
+  BUSINESS_CLOSE_HOUR,
+  BUSINESS_OPEN_HOUR,
+  formatDateOnly,
+  getCurrentWeekRange,
+  getHoraFromDate,
+  hasConflict,
+  isDateInCurrentWeek,
+  isValidTelefone,
+  isWithinBusinessHours,
+  parseDateOnly,
+  parseDayBounds,
+  PUBLIC_BOOKING_INITIAL_STATUS,
+  SLOT_STEP_MINUTES,
+  OBSERVACOES_MAX_LENGTH,
+  validatePublicBookingPayload,
+} from './booking-rules.js';
 
 const { PrismaClient } = pkg;
 
 const app = express();
 app.use(express.json());
 
-const BUSINESS_OPEN_HOUR = 9;
-const BUSINESS_CLOSE_HOUR = 18;
-const SLOT_STEP_MINUTES = 30;
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
-const OBSERVACOES_MAX_LENGTH = 500;
-const PUBLIC_BOOKING_INITIAL_STATUS = 'pendente';
-
-// Aceita: (11) 98765-4321 | 11987654321 | 11 98765-4321 | +5511987654321
-const TELEFONE_REGEX = /^(?:\+?55\s?)?\(?\d{2}\)?[\s-]?9?\d{4}[\s-]?\d{4}$/;
-
-function isValidTelefone(tel) {
-  const digits = tel.replace(/\D/g, '');
-  if (digits.length < 10 || digits.length > 13) return false;
-  return TELEFONE_REGEX.test(tel.trim());
-}
 
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
   .split(',')
@@ -71,92 +76,6 @@ const loginLimiter = rateLimit({
 });
 
 // -- Helpers de data --
-
-function addMinutes(date, minutes) {
-  return new Date(date.getTime() + minutes * 60000);
-}
-
-function buildDateTime(baseDate, hours, minutes = 0) {
-  const d = new Date(baseDate);
-  d.setHours(hours, minutes, 0, 0);
-  return d;
-}
-
-function getHoraFromDate(date) {
-  return date.toTimeString().slice(0, 5);
-}
-
-function overlaps(startA, endA, startB, endB) {
-  return startA < endB && endA > startB;
-}
-
-function parseDateOnly(dateString) {
-  if (!dateString || typeof dateString !== 'string') throw new Error('Data inválida');
-  const d = new Date(`${dateString}T00:00:00`);
-  if (Number.isNaN(d.getTime())) throw new Error('Data inválida');
-  return d;
-}
-
-function parsePublicBookingDateTime(value) {
-  if (!value || typeof value !== 'string' || !value.trim()) return null;
-  const date = new Date(value.trim());
-  if (Number.isNaN(date.getTime())) return null;
-  return date;
-}
-
-function isSlotStepAligned(date) {
-  return date.getMinutes() % SLOT_STEP_MINUTES === 0 && date.getSeconds() === 0 && date.getMilliseconds() === 0;
-}
-
-function formatDateOnly(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function parseDayBounds(dateString) {
-  const start = parseDateOnly(dateString);
-  const end = new Date(start);
-  end.setHours(23, 59, 59, 999);
-  return { start, end };
-}
-
-function getCurrentWeekBounds() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const day = today.getDay();
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  const start = new Date(today);
-  start.setDate(today.getDate() + diffToMonday);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  end.setHours(23, 59, 59, 999);
-  return { start, end };
-}
-
-function getCurrentWeekRange() {
-  const { start, end } = getCurrentWeekBounds();
-  return { inicio: formatDateOnly(start), fim: formatDateOnly(end) };
-}
-
-function isDateInCurrentWeek(date) {
-  const { start, end } = getCurrentWeekBounds();
-  const d = new Date(date);
-  return d >= start && d <= end;
-}
-
-function isWithinBusinessHours(start, end) {
-  const day = new Date(start);
-  const open = buildDateTime(day, BUSINESS_OPEN_HOUR, 0);
-  const close = buildDateTime(day, BUSINESS_CLOSE_HOUR, 0);
-  return start >= open && end <= close;
-}
-
-function hasConflict(startA, endA, items) {
-  return items.some((item) => overlaps(startA, endA, item.inicio, item.fim));
-}
 
 function buildAvailableSlots(baseDay, servico, ocupados) {
   const inicioExpediente = buildDateTime(baseDay, BUSINESS_OPEN_HOUR, 0);
@@ -449,21 +368,12 @@ app.get('/agendamentos/:id', authMiddleware, async (req, res) => {
 
 app.post('/agendamentos', async (req, res) => {
   try {
-    const { nomeCliente, telefone, data, servicoId, observacoes } = req.body;
-    if (!nomeCliente || typeof nomeCliente !== 'string' || !nomeCliente.trim()) return sendError(res, 400, 'Nome do cliente é obrigatório');
-    if (!telefone || typeof telefone !== 'string' || !telefone.trim()) return sendError(res, 400, 'Telefone é obrigatório');
-    if (!isValidTelefone(telefone)) return sendError(res, 400, 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.');
-    if (!data) return sendError(res, 400, 'Data é obrigatória');
-    if (observacoes !== undefined && observacoes !== null) {
-      if (typeof observacoes !== 'string') return sendError(res, 400, 'Observações deve ser texto');
-      if (observacoes.length > OBSERVACOES_MAX_LENGTH) return sendError(res, 400, `Observações excedem o limite de ${OBSERVACOES_MAX_LENGTH} caracteres`);
-    }
-    const dataAgendamento = parsePublicBookingDateTime(data);
-    if (!dataAgendamento) return sendError(res, 400, 'Data inválida. Envie data e hora em formato ISO, como 2026-05-25T09:00:00.000Z');
-    if (!isSlotStepAligned(dataAgendamento)) return sendError(res, 400, 'Horário deve estar alinhado ao intervalo de 30 minutos');
+    const validation = validatePublicBookingPayload(req.body);
+    if (!validation.valid) return sendError(res, validation.status, validation.message);
+
+    const { nomeCliente, telefone, dataAgendamento, servicoIdNumero, observacoes } = validation.data;
+
     if (!isDateInCurrentWeek(dataAgendamento)) return sendError(res, 400, 'Agendamentos disponíveis apenas para a semana atual');
-    const servicoIdNumero = Number(servicoId);
-    if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return sendError(res, 400, 'Serviço inválido');
     const servico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
     if (!servico || servico.ativo === false) return sendError(res, 404, 'Serviço não encontrado ou inativo');
     const inicioSlot = new Date(dataAgendamento);
@@ -475,13 +385,13 @@ app.post('/agendamentos', async (req, res) => {
     if (!slotDisponivel) return sendError(res, 409, 'Horário indisponível');
     const novoAgendamento = await prisma.agendamento.create({
       data: {
-        nomeCliente: nomeCliente.trim(),
-        telefone: telefone.trim(),
+        nomeCliente,
+        telefone,
         data: dataAgendamento,
         hora: getHoraFromDate(dataAgendamento),
         servicoId: servicoIdNumero,
         status: PUBLIC_BOOKING_INITIAL_STATUS,
-        ...(observacoes ? { observacoes: observacoes.trim() } : {}),
+        ...(observacoes ? { observacoes } : {}),
       },
       include: { servico: true },
     });

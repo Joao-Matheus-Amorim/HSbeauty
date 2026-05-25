@@ -1,5 +1,6 @@
 import express from 'express';
 import { buildAdminAppointmentQuery } from './admin-appointment-query-rules.js';
+import { buildAdminServiceQuery } from './admin-service-query-rules.js';
 import { validateAdminBookingUpdatePayload } from './admin-booking-rules.js';
 import { handlePrismaConflict, logError, sendError } from './http-response.js';
 
@@ -222,33 +223,26 @@ export function setupAdminAgendamentos(prisma, authMiddleware) {
 export function setupAdminServicos(prisma, authMiddleware) {
   router.get('/servicos', authMiddleware, async (req, res) => {
     try {
-      const { ativo, page = 1, limit = 20 } = req.query;
-
-      const where = {};
-      if (ativo === 'true') where.ativo = true;
-      if (ativo === 'false') where.ativo = false;
-
-      const pageNum = Math.max(1, Number(page));
-      const limitNum = Math.min(100, Math.max(1, Number(limit)));
-      const skip = (pageNum - 1) * limitNum;
+      const query = buildAdminServiceQuery(req.query);
+      if (!query.valid) return sendError(res, query.status, query.message);
 
       const [servicos, total] = await Promise.all([
         prisma.servico.findMany({
-          where,
+          where: query.where,
           orderBy: { nome: 'asc' },
-          skip,
-          take: limitNum,
+          skip: query.skip,
+          take: query.limitNum,
         }),
-        prisma.servico.count({ where }),
+        prisma.servico.count({ where: query.where }),
       ]);
 
       res.json({
         servicos,
         paginacao: {
           total,
-          pagina: pageNum,
-          limite: limitNum,
-          totalPaginas: Math.ceil(total / limitNum),
+          pagina: query.pageNum,
+          limite: query.limitNum,
+          totalPaginas: Math.ceil(total / query.limitNum),
         },
       });
     } catch (error) {

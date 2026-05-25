@@ -35,6 +35,7 @@ export default function ServiceManager() {
 
   async function loadServices() {
     setLoading(true);
+    setError(null);
     try {
       const data = await listarServicosAdmin();
       setServices(data.servicos);
@@ -46,7 +47,26 @@ export default function ServiceManager() {
   }
 
   useEffect(() => {
-    loadServices();
+    let ignore = false;
+
+    listarServicosAdmin()
+      .then((data) => {
+        if (ignore) return;
+        setError(null);
+        setServices(data.servicos);
+      })
+      .catch((err) => {
+        if (ignore) return;
+        setError(err.message);
+      })
+      .finally(() => {
+        if (ignore) return;
+        setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const handleSubmit = async (e) => {

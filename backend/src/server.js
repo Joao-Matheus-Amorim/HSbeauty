@@ -25,6 +25,7 @@ const SLOT_STEP_MINUTES = 30;
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 const OBSERVACOES_MAX_LENGTH = 500;
+const PUBLIC_BOOKING_INITIAL_STATUS = 'pendente';
 
 // Aceita: (11) 98765-4321 | 11987654321 | 11 98765-4321 | +5511987654321
 const TELEFONE_REGEX = /^(?:\+?55\s?)?\(?\d{2}\)?[\s-]?9?\d{4}[\s-]?\d{4}$/;
@@ -429,7 +430,7 @@ app.get('/agendamentos/:id', authMiddleware, async (req, res) => {
 
 app.post('/agendamentos', async (req, res) => {
   try {
-    const { nomeCliente, telefone, data, servicoId, status, observacoes } = req.body;
+    const { nomeCliente, telefone, data, servicoId, observacoes } = req.body;
     if (!nomeCliente || typeof nomeCliente !== 'string' || !nomeCliente.trim()) return res.status(400).json({ erro: 'Nome do cliente é obrigatório' });
     if (!telefone || typeof telefone !== 'string' || !telefone.trim()) return res.status(400).json({ erro: 'Telefone é obrigatório' });
     if (!isValidTelefone(telefone)) return res.status(400).json({ erro: 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.' });
@@ -458,7 +459,7 @@ app.post('/agendamentos', async (req, res) => {
         data: dataAgendamento,
         hora: getHoraFromDate(dataAgendamento),
         servicoId: servicoIdNumero,
-        ...(status ? { status } : {}),
+        status: PUBLIC_BOOKING_INITIAL_STATUS,
         ...(observacoes ? { observacoes: observacoes.trim() } : {}),
       },
       include: { servico: true },

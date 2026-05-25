@@ -1,4 +1,5 @@
 import express from 'express';
+import { validateAdminBookingUpdatePayload } from './admin-booking-rules.js';
 import { handlePrismaConflict, logError, sendError } from './http-response.js';
 
 const router = express.Router();
@@ -191,46 +192,12 @@ export function setupAdminAgendamentos(prisma, authMiddleware) {
       const agendamento = await prisma.agendamento.findUnique({ where: { id } });
       if (!agendamento) return sendError(res, 404, 'Agendamento não encontrado');
 
-      const { status, observacoes, nomeCliente, telefone, email } = req.body;
-      const data = {};
-
-      if (status !== undefined) {
-        const statusValidos = ['pendente', 'confirmado', 'cancelado', 'concluído'];
-        if (!statusValidos.includes(status)) {
-          return sendError(res, 400, 'Status inválido');
-        }
-        data.status = status;
-      }
-
-      if (observacoes !== undefined) {
-        data.observacoes = observacoes;
-      }
-
-      if (nomeCliente !== undefined) {
-        if (typeof nomeCliente !== 'string' || !nomeCliente.trim()) {
-          return sendError(res, 400, 'Nome do cliente inválido');
-        }
-        data.nomeCliente = nomeCliente.trim();
-      }
-
-      if (telefone !== undefined) {
-        if (typeof telefone !== 'string' || !telefone.trim()) {
-          return sendError(res, 400, 'Telefone inválido');
-        }
-        data.telefone = telefone.trim();
-      }
-
-      if (email !== undefined) {
-        data.email = email;
-      }
-
-      if (Object.keys(data).length === 0) {
-        return sendError(res, 400, 'Nenhum campo para atualizar');
-      }
+      const validation = validateAdminBookingUpdatePayload(req.body);
+      if (!validation.valid) return sendError(res, validation.status, validation.message);
 
       const agendamentoAtualizado = await prisma.agendamento.update({
         where: { id },
-        data,
+        data: validation.data,
         include: { servico: true },
       });
 

@@ -1,4 +1,4 @@
-﻿export const BUSINESS_OPEN_HOUR = 9;
+export const BUSINESS_OPEN_HOUR = 9;
 export const BUSINESS_CLOSE_HOUR = 18;
 export const SLOT_STEP_MINUTES = 30;
 export const OBSERVACOES_MAX_LENGTH = 500;

@@ -19,7 +19,6 @@ const { PrismaClient } = pkg;
 const app = express();
 app.use(express.json());
 
-const SERVICE_DURATION_MINUTES = 150; // 2h30
 const BUSINESS_OPEN_HOUR = 9;
 const BUSINESS_CLOSE_HOUR = 18;
 const SLOT_STEP_MINUTES = 30;
@@ -179,7 +178,7 @@ async function getDayOccupancy(dateString) {
   const ocupados = [
     ...agendamentos.map((a) => {
       const inicio = new Date(a.data);
-      const fim = addMinutes(inicio, SERVICE_DURATION_MINUTES);
+      const fim = addMinutes(inicio, a.servico.duracao);
       return { inicio, fim, tipo: 'agendamento', id: a.id };
     }),
     ...bloqueios.map((b) => ({
@@ -196,12 +195,13 @@ async function getDayOccupancy(dateString) {
 async function calculateAvailability(dateString, servico) {
   const baseDay = parseDateOnly(dateString);
   const semanaAtual = getCurrentWeekRange();
+  const duracaoMinutos = servico.duracao;
 
   if (!isDateInCurrentWeek(baseDay)) {
     return {
       expediente: { inicio: '09:00', fim: '18:00' },
       semanaAtual,
-      duracaoServicoMinutos: SERVICE_DURATION_MINUTES,
+      duracaoServicoMinutos: duracaoMinutos,
       total: 0,
       slotsDisponiveis: [],
       mensagem: 'Agendamentos disponíveis apenas para a semana atual.',
@@ -215,11 +215,11 @@ async function calculateAvailability(dateString, servico) {
 
   for (
     let cursor = new Date(inicioExpediente);
-    addMinutes(cursor, SERVICE_DURATION_MINUTES) <= fimExpediente;
+    addMinutes(cursor, duracaoMinutos) <= fimExpediente;
     cursor = addMinutes(cursor, SLOT_STEP_MINUTES)
   ) {
     const inicioSlot = new Date(cursor);
-    const fimSlot = addMinutes(inicioSlot, SERVICE_DURATION_MINUTES);
+    const fimSlot = addMinutes(inicioSlot, duracaoMinutos);
     if (!hasConflict(inicioSlot, fimSlot, ocupados)) {
       slotsDisponiveis.push({
         horario: getHoraFromDate(inicioSlot),
@@ -232,7 +232,7 @@ async function calculateAvailability(dateString, servico) {
   return {
     expediente: { inicio: '09:00', fim: '18:00' },
     semanaAtual,
-    duracaoServicoMinutos: SERVICE_DURATION_MINUTES,
+    duracaoServicoMinutos: duracaoMinutos,
     total: slotsDisponiveis.length,
     slotsDisponiveis,
   };
@@ -327,7 +327,7 @@ app.get('/servicos', async (req, res) => {
     if (ativo === 'true') where.ativo = true;
     if (ativo === 'false') where.ativo = false;
     const servicos = await prisma.servico.findMany({ where, orderBy: { id: 'asc' } });
-    res.json(servicos.map((s) => ({ ...s, duracao: SERVICE_DURATION_MINUTES })));
+    res.json(servicos);
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: 'Erro ao buscar serviços' });
@@ -340,7 +340,7 @@ app.get('/servicos/:id', async (req, res) => {
     if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
     const servico = await prisma.servico.findUnique({ where: { id } });
     if (!servico) return res.status(404).json({ erro: 'Serviço não encontrado' });
-    res.json({ ...servico, duracao: SERVICE_DURATION_MINUTES });
+    res.json(servico);
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: 'Erro ao buscar serviço' });
@@ -349,12 +349,14 @@ app.get('/servicos/:id', async (req, res) => {
 
 app.post('/servicos', authMiddleware, async (req, res) => {
   try {
-    const { nome, preco, ativo } = req.body;
+    const { nome, preco, duracao, ativo } = req.body;
     if (!nome || typeof nome !== 'string' || !nome.trim()) return res.status(400).json({ erro: 'Nome é obrigatório' });
     const precoNumero = Number(preco);
     if (Number.isNaN(precoNumero) || precoNumero <= 0) return res.status(400).json({ erro: 'Preço inválido' });
+    const duracaoNumero = Number(duracao);
+    if (!Number.isInteger(duracaoNumero) || duracaoNumero <= 0) return res.status(400).json({ erro: 'Duração inválida (em minutos, inteiro positivo)' });
     const novoServico = await prisma.servico.create({
-      data: { nome: nome.trim(), preco: precoNumero, duracao: SERVICE_DURATION_MINUTES, ...(typeof ativo === 'boolean' ? { ativo } : {}) },
+      data: { nome: nome.trim(), preco: precoNumero, duracao: duracaoNumero, ...(typeof ativo === 'boolean' ? { ativo } : {}) },
     });
     res.status(201).json(novoServico);
   } catch (error) {
@@ -369,8 +371,8 @@ app.put('/servicos/:id', authMiddleware, async (req, res) => {
     if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
     const servicoExistente = await prisma.servico.findUnique({ where: { id } });
     if (!servicoExistente) return res.status(404).json({ erro: 'Serviço não encontrado' });
-    const { nome, preco, ativo } = req.body;
-    const data = { duracao: SERVICE_DURATION_MINUTES };
+    const { nome, preco, duracao, ativo } = req.body;
+    const data = {};
     if (nome !== undefined) {
       if (typeof nome !== 'string' || !nome.trim()) return res.status(400).json({ erro: 'Nome inválido' });
       data.nome = nome.trim();
@@ -379,6 +381,11 @@ app.put('/servicos/:id', authMiddleware, async (req, res) => {
       const precoNumero = Number(preco);
       if (Number.isNaN(precoNumero) || precoNumero <= 0) return res.status(400).json({ erro: 'Preço inválido' });
       data.preco = precoNumero;
+    }
+    if (duracao !== undefined) {
+      const duracaoNumero = Number(duracao);
+      if (!Number.isInteger(duracaoNumero) || duracaoNumero <= 0) return res.status(400).json({ erro: 'Duração inválida (em minutos, inteiro positivo)' });
+      data.duracao = duracaoNumero;
     }
     if (ativo !== undefined) {
       if (typeof ativo !== 'boolean') return res.status(400).json({ erro: 'Ativo deve ser true ou false' });
@@ -444,7 +451,7 @@ app.post('/agendamentos', async (req, res) => {
     const servico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
     if (!servico || servico.ativo === false) return res.status(404).json({ erro: 'Serviço não encontrado ou inativo' });
     const inicioSlot = new Date(dataAgendamento);
-    const fimSlot = addMinutes(inicioSlot, SERVICE_DURATION_MINUTES);
+    const fimSlot = addMinutes(inicioSlot, servico.duracao);
     if (!isWithinBusinessHours(inicioSlot, fimSlot)) return res.status(400).json({ erro: 'Horário fora do expediente (09:00–18:00)' });
     const dataString = formatDateOnly(dataAgendamento);
     const { ocupados } = await getDayOccupancy(dataString);
@@ -489,11 +496,13 @@ app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
       payload.data = dataAgendamento;
       payload.hora = getHoraFromDate(dataAgendamento);
     }
+    let servicoAtual = agendamentoExistente.servico;
     if (servicoId !== undefined) {
       const servicoIdNumero = Number(servicoId);
       if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return res.status(400).json({ erro: 'Serviço inválido' });
-      const servico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
-      if (!servico || servico.ativo === false) return res.status(404).json({ erro: 'Serviço não encontrado ou inativo' });
+      const novoServico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
+      if (!novoServico || novoServico.ativo === false) return res.status(404).json({ erro: 'Serviço não encontrado ou inativo' });
+      servicoAtual = novoServico;
       payload.servicoId = servicoIdNumero;
     }
     if (status !== undefined) {
@@ -502,7 +511,7 @@ app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
       payload.status = status;
     }
     const inicioSlot = new Date(dataAtual);
-    const fimSlot = addMinutes(inicioSlot, SERVICE_DURATION_MINUTES);
+    const fimSlot = addMinutes(inicioSlot, servicoAtual.duracao);
     if (!isWithinBusinessHours(inicioSlot, fimSlot)) return res.status(400).json({ erro: 'Horário fora do expediente (09:00–18:00)' });
     const { ocupados } = await getDayOccupancy(formatDateOnly(inicioSlot));
     const ocupadosSemAtual = ocupados.filter((item) => item.tipo !== 'agendamento' || item.id !== agendamentoExistente.id);
@@ -588,7 +597,7 @@ app.get('/disponibilidade', async (req, res) => {
     const servico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
     if (!servico || servico.ativo === false) return res.status(404).json({ erro: 'Serviço não encontrado ou inativo' });
     const disponibilidade = await calculateAvailability(data, servico);
-    res.json({ data, servico: { id: servico.id, nome: servico.nome, duracao: SERVICE_DURATION_MINUTES }, ...disponibilidade });
+    res.json({ data, servico: { id: servico.id, nome: servico.nome, duracao: servico.duracao }, ...disponibilidade });
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: 'Erro ao calcular disponibilidade' });

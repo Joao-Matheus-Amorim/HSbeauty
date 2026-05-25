@@ -42,6 +42,9 @@ jobs:
   backend:
     name: Backend Prisma validation
     runs-on: ubuntu-latest
+    env:
+      # Used only by Prisma config/generate during CI. No network connection is made.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/hsbeauty_ci?schema=public
 
     steps:
       - name: Checkout

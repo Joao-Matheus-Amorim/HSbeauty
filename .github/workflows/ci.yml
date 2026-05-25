@@ -32,7 +32,7 @@ jobs:
         working-directory: frontend
 
       - name: Audit frontend dependencies
-        run: npm audit --audit-level=critical
+        run: npm audit --audit-level=high
         working-directory: frontend
 
       - name: Lint frontend
@@ -65,7 +65,7 @@ jobs:
         working-directory: backend
 
       - name: Audit backend dependencies
-        run: npm audit --audit-level=critical
+        run: npm audit --audit-level=high
         working-directory: backend
 
       - name: Generate Prisma Client

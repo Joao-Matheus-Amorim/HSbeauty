@@ -1,4 +1,5 @@
 import express from 'express';
+import { buildAdminAppointmentQuery } from './admin-appointment-query-rules.js';
 import { validateAdminBookingUpdatePayload } from './admin-booking-rules.js';
 import { handlePrismaConflict, logError, sendError } from './http-response.js';
 
@@ -102,53 +103,27 @@ export function setupAdminDashboard(prisma, authMiddleware) {
 export function setupAdminAgendamentos(prisma, authMiddleware) {
   router.get('/agendamentos', authMiddleware, async (req, res) => {
     try {
-      const { status, dataInicio, dataFim, servicoId, page = 1, limit = 20 } = req.query;
-
-      const where = {};
-
-      // Filtro por status
-      if (status) {
-        where.status = status;
-      }
-
-      // Filtro por data
-      if (dataInicio || dataFim) {
-        where.data = {};
-        if (dataInicio) {
-          where.data.gte = new Date(dataInicio);
-        }
-        if (dataFim) {
-          where.data.lte = new Date(dataFim);
-        }
-      }
-
-      // Filtro por serviço
-      if (servicoId) {
-        where.servicoId = Number(servicoId);
-      }
-
-      const pageNum = Math.max(1, Number(page));
-      const limitNum = Math.min(100, Math.max(1, Number(limit)));
-      const skip = (pageNum - 1) * limitNum;
+      const query = buildAdminAppointmentQuery(req.query);
+      if (!query.valid) return sendError(res, query.status, query.message);
 
       const [agendamentos, total] = await Promise.all([
         prisma.agendamento.findMany({
-          where,
+          where: query.where,
           include: { servico: true },
           orderBy: { data: 'desc' },
-          skip,
-          take: limitNum,
+          skip: query.skip,
+          take: query.limitNum,
         }),
-        prisma.agendamento.count({ where }),
+        prisma.agendamento.count({ where: query.where }),
       ]);
 
       res.json({
         agendamentos,
         paginacao: {
           total,
-          pagina: pageNum,
-          limite: limitNum,
-          totalPaginas: Math.ceil(total / limitNum),
+          pagina: query.pageNum,
+          limite: query.limitNum,
+          totalPaginas: Math.ceil(total / query.limitNum),
         },
       });
     } catch (error) {

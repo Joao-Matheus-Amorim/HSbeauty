@@ -208,8 +208,35 @@ export default function AppointmentManager() {
   }
 
   useEffect(() => {
-    loadAppointments();
-  }, [filters.status, filters.dataInicio, filters.dataFim, page]);
+    let ignore = false;
+    const { status, dataInicio, dataFim } = filters;
+
+    listarAgendamentosAdmin({
+      status,
+      dataInicio,
+      dataFim,
+      page,
+      limit: 10,
+    })
+      .then((data) => {
+        if (ignore) return;
+        setError(null);
+        setAppointments(data.agendamentos || []);
+        setPagination(data.paginacao || {});
+      })
+      .catch((err) => {
+        if (ignore) return;
+        setError(err.message);
+      })
+      .finally(() => {
+        if (ignore) return;
+        setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [filters, page]);
 
   const handleStatusUpdate = async (id, newStatus) => {
     try {
@@ -247,6 +274,8 @@ export default function AppointmentManager() {
     : 'Nenhum agendamento encontrado.';
 
   function changeStatusFilter(status) {
+    setLoading(true);
+    setError(null);
     setPage(1);
     setFilters((current) => ({ ...current, status }));
   }
@@ -256,8 +285,16 @@ export default function AppointmentManager() {
   }
 
   function changeDate(value) {
+    setLoading(true);
+    setError(null);
     setPage(1);
     setFilters((current) => ({ ...current, dataInicio: value }));
+  }
+
+  function changePage(updater) {
+    setLoading(true);
+    setError(null);
+    setPage(updater);
   }
 
   return (
@@ -346,14 +383,14 @@ export default function AppointmentManager() {
             <button
               type="button"
               disabled={pagination.pagina === 1}
-              onClick={() => setPage((p) => p - 1)}
+              onClick={() => changePage((p) => p - 1)}
             >
               Anterior
             </button>
             <button
               type="button"
               disabled={pagination.pagina === pagination.totalPaginas}
-              onClick={() => setPage((p) => p + 1)}
+              onClick={() => changePage((p) => p + 1)}
             >
               Próxima
             </button>

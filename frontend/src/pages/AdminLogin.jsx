@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { loginAdmin } from '../services/agendamentos';
+import { loginAdmin } from '../services/auth';
 import './Admin.css';
 
 export default function AdminLogin({ onLogin }) {
@@ -18,8 +18,6 @@ export default function AdminLogin({ onLogin }) {
     setErro('');
     try {
       const res = await loginAdmin(email.trim(), senha.trim());
-      sessionStorage.setItem('hs_token', res.token);
-      sessionStorage.setItem('hs_admin', JSON.stringify(res.admin));
       onLogin(res.admin);
     } catch (e) {
       setErro(e.message || 'Credenciais inválidas');

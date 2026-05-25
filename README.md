@@ -70,6 +70,7 @@ HSbeauty/
 │
 ├── backend/                # API REST (Node.js + Express)
 │   ├── prisma/             # Schema e migrations do banco
+│   ├── scripts/            # Scripts operacionais seguros
 │   └── src/
 │       ├── server.js       # Entry point — bootstrap e rotas
 │       ├── admin-routes.js # Rotas do painel administrativo
@@ -128,7 +129,7 @@ cp frontend/.env.example frontend/.env
 # Edite frontend/.env com a URL do backend
 ```
 
-### 3. Instale as dependências e migre o banco
+### 3. Instale as dependências, migre o banco e crie o admin
 
 ```bash
 # Instala dependências de ambos os lados
@@ -139,7 +140,12 @@ cd backend && npx prisma migrate deploy
 
 # Popula o banco com serviços iniciais (opcional)
 node src/seed.js
+
+# Cria o usuário administrador inicial via CLI segura
+npm run create-admin -- admin@salao.com "SENHA_FORTE_AQUI"
 ```
+
+> A API não permite criação de administrador por rota HTTP. A rota `/auth/register` é desativada por padrão e retorna erro permanente. Use apenas o script CLI `backend/scripts/create-admin.js` para criar administradores.
 
 ### 4. Inicie os servidores
 
@@ -167,7 +173,6 @@ cd frontend && npm run dev  # http://localhost:5173
 | `JWT_SECRET` | ✅ | Segredo para assinar os tokens JWT (≥32 chars) |
 | `FRONTEND_URL` | ✅ | Origem(s) permitida(s) no CORS. Múltiplas separadas por vírgula |
 | `PORT` | — | Porta do servidor (padrão: `3000`) |
-| `ALLOW_ADMIN_REGISTER` | — | Define como `true` **apenas** para criar o primeiro admin |
 
 ### Frontend (`frontend/.env`)
 

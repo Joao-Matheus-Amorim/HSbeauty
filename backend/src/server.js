@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import pkg from '@prisma/client';
 import { PrismaNeon } from '@prisma/adapter-neon';
 import adminRouter, {
@@ -43,6 +44,15 @@ const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
+
+// Rate limiter: máx. 5 tentativas de login por IP a cada 15 minutos
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { erro: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
+});
 
 function addMinutes(date, minutes) {
   return new Date(date.getTime() + minutes * 60000);
@@ -233,7 +243,7 @@ app.post('/auth/register', async (req, res) => {
   }
 });
 
-app.post('/auth/login', async (req, res) => {
+app.post('/auth/login', loginLimiter, async (req, res) => {
   try {
     const { email, senha } = req.body;
     if (!email || !senha) return res.status(400).json({ erro: 'Email e senha são obrigatórios' });

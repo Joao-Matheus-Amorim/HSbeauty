@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   frontend:
-    name: Frontend build
+    name: Frontend lint and build
     runs-on: ubuntu-latest
 
     steps:
@@ -29,6 +29,10 @@ jobs:
 
       - name: Install frontend dependencies
         run: npm ci
+        working-directory: frontend
+
+      - name: Lint frontend
+        run: npm run lint
         working-directory: frontend
 
       - name: Build frontend

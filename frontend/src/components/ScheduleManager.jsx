@@ -30,6 +30,7 @@ export default function ScheduleManager() {
 
   async function loadHorarios() {
     setLoading(true);
+    setError(null);
     try {
       const data = await listarHorariosAdmin({ ativo: 'true' });
       setHorarios(data.horarios);
@@ -41,13 +42,31 @@ export default function ScheduleManager() {
   }
 
   useEffect(() => {
-    loadHorarios();
+    let ignore = false;
+
+    listarHorariosAdmin({ ativo: 'true' })
+      .then((data) => {
+        if (ignore) return;
+        setError(null);
+        setHorarios(data.horarios);
+      })
+      .catch((err) => {
+        if (ignore) return;
+        setError(err.message);
+      })
+      .finally(() => {
+        if (ignore) return;
+        setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Formatar as datas para o formato ISO esperado pelo backend
       const payload = {
         dataInicio: new Date(formData.dataInicio + (formData.horaInicio ? `T${formData.horaInicio}` : 'T00:00:00')).toISOString(),
         dataFim: new Date(formData.dataFim + (formData.horaFim ? `T${formData.horaFim}` : 'T23:59:59')).toISOString(),
@@ -98,7 +117,6 @@ export default function ScheduleManager() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Info Card */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-[#b5936a] text-white p-6 rounded-3xl shadow-sm">
             <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
@@ -121,7 +139,6 @@ export default function ScheduleManager() {
           </div>
         </div>
 
-        {/* List Card */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-50 flex justify-between items-center">
@@ -184,7 +201,6 @@ export default function ScheduleManager() {
         </div>
       </div>
 
-      {/* Modal Form */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">

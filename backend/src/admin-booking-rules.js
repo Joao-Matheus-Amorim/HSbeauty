@@ -1,4 +1,4 @@
-﻿import { isValidTelefone, OBSERVACOES_MAX_LENGTH } from './booking-rules.js';
+import { isValidTelefone, OBSERVACOES_MAX_LENGTH } from './booking-rules.js';
 
 export const VALID_BOOKING_STATUSES = ['pendente', 'confirmado', 'cancelado', 'concluído'];
 

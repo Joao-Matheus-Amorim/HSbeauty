@@ -368,21 +368,12 @@ app.get('/agendamentos/:id', authMiddleware, async (req, res) => {
 
 app.post('/agendamentos', async (req, res) => {
   try {
-    const { nomeCliente, telefone, data, servicoId, observacoes } = req.body;
-    if (!nomeCliente || typeof nomeCliente !== 'string' || !nomeCliente.trim()) return sendError(res, 400, 'Nome do cliente é obrigatório');
-    if (!telefone || typeof telefone !== 'string' || !telefone.trim()) return sendError(res, 400, 'Telefone é obrigatório');
-    if (!isValidTelefone(telefone)) return sendError(res, 400, 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.');
-    if (!data) return sendError(res, 400, 'Data é obrigatória');
-    if (observacoes !== undefined && observacoes !== null) {
-      if (typeof observacoes !== 'string') return sendError(res, 400, 'Observações deve ser texto');
-      if (observacoes.length > OBSERVACOES_MAX_LENGTH) return sendError(res, 400, `Observações excedem o limite de ${OBSERVACOES_MAX_LENGTH} caracteres`);
-    }
-    const dataAgendamento = parsePublicBookingDateTime(data);
-    if (!dataAgendamento) return sendError(res, 400, 'Data inválida. Envie data e hora em formato ISO, como 2026-05-25T09:00:00.000Z');
-    if (!isSlotStepAligned(dataAgendamento)) return sendError(res, 400, 'Horário deve estar alinhado ao intervalo de 30 minutos');
+    const validation = validatePublicBookingPayload(req.body);
+    if (!validation.valid) return sendError(res, validation.status, validation.message);
+
+    const { nomeCliente, telefone, dataAgendamento, servicoIdNumero, observacoes } = validation.data;
+
     if (!isDateInCurrentWeek(dataAgendamento)) return sendError(res, 400, 'Agendamentos disponíveis apenas para a semana atual');
-    const servicoIdNumero = Number(servicoId);
-    if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return sendError(res, 400, 'Serviço inválido');
     const servico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
     if (!servico || servico.ativo === false) return sendError(res, 404, 'Serviço não encontrado ou inativo');
     const inicioSlot = new Date(dataAgendamento);
@@ -394,8 +385,8 @@ app.post('/agendamentos', async (req, res) => {
     if (!slotDisponivel) return sendError(res, 409, 'Horário indisponível');
     const novoAgendamento = await prisma.agendamento.create({
       data: {
-        nomeCliente: nomeCliente.trim(),
-        telefone: telefone.trim(),
+        nomeCliente,
+        telefone,
         data: dataAgendamento,
         hora: getHoraFromDate(dataAgendamento),
         servicoId: servicoIdNumero,

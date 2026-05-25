@@ -76,7 +76,19 @@ Rotas legadas protegidas:
 
 O painel administrativo novo deve usar `frontend/src/services/admin.js`, que aponta para `/admin/*`.
 
-`frontend/src/services/agendamentos.js` ainda contém funções administrativas legadas que apontam para rotas protegidas fora de `/admin`. Essas funções não devem ser expandidas. A migração/remoção delas deve ocorrer em bloco separado, com validação de uso real no frontend.
+`frontend/src/services/agendamentos.js` deve ficar restrito ao fluxo público. Funções administrativas devem viver em `frontend/src/services/admin.js`.
+
+## Headers de depreciação
+
+Rotas administrativas legadas devem receber aviso HTTP não disruptivo enquanto continuarem disponíveis.
+
+Headers esperados:
+
+- `Deprecation: true`
+- `Sunset: Wed, 30 Sep 2026 23:59:59 GMT`
+- `X-HSBeauty-Deprecated-Route: Use the equivalent /admin route`
+
+Esses headers não devem ser aplicados em rotas públicas reais, como `GET /servicos`, `GET /servicos/:id`, `POST /agendamentos` e `GET /disponibilidade`.
 
 ## Política de depreciação
 
@@ -91,8 +103,7 @@ O painel administrativo novo deve usar `frontend/src/services/admin.js`, que apo
 - Alterar UI.
 - Alterar banco ou migrations.
 - Alterar contrato público de agendamento.
-- Reescrever serviços frontend.
 
 ## Próximo bloco recomendado
 
-Migrar/remover funções administrativas legadas de `frontend/src/services/agendamentos.js` somente após confirmar imports reais e validar que o painel usa exclusivamente `frontend/src/services/admin.js`.
+Remover rotas administrativas legadas somente depois de confirmar uso zero e manter um PR dedicado para remoção.

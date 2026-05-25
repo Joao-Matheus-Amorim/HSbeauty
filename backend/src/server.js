@@ -13,6 +13,7 @@ import adminRouter, {
   setupAdminServicos,
   setupAdminHorarios,
 } from './admin-routes.js';
+import { legacyAdminRouteDeprecation } from './legacy-route-deprecation.js';
 
 const { PrismaClient } = pkg;
 
@@ -49,6 +50,8 @@ app.use(
     },
   })
 );
+
+app.use(legacyAdminRouteDeprecation);
 
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL é obrigatório');
 if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET é obrigatório');

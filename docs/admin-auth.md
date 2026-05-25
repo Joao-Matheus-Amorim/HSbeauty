@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Padronizar a sessão administrativa entre frontend e backend para evitar token salvo incorretamente, sessão zumbi e logout sem revogação.
+Padronizar a sessão administrativa entre frontend e backend para evitar token salvo incorretamente, sessão zumbi, corrida de refresh token e logout sem revogação.
 
 ## Endpoints
 
@@ -59,6 +59,8 @@ Resposta de sucesso:
 
 O backend revoga o refresh token anterior e emite outro. O frontend deve substituir os tokens salvos.
 
+Como o refresh token é rotacionado, o frontend deve serializar renovações concorrentes. Se várias chamadas admin receberem `401` ao mesmo tempo, todas devem aguardar a mesma promessa de refresh em andamento em vez de chamar `/auth/refresh` várias vezes com o token antigo.
+
 ### Logout
 
 `POST /auth/logout`
@@ -77,6 +79,7 @@ O backend revoga o refresh token. O frontend deve limpar `hs_token`, `hs_refresh
 
 - Todas as chamadas admin devem usar `authorizedFetch`.
 - Ao receber `401`, o frontend tenta renovar a sessão uma vez.
+- Chamadas `401` concorrentes devem compartilhar uma única tentativa de refresh.
 - Se o refresh falhar, a sessão local é limpa.
 - Logout sempre tenta revogar o refresh token antes de limpar a sessão local.
 

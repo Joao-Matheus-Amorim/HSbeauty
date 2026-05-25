@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
   Edit2, 
-  Trash2, 
   Check, 
   X, 
   AlertCircle,
@@ -15,8 +14,7 @@ import {
 import { 
   listarServicosAdmin, 
   criarServicoAdmin, 
-  atualizarServicoAdmin, 
-  desativarServicoAdmin 
+  atualizarServicoAdmin
 } from '../services/admin';
 import { clsx } from 'clsx';
 

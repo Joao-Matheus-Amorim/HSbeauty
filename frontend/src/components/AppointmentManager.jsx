@@ -187,6 +187,7 @@ export default function AppointmentManager() {
   const [pagination, setPagination] = useState({});
 
   const { status, dataInicio, dataFim, search } = filters;
+  const effectiveDataFim = dataFim || dataInicio;
 
   async function loadAppointments() {
     setLoading(true);
@@ -195,7 +196,7 @@ export default function AppointmentManager() {
       const data = await listarAgendamentosAdmin({
         status,
         dataInicio,
-        dataFim,
+        dataFim: effectiveDataFim,
         page,
         limit: 10,
       });
@@ -214,7 +215,7 @@ export default function AppointmentManager() {
     listarAgendamentosAdmin({
       status,
       dataInicio,
-      dataFim,
+      dataFim: effectiveDataFim,
       page,
       limit: 10,
     })
@@ -236,7 +237,7 @@ export default function AppointmentManager() {
     return () => {
       ignore = true;
     };
-  }, [status, dataInicio, dataFim, page]);
+  }, [status, dataInicio, effectiveDataFim, page]);
 
   const handleStatusUpdate = async (id, newStatus) => {
     try {
@@ -288,7 +289,7 @@ export default function AppointmentManager() {
     setLoading(true);
     setError(null);
     setPage(1);
-    setFilters((current) => ({ ...current, dataInicio: value }));
+    setFilters((current) => ({ ...current, dataInicio: value, dataFim: value }));
   }
 
   function changePage(updater) {

@@ -5,6 +5,8 @@ const ACCESS_TOKEN_KEY = 'hs_token';
 const REFRESH_TOKEN_KEY = 'hs_refresh_token';
 const ADMIN_KEY = 'hs_admin';
 
+let refreshPromise = null;
+
 function resolveApiUrl() {
   const envUrl = import.meta.env.VITE_API_URL;
   const isBrowser = typeof window !== 'undefined';
@@ -73,7 +75,7 @@ export async function loginAdmin(email, senha) {
   return json;
 }
 
-export async function refreshAdminSession() {
+async function refreshAdminSessionOnce() {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return null;
 
@@ -91,6 +93,16 @@ export async function refreshAdminSession() {
 
   setAdminSession({ ...json, admin: getAdminFromSession() });
   return json.accessToken;
+}
+
+export async function refreshAdminSession() {
+  if (!refreshPromise) {
+    refreshPromise = refreshAdminSessionOnce().finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  return refreshPromise;
 }
 
 export async function logoutAdmin() {

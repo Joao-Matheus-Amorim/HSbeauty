@@ -1,4 +1,5 @@
 import express from 'express';
+import { handlePrismaConflict, logError, sendError } from './http-response.js';
 
 const router = express.Router();
 
@@ -85,8 +86,8 @@ export function setupAdminDashboard(prisma, authMiddleware) {
         topServicos,
       });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ erro: 'Erro ao buscar dados do dashboard' });
+      logError('GET /admin/dashboard', error, req);
+      return sendError(res, 500, 'Erro ao buscar dados do dashboard');
     }
   });
 }
@@ -150,8 +151,8 @@ export function setupAdminAgendamentos(prisma, authMiddleware) {
         },
       });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ erro: 'Erro ao buscar agendamentos' });
+      logError('GET /admin/agendamentos', error, req);
+      return sendError(res, 500, 'Erro ao buscar agendamentos');
     }
   });
 
@@ -162,19 +163,19 @@ export function setupAdminAgendamentos(prisma, authMiddleware) {
   router.get('/agendamentos/:id', authMiddleware, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+      if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
 
       const agendamento = await prisma.agendamento.findUnique({
         where: { id },
         include: { servico: true },
       });
 
-      if (!agendamento) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+      if (!agendamento) return sendError(res, 404, 'Agendamento não encontrado');
 
       res.json(agendamento);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ erro: 'Erro ao buscar agendamento' });
+      logError('GET /admin/agendamentos/:id', error, req);
+      return sendError(res, 500, 'Erro ao buscar agendamento');
     }
   });
 
@@ -185,10 +186,10 @@ export function setupAdminAgendamentos(prisma, authMiddleware) {
   router.put('/agendamentos/:id', authMiddleware, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+      if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
 
       const agendamento = await prisma.agendamento.findUnique({ where: { id } });
-      if (!agendamento) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+      if (!agendamento) return sendError(res, 404, 'Agendamento não encontrado');
 
       const { status, observacoes, nomeCliente, telefone, email } = req.body;
       const data = {};
@@ -196,7 +197,7 @@ export function setupAdminAgendamentos(prisma, authMiddleware) {
       if (status !== undefined) {
         const statusValidos = ['pendente', 'confirmado', 'cancelado', 'concluído'];
         if (!statusValidos.includes(status)) {
-          return res.status(400).json({ erro: 'Status inválido' });
+          return sendError(res, 400, 'Status inválido');
         }
         data.status = status;
       }
@@ -207,14 +208,14 @@ export function setupAdminAgendamentos(prisma, authMiddleware) {
 
       if (nomeCliente !== undefined) {
         if (typeof nomeCliente !== 'string' || !nomeCliente.trim()) {
-          return res.status(400).json({ erro: 'Nome do cliente inválido' });
+          return sendError(res, 400, 'Nome do cliente inválido');
         }
         data.nomeCliente = nomeCliente.trim();
       }
 
       if (telefone !== undefined) {
         if (typeof telefone !== 'string' || !telefone.trim()) {
-          return res.status(400).json({ erro: 'Telefone inválido' });
+          return sendError(res, 400, 'Telefone inválido');
         }
         data.telefone = telefone.trim();
       }
@@ -224,7 +225,7 @@ export function setupAdminAgendamentos(prisma, authMiddleware) {
       }
 
       if (Object.keys(data).length === 0) {
-        return res.status(400).json({ erro: 'Nenhum campo para atualizar' });
+        return sendError(res, 400, 'Nenhum campo para atualizar');
       }
 
       const agendamentoAtualizado = await prisma.agendamento.update({
@@ -235,8 +236,8 @@ export function setupAdminAgendamentos(prisma, authMiddleware) {
 
       res.json(agendamentoAtualizado);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ erro: 'Erro ao atualizar agendamento' });
+      logError('PUT /admin/agendamentos/:id', error, req);
+      return sendError(res, 500, 'Erro ao atualizar agendamento');
     }
   });
 
@@ -247,10 +248,10 @@ export function setupAdminAgendamentos(prisma, authMiddleware) {
   router.delete('/agendamentos/:id', authMiddleware, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+      if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
 
       const agendamento = await prisma.agendamento.findUnique({ where: { id } });
-      if (!agendamento) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+      if (!agendamento) return sendError(res, 404, 'Agendamento não encontrado');
 
       // Ao invés de deletar, marcamos como cancelado
       const agendamentoAtualizado = await prisma.agendamento.update({
@@ -264,8 +265,8 @@ export function setupAdminAgendamentos(prisma, authMiddleware) {
         agendamento: agendamentoAtualizado,
       });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ erro: 'Erro ao cancelar agendamento' });
+      logError('DELETE /admin/agendamentos/:id', error, req);
+      return sendError(res, 500, 'Erro ao cancelar agendamento');
     }
   });
 }
@@ -309,8 +310,8 @@ export function setupAdminServicos(prisma, authMiddleware) {
         },
       });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ erro: 'Erro ao buscar serviços' });
+      logError('GET /admin/servicos', error, req);
+      return sendError(res, 500, 'Erro ao buscar serviços');
     }
   });
 
@@ -321,15 +322,15 @@ export function setupAdminServicos(prisma, authMiddleware) {
   router.get('/servicos/:id', authMiddleware, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+      if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
 
       const servico = await prisma.servico.findUnique({ where: { id } });
-      if (!servico) return res.status(404).json({ erro: 'Serviço não encontrado' });
+      if (!servico) return sendError(res, 404, 'Serviço não encontrado');
 
       res.json(servico);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ erro: 'Erro ao buscar serviço' });
+      logError('GET /admin/servicos/:id', error, req);
+      return sendError(res, 500, 'Erro ao buscar serviço');
     }
   });
 
@@ -343,17 +344,17 @@ export function setupAdminServicos(prisma, authMiddleware) {
 
       // Validações
       if (!nome || typeof nome !== 'string' || !nome.trim()) {
-        return res.status(400).json({ erro: 'Nome é obrigatório' });
+        return sendError(res, 400, 'Nome é obrigatório');
       }
 
       const precoNumero = Number(preco);
       if (Number.isNaN(precoNumero) || precoNumero <= 0) {
-        return res.status(400).json({ erro: 'Preço inválido' });
+        return sendError(res, 400, 'Preço inválido');
       }
 
       const duracaoNumero = Number(duracao);
       if (!Number.isInteger(duracaoNumero) || duracaoNumero <= 0) {
-        return res.status(400).json({ erro: 'Duração inválida' });
+        return sendError(res, 400, 'Duração inválida');
       }
 
       const novoServico = await prisma.servico.create({
@@ -369,11 +370,10 @@ export function setupAdminServicos(prisma, authMiddleware) {
 
       res.status(201).json(novoServico);
     } catch (error) {
-      console.error(error);
-      if (error.code === 'P2002') {
-        return res.status(409).json({ erro: 'Serviço com este nome já existe' });
-      }
-      res.status(500).json({ erro: 'Erro ao criar serviço' });
+      const conflictResponse = handlePrismaConflict(res, error, 'Serviço com este nome já existe');
+      if (conflictResponse) return conflictResponse;
+      logError('POST /admin/servicos', error, req);
+      return sendError(res, 500, 'Erro ao criar serviço');
     }
   });
 
@@ -384,17 +384,17 @@ export function setupAdminServicos(prisma, authMiddleware) {
   router.put('/servicos/:id', authMiddleware, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+      if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
 
       const servicoExistente = await prisma.servico.findUnique({ where: { id } });
-      if (!servicoExistente) return res.status(404).json({ erro: 'Serviço não encontrado' });
+      if (!servicoExistente) return sendError(res, 404, 'Serviço não encontrado');
 
       const { nome, descricao, preco, duracao, categoria, ativo } = req.body;
       const data = {};
 
       if (nome !== undefined) {
         if (typeof nome !== 'string' || !nome.trim()) {
-          return res.status(400).json({ erro: 'Nome inválido' });
+          return sendError(res, 400, 'Nome inválido');
         }
         data.nome = nome.trim();
       }
@@ -406,7 +406,7 @@ export function setupAdminServicos(prisma, authMiddleware) {
       if (preco !== undefined) {
         const precoNumero = Number(preco);
         if (Number.isNaN(precoNumero) || precoNumero <= 0) {
-          return res.status(400).json({ erro: 'Preço inválido' });
+          return sendError(res, 400, 'Preço inválido');
         }
         data.preco = precoNumero;
       }
@@ -414,7 +414,7 @@ export function setupAdminServicos(prisma, authMiddleware) {
       if (duracao !== undefined) {
         const duracaoNumero = Number(duracao);
         if (!Number.isInteger(duracaoNumero) || duracaoNumero <= 0) {
-          return res.status(400).json({ erro: 'Duração inválida' });
+          return sendError(res, 400, 'Duração inválida');
         }
         data.duracao = duracaoNumero;
       }
@@ -425,13 +425,13 @@ export function setupAdminServicos(prisma, authMiddleware) {
 
       if (ativo !== undefined) {
         if (typeof ativo !== 'boolean') {
-          return res.status(400).json({ erro: 'Ativo deve ser true ou false' });
+          return sendError(res, 400, 'Ativo deve ser true ou false');
         }
         data.ativo = ativo;
       }
 
       if (Object.keys(data).length === 0) {
-        return res.status(400).json({ erro: 'Nenhum campo para atualizar' });
+        return sendError(res, 400, 'Nenhum campo para atualizar');
       }
 
       const servicoAtualizado = await prisma.servico.update({
@@ -441,11 +441,10 @@ export function setupAdminServicos(prisma, authMiddleware) {
 
       res.json(servicoAtualizado);
     } catch (error) {
-      console.error(error);
-      if (error.code === 'P2002') {
-        return res.status(409).json({ erro: 'Serviço com este nome já existe' });
-      }
-      res.status(500).json({ erro: 'Erro ao atualizar serviço' });
+      const conflictResponse = handlePrismaConflict(res, error, 'Serviço com este nome já existe');
+      if (conflictResponse) return conflictResponse;
+      logError('PUT /admin/servicos/:id', error, req);
+      return sendError(res, 500, 'Erro ao atualizar serviço');
     }
   });
 
@@ -456,10 +455,10 @@ export function setupAdminServicos(prisma, authMiddleware) {
   router.delete('/servicos/:id', authMiddleware, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+      if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
 
       const servicoExistente = await prisma.servico.findUnique({ where: { id } });
-      if (!servicoExistente) return res.status(404).json({ erro: 'Serviço não encontrado' });
+      if (!servicoExistente) return sendError(res, 404, 'Serviço não encontrado');
 
       const servicoDesativado = await prisma.servico.update({
         where: { id },
@@ -471,8 +470,8 @@ export function setupAdminServicos(prisma, authMiddleware) {
         servico: servicoDesativado,
       });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ erro: 'Erro ao desativar serviço' });
+      logError('DELETE /admin/servicos/:id', error, req);
+      return sendError(res, 500, 'Erro ao desativar serviço');
     }
   });
 }
@@ -516,8 +515,8 @@ export function setupAdminHorarios(prisma, authMiddleware) {
         },
       });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ erro: 'Erro ao buscar horários' });
+      logError('GET /admin/horarios', error, req);
+      return sendError(res, 500, 'Erro ao buscar horários');
     }
   });
 
@@ -530,18 +529,18 @@ export function setupAdminHorarios(prisma, authMiddleware) {
       const { dataInicio, dataFim, horaInicio, horaFim, motivo } = req.body;
 
       if (!dataInicio || !dataFim) {
-        return res.status(400).json({ erro: 'Data de início e fim são obrigatórias' });
+        return sendError(res, 400, 'Data de início e fim são obrigatórias');
       }
 
       const dataInicioDate = new Date(dataInicio);
       const dataFimDate = new Date(dataFim);
 
       if (Number.isNaN(dataInicioDate.getTime()) || Number.isNaN(dataFimDate.getTime())) {
-        return res.status(400).json({ erro: 'Datas inválidas' });
+        return sendError(res, 400, 'Datas inválidas');
       }
 
       if (dataFimDate <= dataInicioDate) {
-        return res.status(400).json({ erro: 'Data de fim deve ser posterior à data de início' });
+        return sendError(res, 400, 'Data de fim deve ser posterior à data de início');
       }
 
       const novoBloqueio = await prisma.bloqueioHorario.create({
@@ -556,8 +555,8 @@ export function setupAdminHorarios(prisma, authMiddleware) {
 
       res.status(201).json(novoBloqueio);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ erro: 'Erro ao criar bloqueio de horário' });
+      logError('POST /admin/horarios', error, req);
+      return sendError(res, 500, 'Erro ao criar bloqueio de horário');
     }
   });
 
@@ -568,10 +567,10 @@ export function setupAdminHorarios(prisma, authMiddleware) {
   router.put('/horarios/:id', authMiddleware, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+      if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
 
       const bloqueioExistente = await prisma.bloqueioHorario.findUnique({ where: { id } });
-      if (!bloqueioExistente) return res.status(404).json({ erro: 'Bloqueio não encontrado' });
+      if (!bloqueioExistente) return sendError(res, 404, 'Bloqueio não encontrado');
 
       const { dataInicio, dataFim, horaInicio, horaFim, motivo, ativo } = req.body;
       const data = {};
@@ -579,7 +578,7 @@ export function setupAdminHorarios(prisma, authMiddleware) {
       if (dataInicio !== undefined) {
         const dataInicioDate = new Date(dataInicio);
         if (Number.isNaN(dataInicioDate.getTime())) {
-          return res.status(400).json({ erro: 'Data de início inválida' });
+          return sendError(res, 400, 'Data de início inválida');
         }
         data.dataInicio = dataInicioDate;
       }
@@ -587,7 +586,7 @@ export function setupAdminHorarios(prisma, authMiddleware) {
       if (dataFim !== undefined) {
         const dataFimDate = new Date(dataFim);
         if (Number.isNaN(dataFimDate.getTime())) {
-          return res.status(400).json({ erro: 'Data de fim inválida' });
+          return sendError(res, 400, 'Data de fim inválida');
         }
         data.dataFim = dataFimDate;
       }
@@ -606,13 +605,13 @@ export function setupAdminHorarios(prisma, authMiddleware) {
 
       if (ativo !== undefined) {
         if (typeof ativo !== 'boolean') {
-          return res.status(400).json({ erro: 'Ativo deve ser true ou false' });
+          return sendError(res, 400, 'Ativo deve ser true ou false');
         }
         data.ativo = ativo;
       }
 
       if (Object.keys(data).length === 0) {
-        return res.status(400).json({ erro: 'Nenhum campo para atualizar' });
+        return sendError(res, 400, 'Nenhum campo para atualizar');
       }
 
       const bloqueioAtualizado = await prisma.bloqueioHorario.update({
@@ -622,8 +621,8 @@ export function setupAdminHorarios(prisma, authMiddleware) {
 
       res.json(bloqueioAtualizado);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ erro: 'Erro ao atualizar bloqueio de horário' });
+      logError('PUT /admin/horarios/:id', error, req);
+      return sendError(res, 500, 'Erro ao atualizar bloqueio de horário');
     }
   });
 
@@ -634,10 +633,10 @@ export function setupAdminHorarios(prisma, authMiddleware) {
   router.delete('/horarios/:id', authMiddleware, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+      if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
 
       const bloqueioExistente = await prisma.bloqueioHorario.findUnique({ where: { id } });
-      if (!bloqueioExistente) return res.status(404).json({ erro: 'Bloqueio não encontrado' });
+      if (!bloqueioExistente) return sendError(res, 404, 'Bloqueio não encontrado');
 
       const bloqueioDesativado = await prisma.bloqueioHorario.update({
         where: { id },
@@ -649,8 +648,8 @@ export function setupAdminHorarios(prisma, authMiddleware) {
         bloqueio: bloqueioDesativado,
       });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ erro: 'Erro ao desativar bloqueio de horário' });
+      logError('DELETE /admin/horarios/:id', error, req);
+      return sendError(res, 500, 'Erro ao desativar bloqueio de horário');
     }
   });
 }

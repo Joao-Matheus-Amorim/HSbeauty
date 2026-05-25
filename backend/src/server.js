@@ -14,6 +14,7 @@ import adminRouter, {
   setupAdminHorarios,
 } from './admin-routes.js';
 import { legacyAdminRouteDeprecation } from './legacy-route-deprecation.js';
+import { logError, sendError } from './http-response.js';
 
 const { PrismaClient } = pkg;
 
@@ -264,12 +265,12 @@ async function calculateAvailability(dateString, servico) {
 
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) return res.status(401).json({ erro: 'Token não fornecido' });
+  if (!header || !header.startsWith('Bearer ')) return sendError(res, 401, 'Token não fornecido');
   try {
     req.admin = jwt.verify(header.split(' ')[1], JWT_SECRET);
     next();
   } catch {
-    return res.status(401).json({ erro: 'Token inválido ou expirado' });
+    return sendError(res, 401, 'Token inválido ou expirado');
   }
 }
 
@@ -280,55 +281,53 @@ app.get('/', (req, res) => {
 });
 
 app.all('/auth/register', (_req, res) => {
-  return res.status(410).json({
-    erro: 'Registro de admin via HTTP desativado. Use o script CLI backend/scripts/create-admin.js.',
-  });
+  return sendError(res, 410, 'Registro de admin via HTTP desativado. Use o script CLI backend/scripts/create-admin.js.');
 });
 
 app.post('/auth/login', loginLimiter, async (req, res) => {
   try {
     const { email, senha } = req.body;
-    if (!email || !senha) return res.status(400).json({ erro: 'Email e senha são obrigatórios' });
+    if (!email || !senha) return sendError(res, 400, 'Email e senha são obrigatórios');
     const admin = await prisma.admin.findUnique({ where: { email } });
-    if (!admin || admin.ativo === false) return res.status(401).json({ erro: 'Credenciais inválidas' });
+    if (!admin || admin.ativo === false) return sendError(res, 401, 'Credenciais inválidas');
     const ok = await bcrypt.compare(senha, admin.senha);
-    if (!ok) return res.status(401).json({ erro: 'Credenciais inválidas' });
+    if (!ok) return sendError(res, 401, 'Credenciais inválidas');
     const accessToken = generateAccessToken(admin);
     const refreshToken = await generateRefreshToken(admin.id);
     res.json({ accessToken, refreshToken, expiresIn: 900, admin: { id: admin.id, email: admin.email } });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao fazer login' });
+    logError('POST /auth/login', error, req);
+    return sendError(res, 500, 'Erro ao fazer login');
   }
 });
 
 app.post('/auth/refresh', async (req, res) => {
   try {
     const { refreshToken } = req.body;
-    if (!refreshToken) return res.status(400).json({ erro: 'refreshToken é obrigatório' });
+    if (!refreshToken) return sendError(res, 400, 'refreshToken é obrigatório');
     const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken }, include: { admin: true } });
-    if (!stored || stored.revogado || stored.expiresAt < new Date()) return res.status(401).json({ erro: 'Refresh token inválido ou expirado' });
-    if (!stored.admin || stored.admin.ativo === false) return res.status(401).json({ erro: 'Usuário inativo' });
+    if (!stored || stored.revogado || stored.expiresAt < new Date()) return sendError(res, 401, 'Refresh token inválido ou expirado');
+    if (!stored.admin || stored.admin.ativo === false) return sendError(res, 401, 'Usuário inativo');
     await prisma.refreshToken.update({ where: { id: stored.id }, data: { revogado: true } });
     const newAccessToken = generateAccessToken(stored.admin);
     const newRefreshToken = await generateRefreshToken(stored.admin.id);
     res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken, expiresIn: 900 });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao renovar token' });
+    logError('POST /auth/refresh', error, req);
+    return sendError(res, 500, 'Erro ao renovar token');
   }
 });
 
 app.post('/auth/logout', async (req, res) => {
   try {
     const { refreshToken } = req.body;
-    if (!refreshToken) return res.status(400).json({ erro: 'refreshToken é obrigatório' });
+    if (!refreshToken) return sendError(res, 400, 'refreshToken é obrigatório');
     const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
     if (stored && !stored.revogado) await prisma.refreshToken.update({ where: { id: stored.id }, data: { revogado: true } });
     res.json({ mensagem: 'Logout realizado com sucesso' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao fazer logout' });
+    logError('POST /auth/logout', error, req);
+    return sendError(res, 500, 'Erro ao fazer logout');
   }
 });
 
@@ -341,87 +340,87 @@ app.get('/servicos', async (req, res) => {
     const servicos = await prisma.servico.findMany({ where, orderBy: { id: 'asc' } });
     res.json(servicos);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao buscar serviços' });
+    logError('GET /servicos', error, req);
+    return sendError(res, 500, 'Erro ao buscar serviços');
   }
 });
 
 app.get('/servicos/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+    if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
     const servico = await prisma.servico.findUnique({ where: { id } });
-    if (!servico) return res.status(404).json({ erro: 'Serviço não encontrado' });
+    if (!servico) return sendError(res, 404, 'Serviço não encontrado');
     res.json(servico);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao buscar serviço' });
+    logError('GET /servicos/:id', error, req);
+    return sendError(res, 500, 'Erro ao buscar serviço');
   }
 });
 
 app.post('/servicos', authMiddleware, async (req, res) => {
   try {
     const { nome, preco, duracao, ativo } = req.body;
-    if (!nome || typeof nome !== 'string' || !nome.trim()) return res.status(400).json({ erro: 'Nome é obrigatório' });
+    if (!nome || typeof nome !== 'string' || !nome.trim()) return sendError(res, 400, 'Nome é obrigatório');
     const precoNumero = Number(preco);
-    if (Number.isNaN(precoNumero) || precoNumero <= 0) return res.status(400).json({ erro: 'Preço inválido' });
+    if (Number.isNaN(precoNumero) || precoNumero <= 0) return sendError(res, 400, 'Preço inválido');
     const duracaoNumero = Number(duracao);
-    if (!Number.isInteger(duracaoNumero) || duracaoNumero <= 0) return res.status(400).json({ erro: 'Duração inválida (em minutos, inteiro positivo)' });
+    if (!Number.isInteger(duracaoNumero) || duracaoNumero <= 0) return sendError(res, 400, 'Duração inválida (em minutos, inteiro positivo)');
     const novoServico = await prisma.servico.create({
       data: { nome: nome.trim(), preco: precoNumero, duracao: duracaoNumero, ...(typeof ativo === 'boolean' ? { ativo } : {}) },
     });
     res.status(201).json(novoServico);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao criar serviço' });
+    logError('POST /servicos', error, req);
+    return sendError(res, 500, 'Erro ao criar serviço');
   }
 });
 
 app.put('/servicos/:id', authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+    if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
     const servicoExistente = await prisma.servico.findUnique({ where: { id } });
-    if (!servicoExistente) return res.status(404).json({ erro: 'Serviço não encontrado' });
+    if (!servicoExistente) return sendError(res, 404, 'Serviço não encontrado');
     const { nome, preco, duracao, ativo } = req.body;
     const data = {};
     if (nome !== undefined) {
-      if (typeof nome !== 'string' || !nome.trim()) return res.status(400).json({ erro: 'Nome inválido' });
+      if (typeof nome !== 'string' || !nome.trim()) return sendError(res, 400, 'Nome inválido');
       data.nome = nome.trim();
     }
     if (preco !== undefined) {
       const precoNumero = Number(preco);
-      if (Number.isNaN(precoNumero) || precoNumero <= 0) return res.status(400).json({ erro: 'Preço inválido' });
+      if (Number.isNaN(precoNumero) || precoNumero <= 0) return sendError(res, 400, 'Preço inválido');
       data.preco = precoNumero;
     }
     if (duracao !== undefined) {
       const duracaoNumero = Number(duracao);
-      if (!Number.isInteger(duracaoNumero) || duracaoNumero <= 0) return res.status(400).json({ erro: 'Duração inválida (em minutos, inteiro positivo)' });
+      if (!Number.isInteger(duracaoNumero) || duracaoNumero <= 0) return sendError(res, 400, 'Duração inválida (em minutos, inteiro positivo)');
       data.duracao = duracaoNumero;
     }
     if (ativo !== undefined) {
-      if (typeof ativo !== 'boolean') return res.status(400).json({ erro: 'Ativo deve ser true ou false' });
+      if (typeof ativo !== 'boolean') return sendError(res, 400, 'Ativo deve ser true ou false');
       data.ativo = ativo;
     }
     const servicoAtualizado = await prisma.servico.update({ where: { id }, data });
     res.json(servicoAtualizado);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao atualizar serviço' });
+    logError('PUT /servicos/:id', error, req);
+    return sendError(res, 500, 'Erro ao atualizar serviço');
   }
 });
 
 app.delete('/servicos/:id', authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+    if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
     const servicoExistente = await prisma.servico.findUnique({ where: { id } });
-    if (!servicoExistente) return res.status(404).json({ erro: 'Serviço não encontrado' });
+    if (!servicoExistente) return sendError(res, 404, 'Serviço não encontrado');
     const servicoDesativado = await prisma.servico.update({ where: { id }, data: { ativo: false } });
     res.json({ mensagem: 'Serviço desativado com sucesso', servico: servicoDesativado });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao desativar serviço' });
+    logError('DELETE /servicos/:id', error, req);
+    return sendError(res, 500, 'Erro ao desativar serviço');
   }
 });
 
@@ -430,50 +429,50 @@ app.get('/agendamentos', authMiddleware, async (req, res) => {
     const agendamentos = await prisma.agendamento.findMany({ orderBy: { id: 'asc' }, include: { servico: true } });
     res.json(agendamentos);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao buscar agendamentos' });
+    logError('GET /agendamentos', error, req);
+    return sendError(res, 500, 'Erro ao buscar agendamentos');
   }
 });
 
 app.get('/agendamentos/:id', authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+    if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
     const agendamento = await prisma.agendamento.findUnique({ where: { id }, include: { servico: true } });
-    if (!agendamento) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    if (!agendamento) return sendError(res, 404, 'Agendamento não encontrado');
     res.json(agendamento);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao buscar agendamento' });
+    logError('GET /agendamentos/:id', error, req);
+    return sendError(res, 500, 'Erro ao buscar agendamento');
   }
 });
 
 app.post('/agendamentos', async (req, res) => {
   try {
     const { nomeCliente, telefone, data, servicoId, observacoes } = req.body;
-    if (!nomeCliente || typeof nomeCliente !== 'string' || !nomeCliente.trim()) return res.status(400).json({ erro: 'Nome do cliente é obrigatório' });
-    if (!telefone || typeof telefone !== 'string' || !telefone.trim()) return res.status(400).json({ erro: 'Telefone é obrigatório' });
-    if (!isValidTelefone(telefone)) return res.status(400).json({ erro: 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.' });
-    if (!data) return res.status(400).json({ erro: 'Data é obrigatória' });
+    if (!nomeCliente || typeof nomeCliente !== 'string' || !nomeCliente.trim()) return sendError(res, 400, 'Nome do cliente é obrigatório');
+    if (!telefone || typeof telefone !== 'string' || !telefone.trim()) return sendError(res, 400, 'Telefone é obrigatório');
+    if (!isValidTelefone(telefone)) return sendError(res, 400, 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.');
+    if (!data) return sendError(res, 400, 'Data é obrigatória');
     if (observacoes !== undefined && observacoes !== null) {
-      if (typeof observacoes !== 'string') return res.status(400).json({ erro: 'Observações deve ser texto' });
-      if (observacoes.length > OBSERVACOES_MAX_LENGTH) return res.status(400).json({ erro: `Observações excedem o limite de ${OBSERVACOES_MAX_LENGTH} caracteres` });
+      if (typeof observacoes !== 'string') return sendError(res, 400, 'Observações deve ser texto');
+      if (observacoes.length > OBSERVACOES_MAX_LENGTH) return sendError(res, 400, `Observações excedem o limite de ${OBSERVACOES_MAX_LENGTH} caracteres`);
     }
     const dataAgendamento = parsePublicBookingDateTime(data);
-    if (!dataAgendamento) return res.status(400).json({ erro: 'Data inválida. Envie data e hora em formato ISO, como 2026-05-25T09:00:00.000Z' });
-    if (!isSlotStepAligned(dataAgendamento)) return res.status(400).json({ erro: 'Horário deve estar alinhado ao intervalo de 30 minutos' });
-    if (!isDateInCurrentWeek(dataAgendamento)) return res.status(400).json({ erro: 'Agendamentos disponíveis apenas para a semana atual' });
+    if (!dataAgendamento) return sendError(res, 400, 'Data inválida. Envie data e hora em formato ISO, como 2026-05-25T09:00:00.000Z');
+    if (!isSlotStepAligned(dataAgendamento)) return sendError(res, 400, 'Horário deve estar alinhado ao intervalo de 30 minutos');
+    if (!isDateInCurrentWeek(dataAgendamento)) return sendError(res, 400, 'Agendamentos disponíveis apenas para a semana atual');
     const servicoIdNumero = Number(servicoId);
-    if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return res.status(400).json({ erro: 'Serviço inválido' });
+    if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return sendError(res, 400, 'Serviço inválido');
     const servico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
-    if (!servico || servico.ativo === false) return res.status(404).json({ erro: 'Serviço não encontrado ou inativo' });
+    if (!servico || servico.ativo === false) return sendError(res, 404, 'Serviço não encontrado ou inativo');
     const inicioSlot = new Date(dataAgendamento);
     const fimSlot = addMinutes(inicioSlot, servico.duracao);
-    if (!isWithinBusinessHours(inicioSlot, fimSlot)) return res.status(400).json({ erro: 'Horário fora do expediente (09:00–18:00)' });
+    if (!isWithinBusinessHours(inicioSlot, fimSlot)) return sendError(res, 400, 'Horário fora do expediente (09:00–18:00)');
     const dataString = formatDateOnly(dataAgendamento);
     const disponibilidade = await calculateAvailability(dataString, servico);
     const slotDisponivel = disponibilidade.slotsDisponiveis.some((slot) => new Date(slot.inicio).getTime() === inicioSlot.getTime());
-    if (!slotDisponivel) return res.status(409).json({ erro: 'Horário indisponível' });
+    if (!slotDisponivel) return sendError(res, 409, 'Horário indisponível');
     const novoAgendamento = await prisma.agendamento.create({
       data: {
         nomeCliente: nomeCliente.trim(),
@@ -488,38 +487,38 @@ app.post('/agendamentos', async (req, res) => {
     });
     res.status(201).json(novoAgendamento);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao criar agendamento' });
+    logError('POST /agendamentos', error, req);
+    return sendError(res, 500, 'Erro ao criar agendamento');
   }
 });
 
 app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+    if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
     const agendamentoExistente = await prisma.agendamento.findUnique({ where: { id }, include: { servico: true } });
-    if (!agendamentoExistente) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    if (!agendamentoExistente) return sendError(res, 404, 'Agendamento não encontrado');
     const { nomeCliente, telefone, data, servicoId, status, observacoes } = req.body;
     const payload = {};
     if (nomeCliente !== undefined) payload.nomeCliente = String(nomeCliente).trim();
     if (telefone !== undefined) {
-      if (!isValidTelefone(telefone)) return res.status(400).json({ erro: 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.' });
+      if (!isValidTelefone(telefone)) return sendError(res, 400, 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.');
       payload.telefone = String(telefone).trim();
     }
     if (observacoes !== undefined) {
       if (observacoes === null) {
         payload.observacoes = null;
       } else {
-        if (typeof observacoes !== 'string') return res.status(400).json({ erro: 'Observações deve ser texto' });
-        if (observacoes.length > OBSERVACOES_MAX_LENGTH) return res.status(400).json({ erro: `Observações excedem o limite de ${OBSERVACOES_MAX_LENGTH} caracteres` });
+        if (typeof observacoes !== 'string') return sendError(res, 400, 'Observações deve ser texto');
+        if (observacoes.length > OBSERVACOES_MAX_LENGTH) return sendError(res, 400, `Observações excedem o limite de ${OBSERVACOES_MAX_LENGTH} caracteres`);
         payload.observacoes = observacoes.trim();
       }
     }
     let dataAtual = agendamentoExistente.data;
     if (data !== undefined) {
       const dataAgendamento = new Date(data);
-      if (Number.isNaN(dataAgendamento.getTime())) return res.status(400).json({ erro: 'Data inválida' });
-      if (!isDateInCurrentWeek(dataAgendamento)) return res.status(400).json({ erro: 'Agendamentos disponíveis apenas para a semana atual' });
+      if (Number.isNaN(dataAgendamento.getTime())) return sendError(res, 400, 'Data inválida');
+      if (!isDateInCurrentWeek(dataAgendamento)) return sendError(res, 400, 'Agendamentos disponíveis apenas para a semana atual');
       dataAtual = dataAgendamento;
       payload.data = dataAgendamento;
       payload.hora = getHoraFromDate(dataAgendamento);
@@ -527,28 +526,28 @@ app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
     let servicoAtual = agendamentoExistente.servico;
     if (servicoId !== undefined) {
       const servicoIdNumero = Number(servicoId);
-      if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return res.status(400).json({ erro: 'Serviço inválido' });
+      if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return sendError(res, 400, 'Serviço inválido');
       const novoServico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
-      if (!novoServico || novoServico.ativo === false) return res.status(404).json({ erro: 'Serviço não encontrado ou inativo' });
+      if (!novoServico || novoServico.ativo === false) return sendError(res, 404, 'Serviço não encontrado ou inativo');
       servicoAtual = novoServico;
       payload.servicoId = servicoIdNumero;
     }
     if (status !== undefined) {
       const statusValidos = ['pendente', 'confirmado', 'cancelado', 'concluído'];
-      if (!statusValidos.includes(status)) return res.status(400).json({ erro: 'Status inválido' });
+      if (!statusValidos.includes(status)) return sendError(res, 400, 'Status inválido');
       payload.status = status;
     }
     const inicioSlot = new Date(dataAtual);
     const fimSlot = addMinutes(inicioSlot, servicoAtual.duracao);
-    if (!isWithinBusinessHours(inicioSlot, fimSlot)) return res.status(400).json({ erro: 'Horário fora do expediente (09:00–18:00)' });
+    if (!isWithinBusinessHours(inicioSlot, fimSlot)) return sendError(res, 400, 'Horário fora do expediente (09:00–18:00)');
     const { ocupados } = await getDayOccupancy(formatDateOnly(inicioSlot));
     const ocupadosSemAtual = ocupados.filter((item) => item.tipo !== 'agendamento' || item.id !== agendamentoExistente.id);
-    if (hasConflict(inicioSlot, fimSlot, ocupadosSemAtual)) return res.status(409).json({ erro: 'Horário indisponível' });
+    if (hasConflict(inicioSlot, fimSlot, ocupadosSemAtual)) return sendError(res, 409, 'Horário indisponível');
     const agendamentoAtualizado = await prisma.agendamento.update({ where: { id }, data: payload, include: { servico: true } });
     res.json(agendamentoAtualizado);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao atualizar agendamento' });
+    logError('PUT /agendamentos/:id', error, req);
+    return sendError(res, 500, 'Erro ao atualizar agendamento');
   }
 });
 
@@ -556,14 +555,14 @@ app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
 app.delete('/agendamentos/:id', authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+    if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
     const existe = await prisma.agendamento.findUnique({ where: { id } });
-    if (!existe) return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    if (!existe) return sendError(res, 404, 'Agendamento não encontrado');
     const agendamento = await prisma.agendamento.update({ where: { id }, data: { status: 'cancelado' }, include: { servico: true } });
     res.json({ mensagem: 'Agendamento cancelado com sucesso', agendamento });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao cancelar agendamento' });
+    logError('DELETE /agendamentos/:id', error, req);
+    return sendError(res, 500, 'Erro ao cancelar agendamento');
   }
 });
 
@@ -572,16 +571,16 @@ app.post('/bloqueios', authMiddleware, async (req, res) => {
     const { inicio, fim, dataInicio, dataFim, motivo } = req.body;
     const rawInicio = dataInicio || inicio;
     const rawFim = dataFim || fim;
-    if (!rawInicio || !rawFim) return res.status(400).json({ erro: 'Inicio e fim são obrigatórios' });
+    if (!rawInicio || !rawFim) return sendError(res, 400, 'Inicio e fim são obrigatórios');
     const inicioDate = new Date(rawInicio);
     const fimDate = new Date(rawFim);
-    if (Number.isNaN(inicioDate.getTime()) || Number.isNaN(fimDate.getTime())) return res.status(400).json({ erro: 'Datas inválidas' });
-    if (fimDate <= inicioDate) return res.status(400).json({ erro: 'Fim deve ser maior que início' });
+    if (Number.isNaN(inicioDate.getTime()) || Number.isNaN(fimDate.getTime())) return sendError(res, 400, 'Datas inválidas');
+    if (fimDate <= inicioDate) return sendError(res, 400, 'Fim deve ser maior que início');
     const bloqueio = await prisma.bloqueioHorario.create({ data: { dataInicio: inicioDate, dataFim: fimDate, motivo } });
     res.status(201).json({ success: true, bloqueio });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao criar bloqueio' });
+    logError('POST /bloqueios', error, req);
+    return sendError(res, 500, 'Erro ao criar bloqueio');
   }
 });
 
@@ -590,22 +589,22 @@ app.get('/bloqueios', authMiddleware, async (req, res) => {
     const bloqueios = await prisma.bloqueioHorario.findMany({ where: { ativo: true }, orderBy: { id: 'asc' } });
     res.json(bloqueios);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao carregar bloqueios' });
+    logError('GET /bloqueios', error, req);
+    return sendError(res, 500, 'Erro ao carregar bloqueios');
   }
 });
 
 app.delete('/bloqueios/:id', authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
+    if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
     const existe = await prisma.bloqueioHorario.findUnique({ where: { id } });
-    if (!existe) return res.status(404).json({ erro: 'Bloqueio não encontrado' });
+    if (!existe) return sendError(res, 404, 'Bloqueio não encontrado');
     const bloqueio = await prisma.bloqueioHorario.update({ where: { id }, data: { ativo: false } });
     res.json({ mensagem: 'Bloqueio removido', bloqueio });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao remover bloqueio' });
+    logError('DELETE /bloqueios/:id', error, req);
+    return sendError(res, 500, 'Erro ao remover bloqueio');
   }
 });
 
@@ -618,17 +617,17 @@ app.use('/admin', adminRouter);
 app.get('/disponibilidade', async (req, res) => {
   try {
     const { data, servicoId } = req.query;
-    if (!data) return res.status(400).json({ erro: 'Informe a data no formato YYYY-MM-DD' });
-    if (!servicoId) return res.status(400).json({ erro: 'Informe o servicoId' });
+    if (!data) return sendError(res, 400, 'Informe a data no formato YYYY-MM-DD');
+    if (!servicoId) return sendError(res, 400, 'Informe o servicoId');
     const servicoIdNumero = Number(servicoId);
-    if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return res.status(400).json({ erro: 'servicoId inválido' });
+    if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return sendError(res, 400, 'servicoId inválido');
     const servico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
-    if (!servico || servico.ativo === false) return res.status(404).json({ erro: 'Serviço não encontrado ou inativo' });
+    if (!servico || servico.ativo === false) return sendError(res, 404, 'Serviço não encontrado ou inativo');
     const disponibilidade = await calculateAvailability(data, servico);
     res.json({ data, servico: { id: servico.id, nome: servico.nome, duracao: servico.duracao }, ...disponibilidade });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: 'Erro ao calcular disponibilidade' });
+    logError('GET /disponibilidade', error, req);
+    return sendError(res, 500, 'Erro ao calcular disponibilidade');
   }
 });
 

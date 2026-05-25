@@ -31,7 +31,6 @@ const TELEFONE_REGEX = /^(?:\+?55\s?)?\(?\d{2}\)?[\s-]?9?\d{4}[\s-]?\d{4}$/;
 
 function isValidTelefone(tel) {
   const digits = tel.replace(/\D/g, '');
-  // Com DDI: 12-13 dígitos | Sem DDI: 10-11 dígitos
   if (digits.length < 10 || digits.length > 13) return false;
   return TELEFONE_REGEX.test(tel.trim());
 }
@@ -58,7 +57,6 @@ const prisma = new PrismaClient({ adapter });
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Rate limiter: máx. 5 tentativas de login por IP a cada 15 minutos
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
@@ -67,7 +65,7 @@ const loginLimiter = rateLimit({
   message: { erro: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
 });
 
-// ── Helpers de data ──────────────────────────────────────────────────────────
+// -- Helpers de data --
 
 function addMinutes(date, minutes) {
   return new Date(date.getTime() + minutes * 60000);
@@ -113,15 +111,12 @@ function getCurrentWeekBounds() {
   today.setHours(0, 0, 0, 0);
   const day = today.getDay();
   const diffToMonday = day === 0 ? -6 : 1 - day;
-
   const start = new Date(today);
   start.setDate(today.getDate() + diffToMonday);
   start.setHours(0, 0, 0, 0);
-
   const end = new Date(start);
   end.setDate(start.getDate() + 6);
   end.setHours(23, 59, 59, 999);
-
   return { start, end };
 }
 
@@ -147,7 +142,7 @@ function hasConflict(startA, endA, items) {
   return items.some((item) => overlaps(startA, endA, item.inicio, item.fim));
 }
 
-// ── Helpers de token ─────────────────────────────────────────────────────────
+// -- Helpers de token --
 
 function generateAccessToken(admin) {
   return jwt.sign({ id: admin.id, email: admin.email }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
@@ -161,13 +156,14 @@ async function generateRefreshToken(adminId) {
   return token;
 }
 
-// ── Ocupancy helpers ─────────────────────────────────────────────────────────
+// -- Ocupancy helpers --
 
 async function getDayOccupancy(dateString) {
   const { start: dayStart, end: dayEnd } = parseDayBounds(dateString);
   const [agendamentos, bloqueios] = await Promise.all([
     prisma.agendamento.findMany({
-      where: { data: { gte: dayStart, lte: dayEnd } },
+      // Exclui cancelados do calculo de conflitos
+      where: { data: { gte: dayStart, lte: dayEnd }, status: { not: 'cancelado' } },
       include: { servico: true },
       orderBy: { id: 'asc' },
     }),
@@ -242,7 +238,7 @@ async function calculateAvailability(dateString, servico) {
   };
 }
 
-// ── Auth middleware ───────────────────────────────────────────────────────────
+// -- Auth middleware --
 
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
@@ -255,7 +251,7 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// ── Rotas ─────────────────────────────────────────────────────────────────────
+// -- Rotas --
 
 app.get('/', (req, res) => {
   res.json({ status: 'ok', mensagem: 'API HSBeauty rodando' });
@@ -263,7 +259,6 @@ app.get('/', (req, res) => {
 
 app.post('/auth/register', async (req, res) => {
   if (process.env.ALLOW_ADMIN_REGISTER !== 'true') return res.status(403).json({ erro: 'Registro de admin desativado' });
-
   try {
     const { email, senha } = req.body;
     if (!email || !senha) return res.status(400).json({ erro: 'Email e senha são obrigatórios' });
@@ -278,7 +273,6 @@ app.post('/auth/register', async (req, res) => {
   }
 });
 
-// Login: retorna accessToken (15min) + refreshToken (7 dias)
 app.post('/auth/login', loginLimiter, async (req, res) => {
   try {
     const { email, senha } = req.body;
@@ -287,69 +281,38 @@ app.post('/auth/login', loginLimiter, async (req, res) => {
     if (!admin || admin.ativo === false) return res.status(401).json({ erro: 'Credenciais inválidas' });
     const ok = await bcrypt.compare(senha, admin.senha);
     if (!ok) return res.status(401).json({ erro: 'Credenciais inválidas' });
-
     const accessToken = generateAccessToken(admin);
     const refreshToken = await generateRefreshToken(admin.id);
-
-    res.json({
-      accessToken,
-      refreshToken,
-      expiresIn: 900, // 15 minutos em segundos
-      admin: { id: admin.id, email: admin.email },
-    });
+    res.json({ accessToken, refreshToken, expiresIn: 900, admin: { id: admin.id, email: admin.email } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: 'Erro ao fazer login' });
   }
 });
 
-// Refresh: valida refreshToken e emite novo par de tokens (rotação)
 app.post('/auth/refresh', async (req, res) => {
   try {
     const { refreshToken } = req.body;
     if (!refreshToken) return res.status(400).json({ erro: 'refreshToken é obrigatório' });
-
-    const stored = await prisma.refreshToken.findUnique({
-      where: { token: refreshToken },
-      include: { admin: true },
-    });
-
-    if (!stored || stored.revogado || stored.expiresAt < new Date()) {
-      return res.status(401).json({ erro: 'Refresh token inválido ou expirado' });
-    }
-
-    if (!stored.admin || stored.admin.ativo === false) {
-      return res.status(401).json({ erro: 'Usuário inativo' });
-    }
-
-    // Rotação: revoga o token atual e emite um novo par
+    const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken }, include: { admin: true } });
+    if (!stored || stored.revogado || stored.expiresAt < new Date()) return res.status(401).json({ erro: 'Refresh token inválido ou expirado' });
+    if (!stored.admin || stored.admin.ativo === false) return res.status(401).json({ erro: 'Usuário inativo' });
     await prisma.refreshToken.update({ where: { id: stored.id }, data: { revogado: true } });
-
     const newAccessToken = generateAccessToken(stored.admin);
     const newRefreshToken = await generateRefreshToken(stored.admin.id);
-
-    res.json({
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-      expiresIn: 900,
-    });
+    res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken, expiresIn: 900 });
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: 'Erro ao renovar token' });
   }
 });
 
-// Logout: revoga o refreshToken
 app.post('/auth/logout', async (req, res) => {
   try {
     const { refreshToken } = req.body;
     if (!refreshToken) return res.status(400).json({ erro: 'refreshToken é obrigatório' });
-
     const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
-    if (stored && !stored.revogado) {
-      await prisma.refreshToken.update({ where: { id: stored.id }, data: { revogado: true } });
-    }
-
+    if (stored && !stored.revogado) await prisma.refreshToken.update({ where: { id: stored.id }, data: { revogado: true } });
     res.json({ mensagem: 'Logout realizado com sucesso' });
   } catch (error) {
     console.error(error);
@@ -473,24 +436,19 @@ app.post('/agendamentos', async (req, res) => {
     if (!telefone || typeof telefone !== 'string' || !telefone.trim()) return res.status(400).json({ erro: 'Telefone é obrigatório' });
     if (!isValidTelefone(telefone)) return res.status(400).json({ erro: 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.' });
     if (!data) return res.status(400).json({ erro: 'Data é obrigatória' });
-
     const dataAgendamento = new Date(data);
     if (Number.isNaN(dataAgendamento.getTime())) return res.status(400).json({ erro: 'Data inválida' });
     if (!isDateInCurrentWeek(dataAgendamento)) return res.status(400).json({ erro: 'Agendamentos disponíveis apenas para a semana atual' });
-
     const servicoIdNumero = Number(servicoId);
     if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return res.status(400).json({ erro: 'Serviço inválido' });
     const servico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
     if (!servico || servico.ativo === false) return res.status(404).json({ erro: 'Serviço não encontrado ou inativo' });
-
     const inicioSlot = new Date(dataAgendamento);
     const fimSlot = addMinutes(inicioSlot, SERVICE_DURATION_MINUTES);
     if (!isWithinBusinessHours(inicioSlot, fimSlot)) return res.status(400).json({ erro: 'Horário fora do expediente (09:00–18:00)' });
-
     const dataString = formatDateOnly(dataAgendamento);
     const { ocupados } = await getDayOccupancy(dataString);
     if (hasConflict(inicioSlot, fimSlot, ocupados)) return res.status(409).json({ erro: 'Horário indisponível' });
-
     const novoAgendamento = await prisma.agendamento.create({
       data: {
         nomeCliente: nomeCliente.trim(),
@@ -515,7 +473,6 @@ app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
     if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
     const agendamentoExistente = await prisma.agendamento.findUnique({ where: { id }, include: { servico: true } });
     if (!agendamentoExistente) return res.status(404).json({ erro: 'Agendamento não encontrado' });
-
     const { nomeCliente, telefone, data, servicoId, status } = req.body;
     const payload = {};
     if (nomeCliente !== undefined) payload.nomeCliente = String(nomeCliente).trim();
@@ -523,7 +480,6 @@ app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
       if (!isValidTelefone(telefone)) return res.status(400).json({ erro: 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.' });
       payload.telefone = String(telefone).trim();
     }
-
     let dataAtual = agendamentoExistente.data;
     if (data !== undefined) {
       const dataAgendamento = new Date(data);
@@ -533,7 +489,6 @@ app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
       payload.data = dataAgendamento;
       payload.hora = getHoraFromDate(dataAgendamento);
     }
-
     if (servicoId !== undefined) {
       const servicoIdNumero = Number(servicoId);
       if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return res.status(400).json({ erro: 'Serviço inválido' });
@@ -541,21 +496,17 @@ app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
       if (!servico || servico.ativo === false) return res.status(404).json({ erro: 'Serviço não encontrado ou inativo' });
       payload.servicoId = servicoIdNumero;
     }
-
     if (status !== undefined) {
       const statusValidos = ['pendente', 'confirmado', 'cancelado', 'concluído'];
       if (!statusValidos.includes(status)) return res.status(400).json({ erro: 'Status inválido' });
       payload.status = status;
     }
-
     const inicioSlot = new Date(dataAtual);
     const fimSlot = addMinutes(inicioSlot, SERVICE_DURATION_MINUTES);
     if (!isWithinBusinessHours(inicioSlot, fimSlot)) return res.status(400).json({ erro: 'Horário fora do expediente (09:00–18:00)' });
-
     const { ocupados } = await getDayOccupancy(formatDateOnly(inicioSlot));
     const ocupadosSemAtual = ocupados.filter((item) => item.tipo !== 'agendamento' || item.id !== agendamentoExistente.id);
     if (hasConflict(inicioSlot, fimSlot, ocupadosSemAtual)) return res.status(409).json({ erro: 'Horário indisponível' });
-
     const agendamentoAtualizado = await prisma.agendamento.update({ where: { id }, data: payload, include: { servico: true } });
     res.json(agendamentoAtualizado);
   } catch (error) {
@@ -564,17 +515,18 @@ app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Soft delete: marca como cancelado em vez de apagar do banco
 app.delete('/agendamentos/:id', authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
     const existe = await prisma.agendamento.findUnique({ where: { id } });
     if (!existe) return res.status(404).json({ erro: 'Agendamento não encontrado' });
-    await prisma.agendamento.delete({ where: { id } });
-    res.status(204).send();
+    const agendamento = await prisma.agendamento.update({ where: { id }, data: { status: 'cancelado' }, include: { servico: true } });
+    res.json({ mensagem: 'Agendamento cancelado com sucesso', agendamento });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ erro: 'Erro ao remover agendamento' });
+    res.status(500).json({ erro: 'Erro ao cancelar agendamento' });
   }
 });
 
@@ -631,18 +583,12 @@ app.get('/disponibilidade', async (req, res) => {
     const { data, servicoId } = req.query;
     if (!data) return res.status(400).json({ erro: 'Informe a data no formato YYYY-MM-DD' });
     if (!servicoId) return res.status(400).json({ erro: 'Informe o servicoId' });
-
     const servicoIdNumero = Number(servicoId);
     if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return res.status(400).json({ erro: 'servicoId inválido' });
     const servico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
     if (!servico || servico.ativo === false) return res.status(404).json({ erro: 'Serviço não encontrado ou inativo' });
-
     const disponibilidade = await calculateAvailability(data, servico);
-    res.json({
-      data,
-      servico: { id: servico.id, nome: servico.nome, duracao: SERVICE_DURATION_MINUTES },
-      ...disponibilidade,
-    });
+    res.json({ data, servico: { id: servico.id, nome: servico.nome, duracao: SERVICE_DURATION_MINUTES }, ...disponibilidade });
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: 'Erro ao calcular disponibilidade' });

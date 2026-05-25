@@ -93,6 +93,17 @@ function parseDateOnly(dateString) {
   return d;
 }
 
+function parsePublicBookingDateTime(value) {
+  if (!value || typeof value !== 'string' || !value.trim()) return null;
+  const date = new Date(value.trim());
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+}
+
+function isSlotStepAligned(date) {
+  return date.getMinutes() % SLOT_STEP_MINUTES === 0 && date.getSeconds() === 0 && date.getMilliseconds() === 0;
+}
+
 function formatDateOnly(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -141,6 +152,30 @@ function isWithinBusinessHours(start, end) {
 
 function hasConflict(startA, endA, items) {
   return items.some((item) => overlaps(startA, endA, item.inicio, item.fim));
+}
+
+function buildAvailableSlots(baseDay, servico, ocupados) {
+  const inicioExpediente = buildDateTime(baseDay, BUSINESS_OPEN_HOUR, 0);
+  const fimExpediente = buildDateTime(baseDay, BUSINESS_CLOSE_HOUR, 0);
+  const slotsDisponiveis = [];
+
+  for (
+    let cursor = new Date(inicioExpediente);
+    addMinutes(cursor, servico.duracao) <= fimExpediente;
+    cursor = addMinutes(cursor, SLOT_STEP_MINUTES)
+  ) {
+    const inicioSlot = new Date(cursor);
+    const fimSlot = addMinutes(inicioSlot, servico.duracao);
+    if (!hasConflict(inicioSlot, fimSlot, ocupados)) {
+      slotsDisponiveis.push({
+        horario: getHoraFromDate(inicioSlot),
+        inicio: inicioSlot.toISOString(),
+        fim: fimSlot.toISOString(),
+      });
+    }
+  }
+
+  return slotsDisponiveis;
 }
 
 // -- Helpers de token --
@@ -210,26 +245,8 @@ async function calculateAvailability(dateString, servico) {
     };
   }
 
-  const inicioExpediente = buildDateTime(baseDay, BUSINESS_OPEN_HOUR, 0);
-  const fimExpediente = buildDateTime(baseDay, BUSINESS_CLOSE_HOUR, 0);
   const { ocupados } = await getDayOccupancy(dateString);
-  const slotsDisponiveis = [];
-
-  for (
-    let cursor = new Date(inicioExpediente);
-    addMinutes(cursor, duracaoMinutos) <= fimExpediente;
-    cursor = addMinutes(cursor, SLOT_STEP_MINUTES)
-  ) {
-    const inicioSlot = new Date(cursor);
-    const fimSlot = addMinutes(inicioSlot, duracaoMinutos);
-    if (!hasConflict(inicioSlot, fimSlot, ocupados)) {
-      slotsDisponiveis.push({
-        horario: getHoraFromDate(inicioSlot),
-        inicio: inicioSlot.toISOString(),
-        fim: fimSlot.toISOString(),
-      });
-    }
-  }
+  const slotsDisponiveis = buildAvailableSlots(baseDay, servico, ocupados);
 
   return {
     expediente: { inicio: '09:00', fim: '18:00' },
@@ -439,8 +456,9 @@ app.post('/agendamentos', async (req, res) => {
       if (typeof observacoes !== 'string') return res.status(400).json({ erro: 'Observações deve ser texto' });
       if (observacoes.length > OBSERVACOES_MAX_LENGTH) return res.status(400).json({ erro: `Observações excedem o limite de ${OBSERVACOES_MAX_LENGTH} caracteres` });
     }
-    const dataAgendamento = new Date(data);
-    if (Number.isNaN(dataAgendamento.getTime())) return res.status(400).json({ erro: 'Data inválida' });
+    const dataAgendamento = parsePublicBookingDateTime(data);
+    if (!dataAgendamento) return res.status(400).json({ erro: 'Data inválida. Envie data e hora em formato ISO, como 2026-05-25T09:00:00.000Z' });
+    if (!isSlotStepAligned(dataAgendamento)) return res.status(400).json({ erro: 'Horário deve estar alinhado ao intervalo de 30 minutos' });
     if (!isDateInCurrentWeek(dataAgendamento)) return res.status(400).json({ erro: 'Agendamentos disponíveis apenas para a semana atual' });
     const servicoIdNumero = Number(servicoId);
     if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return res.status(400).json({ erro: 'Serviço inválido' });
@@ -450,8 +468,9 @@ app.post('/agendamentos', async (req, res) => {
     const fimSlot = addMinutes(inicioSlot, servico.duracao);
     if (!isWithinBusinessHours(inicioSlot, fimSlot)) return res.status(400).json({ erro: 'Horário fora do expediente (09:00–18:00)' });
     const dataString = formatDateOnly(dataAgendamento);
-    const { ocupados } = await getDayOccupancy(dataString);
-    if (hasConflict(inicioSlot, fimSlot, ocupados)) return res.status(409).json({ erro: 'Horário indisponível' });
+    const disponibilidade = await calculateAvailability(dataString, servico);
+    const slotDisponivel = disponibilidade.slotsDisponiveis.some((slot) => new Date(slot.inicio).getTime() === inicioSlot.getTime());
+    if (!slotDisponivel) return res.status(409).json({ erro: 'Horário indisponível' });
     const novoAgendamento = await prisma.agendamento.create({
       data: {
         nomeCliente: nomeCliente.trim(),

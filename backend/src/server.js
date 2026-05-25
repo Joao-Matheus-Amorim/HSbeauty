@@ -24,6 +24,7 @@ const BUSINESS_CLOSE_HOUR = 18;
 const SLOT_STEP_MINUTES = 30;
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+const OBSERVACOES_MAX_LENGTH = 500;
 
 // Aceita: (11) 98765-4321 | 11987654321 | 11 98765-4321 | +5511987654321
 const TELEFONE_REGEX = /^(?:\+?55\s?)?\(?\d{2}\)?[\s-]?9?\d{4}[\s-]?\d{4}$/;
@@ -438,11 +439,15 @@ app.get('/agendamentos/:id', authMiddleware, async (req, res) => {
 
 app.post('/agendamentos', async (req, res) => {
   try {
-    const { nomeCliente, telefone, data, servicoId, status } = req.body;
+    const { nomeCliente, telefone, data, servicoId, status, observacoes } = req.body;
     if (!nomeCliente || typeof nomeCliente !== 'string' || !nomeCliente.trim()) return res.status(400).json({ erro: 'Nome do cliente é obrigatório' });
     if (!telefone || typeof telefone !== 'string' || !telefone.trim()) return res.status(400).json({ erro: 'Telefone é obrigatório' });
     if (!isValidTelefone(telefone)) return res.status(400).json({ erro: 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.' });
     if (!data) return res.status(400).json({ erro: 'Data é obrigatória' });
+    if (observacoes !== undefined && observacoes !== null) {
+      if (typeof observacoes !== 'string') return res.status(400).json({ erro: 'Observações deve ser texto' });
+      if (observacoes.length > OBSERVACOES_MAX_LENGTH) return res.status(400).json({ erro: `Observações excedem o limite de ${OBSERVACOES_MAX_LENGTH} caracteres` });
+    }
     const dataAgendamento = new Date(data);
     if (Number.isNaN(dataAgendamento.getTime())) return res.status(400).json({ erro: 'Data inválida' });
     if (!isDateInCurrentWeek(dataAgendamento)) return res.status(400).json({ erro: 'Agendamentos disponíveis apenas para a semana atual' });
@@ -464,6 +469,7 @@ app.post('/agendamentos', async (req, res) => {
         hora: getHoraFromDate(dataAgendamento),
         servicoId: servicoIdNumero,
         ...(status ? { status } : {}),
+        ...(observacoes ? { observacoes: observacoes.trim() } : {}),
       },
       include: { servico: true },
     });
@@ -480,12 +486,21 @@ app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
     if (!Number.isInteger(id)) return res.status(400).json({ erro: 'ID inválido' });
     const agendamentoExistente = await prisma.agendamento.findUnique({ where: { id }, include: { servico: true } });
     if (!agendamentoExistente) return res.status(404).json({ erro: 'Agendamento não encontrado' });
-    const { nomeCliente, telefone, data, servicoId, status } = req.body;
+    const { nomeCliente, telefone, data, servicoId, status, observacoes } = req.body;
     const payload = {};
     if (nomeCliente !== undefined) payload.nomeCliente = String(nomeCliente).trim();
     if (telefone !== undefined) {
       if (!isValidTelefone(telefone)) return res.status(400).json({ erro: 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.' });
       payload.telefone = String(telefone).trim();
+    }
+    if (observacoes !== undefined) {
+      if (observacoes === null) {
+        payload.observacoes = null;
+      } else {
+        if (typeof observacoes !== 'string') return res.status(400).json({ erro: 'Observações deve ser texto' });
+        if (observacoes.length > OBSERVACOES_MAX_LENGTH) return res.status(400).json({ erro: `Observações excedem o limite de ${OBSERVACOES_MAX_LENGTH} caracteres` });
+        payload.observacoes = observacoes.trim();
+      }
     }
     let dataAtual = agendamentoExistente.data;
     if (data !== undefined) {

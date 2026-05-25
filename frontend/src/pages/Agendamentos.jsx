@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
-  listarAgendamentos,
-  atualizarAgendamento,
-  excluirAgendamento,
-} from '../services/agendamentos';
+  listarAgendamentosAdmin,
+  atualizarAgendamentoAdmin,
+  cancelarAgendamentoAdmin,
+} from '../services/admin';
 import AgendamentoCard from '../components/agendamentos/AgendamentoCard';
 import './Agendamentos.css';
 
@@ -16,8 +16,8 @@ export default function Agendamentos() {
     try {
       setLoading(true);
       setErro('');
-      const dados = await listarAgendamentos();
-      setAgendamentos(dados);
+      const dados = await listarAgendamentosAdmin();
+      setAgendamentos(dados.agendamentos || []);
     } catch (error) {
       setErro(error.message || 'Erro ao carregar agendamentos');
     } finally {
@@ -32,8 +32,8 @@ export default function Agendamentos() {
       try {
         setLoading(true);
         setErro('');
-        const dados = await listarAgendamentos();
-        if (ativo) setAgendamentos(dados);
+        const dados = await listarAgendamentosAdmin();
+        if (ativo) setAgendamentos(dados.agendamentos || []);
       } catch (error) {
         if (ativo) setErro(error.message || 'Erro ao carregar agendamentos');
       } finally {
@@ -47,7 +47,7 @@ export default function Agendamentos() {
 
   async function confirmarAgendamento(id) {
     try {
-      await atualizarAgendamento(id, { status: 'confirmado' });
+      await atualizarAgendamentoAdmin(id, { status: 'confirmado' });
       await carregarAgendamentos();
     } catch (error) {
       alert(error.message || 'Erro ao confirmar agendamento');
@@ -56,7 +56,7 @@ export default function Agendamentos() {
 
   async function cancelarAgendamento(id) {
     try {
-      await atualizarAgendamento(id, { status: 'cancelado' });
+      await atualizarAgendamentoAdmin(id, { status: 'cancelado' });
       await carregarAgendamentos();
     } catch (error) {
       alert(error.message || 'Erro ao cancelar agendamento');
@@ -65,7 +65,7 @@ export default function Agendamentos() {
 
   async function excluirAgendamentoPorId(id) {
     try {
-      await excluirAgendamento(id);
+      await cancelarAgendamentoAdmin(id);
       await carregarAgendamentos();
     } catch (error) {
       alert(error.message || 'Erro ao excluir agendamento');

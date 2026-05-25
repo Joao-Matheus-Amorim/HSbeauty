@@ -7,7 +7,6 @@ import {
   AlertCircle, 
   X,
   Info,
-  ChevronLeft,
   ChevronRight
 } from 'lucide-react';
 import { 
@@ -15,7 +14,6 @@ import {
   criarHorarioAdmin, 
   desativarHorarioAdmin 
 } from '../services/admin';
-import { clsx } from 'clsx';
 
 export default function ScheduleManager() {
   const [horarios, setHorarios] = useState([]);

@@ -188,6 +188,7 @@ export default function AppointmentManager() {
 
   const { status, dataInicio, dataFim, search } = filters;
   const effectiveDataFim = dataFim || dataInicio;
+  const dataFimFilter = effectiveDataFim ? `${effectiveDataFim}T23:59:59.999Z` : '';
 
   async function loadAppointments() {
     setLoading(true);
@@ -196,7 +197,7 @@ export default function AppointmentManager() {
       const data = await listarAgendamentosAdmin({
         status,
         dataInicio,
-        dataFim: effectiveDataFim ? `${effectiveDataFim}T23:59:59.999` : '',
+        dataFim: dataFimFilter,
         page,
         limit: 10,
       });
@@ -215,7 +216,7 @@ export default function AppointmentManager() {
     listarAgendamentosAdmin({
       status,
       dataInicio,
-      dataFim: effectiveDataFim ? `${effectiveDataFim}T23:59:59.999` : '',
+      dataFim: dataFimFilter,
       page,
       limit: 10,
     })
@@ -237,7 +238,7 @@ export default function AppointmentManager() {
     return () => {
       ignore = true;
     };
-  }, [status, dataInicio, effectiveDataFim, page]);
+  }, [status, dataInicio, dataFimFilter, page]);
 
   const handleStatusUpdate = async (id, newStatus) => {
     try {

@@ -186,11 +186,12 @@ export default function AppointmentManager() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({});
 
+  const { status, dataInicio, dataFim, search } = filters;
+
   async function loadAppointments() {
     setLoading(true);
     setError(null);
     try {
-      const { status, dataInicio, dataFim } = filters;
       const data = await listarAgendamentosAdmin({
         status,
         dataInicio,
@@ -209,7 +210,6 @@ export default function AppointmentManager() {
 
   useEffect(() => {
     let ignore = false;
-    const { status, dataInicio, dataFim } = filters;
 
     listarAgendamentosAdmin({
       status,
@@ -236,7 +236,7 @@ export default function AppointmentManager() {
     return () => {
       ignore = true;
     };
-  }, [filters, page]);
+  }, [status, dataInicio, dataFim, page]);
 
   const handleStatusUpdate = async (id, newStatus) => {
     try {
@@ -258,26 +258,26 @@ export default function AppointmentManager() {
   };
 
   const filteredAppointments = useMemo(() => {
-    if (!filters.search) return appointments;
-    const s = filters.search.toLowerCase();
+    if (!search) return appointments;
+    const s = search.toLowerCase();
     return appointments.filter((a) => {
       const nameMatch = a.nomeCliente?.toLowerCase().includes(s);
       const phoneMatch = a.telefone?.includes(s);
       const serviceMatch = a.servico?.nome?.toLowerCase().includes(s);
       return nameMatch || phoneMatch || serviceMatch;
     });
-  }, [appointments, filters.search]);
+  }, [appointments, search]);
 
-  const title = filters.status === 'pendente' ? 'Para confirmar' : 'Agendamentos';
-  const emptyMessage = filters.status === 'pendente'
+  const title = status === 'pendente' ? 'Para confirmar' : 'Agendamentos';
+  const emptyMessage = status === 'pendente'
     ? 'Nenhum agendamento pendente para confirmar.'
     : 'Nenhum agendamento encontrado.';
 
-  function changeStatusFilter(status) {
+  function changeStatusFilter(newStatus) {
     setLoading(true);
     setError(null);
     setPage(1);
-    setFilters((current) => ({ ...current, status }));
+    setFilters((current) => ({ ...current, status: newStatus }));
   }
 
   function changeSearch(value) {
@@ -304,7 +304,7 @@ export default function AppointmentManager() {
           <span className="admin-section-kicker">Agenda</span>
           <h2>{title}</h2>
           <p>
-            {filters.status === 'pendente'
+            {status === 'pendente'
               ? 'Confirme ou cancele os pedidos que chegaram pelo site.'
               : 'Veja e gerencie todos os agendamentos.'}
           </p>
@@ -319,7 +319,7 @@ export default function AppointmentManager() {
           <button
             type="button"
             key={tab.value || 'todos'}
-            className={clsx('admin-status-tab', filters.status === tab.value && 'is-active')}
+            className={clsx('admin-status-tab', status === tab.value && 'is-active')}
             onClick={() => changeStatusFilter(tab.value)}
           >
             <strong>{tab.label}</strong>
@@ -334,7 +334,7 @@ export default function AppointmentManager() {
           <input
             type="text"
             placeholder="Buscar cliente, telefone ou serviço..."
-            value={filters.search}
+            value={search}
             onChange={(e) => changeSearch(e.target.value)}
           />
         </div>
@@ -343,7 +343,7 @@ export default function AppointmentManager() {
           <CalendarDays className="w-4 h-4" />
           <input
             type="date"
-            value={filters.dataInicio}
+            value={dataInicio}
             onChange={(e) => changeDate(e.target.value)}
           />
         </div>

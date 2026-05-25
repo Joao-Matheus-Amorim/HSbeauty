@@ -26,6 +26,16 @@ const SLOT_STEP_MINUTES = 30;
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
+// Aceita: (11) 98765-4321 | 11987654321 | 11 98765-4321 | +5511987654321
+const TELEFONE_REGEX = /^(?:\+?55\s?)?\(?\d{2}\)?[\s-]?9?\d{4}[\s-]?\d{4}$/;
+
+function isValidTelefone(tel) {
+  const digits = tel.replace(/\D/g, '');
+  // Com DDI: 12-13 dígitos | Sem DDI: 10-11 dígitos
+  if (digits.length < 10 || digits.length > 13) return false;
+  return TELEFONE_REGEX.test(tel.trim());
+}
+
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
   .split(',')
   .map((origin) => origin.trim())
@@ -461,6 +471,7 @@ app.post('/agendamentos', async (req, res) => {
     const { nomeCliente, telefone, data, servicoId, status } = req.body;
     if (!nomeCliente || typeof nomeCliente !== 'string' || !nomeCliente.trim()) return res.status(400).json({ erro: 'Nome do cliente é obrigatório' });
     if (!telefone || typeof telefone !== 'string' || !telefone.trim()) return res.status(400).json({ erro: 'Telefone é obrigatório' });
+    if (!isValidTelefone(telefone)) return res.status(400).json({ erro: 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.' });
     if (!data) return res.status(400).json({ erro: 'Data é obrigatória' });
 
     const dataAgendamento = new Date(data);
@@ -508,7 +519,10 @@ app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
     const { nomeCliente, telefone, data, servicoId, status } = req.body;
     const payload = {};
     if (nomeCliente !== undefined) payload.nomeCliente = String(nomeCliente).trim();
-    if (telefone !== undefined) payload.telefone = String(telefone).trim();
+    if (telefone !== undefined) {
+      if (!isValidTelefone(telefone)) return res.status(400).json({ erro: 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.' });
+      payload.telefone = String(telefone).trim();
+    }
 
     let dataAtual = agendamentoExistente.data;
     if (data !== undefined) {

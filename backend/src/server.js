@@ -13,6 +13,7 @@ import adminRouter, {
   setupAdminServicos,
   setupAdminHorarios,
 } from './admin-routes.js';
+import { validateAppointmentUpdatePayload } from './appointment-mutation-rules.js';
 import { legacyAdminRouteDeprecation } from './legacy-route-deprecation.js';
 import { logError, sendError } from './http-response.js';
 import {
@@ -25,13 +26,11 @@ import {
   getHoraFromDate,
   hasConflict,
   isDateInCurrentWeek,
-  isValidTelefone,
   isWithinBusinessHours,
   parseDateOnly,
   parseDayBounds,
   PUBLIC_BOOKING_INITIAL_STATUS,
   SLOT_STEP_MINUTES,
-  OBSERVACOES_MAX_LENGTH,
   validatePublicBookingPayload,
 } from './booking-rules.js';
 
@@ -408,45 +407,25 @@ app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
     if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
     const agendamentoExistente = await prisma.agendamento.findUnique({ where: { id }, include: { servico: true } });
     if (!agendamentoExistente) return sendError(res, 404, 'Agendamento não encontrado');
-    const { nomeCliente, telefone, data, servicoId, status, observacoes } = req.body;
-    const payload = {};
-    if (nomeCliente !== undefined) payload.nomeCliente = String(nomeCliente).trim();
-    if (telefone !== undefined) {
-      if (!isValidTelefone(telefone)) return sendError(res, 400, 'Telefone inválido. Use o formato (11) 98765-4321 ou similar.');
-      payload.telefone = String(telefone).trim();
-    }
-    if (observacoes !== undefined) {
-      if (observacoes === null) {
-        payload.observacoes = null;
-      } else {
-        if (typeof observacoes !== 'string') return sendError(res, 400, 'Observações deve ser texto');
-        if (observacoes.length > OBSERVACOES_MAX_LENGTH) return sendError(res, 400, `Observações excedem o limite de ${OBSERVACOES_MAX_LENGTH} caracteres`);
-        payload.observacoes = observacoes.trim();
-      }
-    }
-    let dataAtual = agendamentoExistente.data;
-    if (data !== undefined) {
-      const dataAgendamento = new Date(data);
-      if (Number.isNaN(dataAgendamento.getTime())) return sendError(res, 400, 'Data inválida');
-      if (!isDateInCurrentWeek(dataAgendamento)) return sendError(res, 400, 'Agendamentos disponíveis apenas para a semana atual');
-      dataAtual = dataAgendamento;
-      payload.data = dataAgendamento;
-      payload.hora = getHoraFromDate(dataAgendamento);
-    }
+
+    const validation = validateAppointmentUpdatePayload(req.body);
+    if (!validation.valid) return sendError(res, validation.status, validation.message);
+
+    const payload = { ...validation.data };
+    const dataAtual = validation.dataAgendamento ?? agendamentoExistente.data;
     let servicoAtual = agendamentoExistente.servico;
-    if (servicoId !== undefined) {
-      const servicoIdNumero = Number(servicoId);
-      if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return sendError(res, 400, 'Serviço inválido');
-      const novoServico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
+
+    if (validation.dataAgendamento && !isDateInCurrentWeek(validation.dataAgendamento)) {
+      return sendError(res, 400, 'Agendamentos disponíveis apenas para a semana atual');
+    }
+
+    if (validation.servicoIdNumero !== undefined) {
+      const novoServico = await prisma.servico.findUnique({ where: { id: validation.servicoIdNumero } });
       if (!novoServico || novoServico.ativo === false) return sendError(res, 404, 'Serviço não encontrado ou inativo');
       servicoAtual = novoServico;
-      payload.servicoId = servicoIdNumero;
+      payload.servicoId = validation.servicoIdNumero;
     }
-    if (status !== undefined) {
-      const statusValidos = ['pendente', 'confirmado', 'cancelado', 'concluído'];
-      if (!statusValidos.includes(status)) return sendError(res, 400, 'Status inválido');
-      payload.status = status;
-    }
+
     const inicioSlot = new Date(dataAtual);
     const fimSlot = addMinutes(inicioSlot, servicoAtual.duracao);
     if (!isWithinBusinessHours(inicioSlot, fimSlot)) return sendError(res, 400, 'Horário fora do expediente (09:00–18:00)');

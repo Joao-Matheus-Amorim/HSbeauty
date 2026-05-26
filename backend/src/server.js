@@ -14,7 +14,7 @@ import adminRouter, {
   setupAdminHorarios,
 } from './admin-routes.js';
 import { validateAppointmentUpdatePayload } from './appointment-mutation-rules.js';
-import { buildPublicServiceQuery } from './public-service-query-rules.js';
+import { buildPublicServiceByIdQuery, buildPublicServiceQuery } from './public-service-query-rules.js';
 import { legacyAdminRouteDeprecation } from './legacy-route-deprecation.js';
 import { logError, sendError } from './http-response.js';
 import {
@@ -265,9 +265,10 @@ app.get('/servicos', async (req, res) => {
 
 app.get('/servicos/:id', async (req, res) => {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
-    const servico = await prisma.servico.findUnique({ where: { id } });
+    const query = buildPublicServiceByIdQuery(req.params.id);
+    if (!query.valid) return sendError(res, query.status, query.message);
+
+    const servico = await prisma.servico.findFirst({ where: query.where });
     if (!servico) return sendError(res, 404, 'Serviço não encontrado');
     res.json(servico);
   } catch (error) {

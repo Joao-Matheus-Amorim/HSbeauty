@@ -37,13 +37,29 @@ Um PR so esta pronto quando:
 
 ## Gates de qualidade
 
-Checklist minimo por PR:
+Checklist minimo por PR, executado a partir da raiz do repositorio:
 
-- Backend: `npm test`
-- Prisma: `npx prisma generate --schema=prisma/schema.prisma`
-- Frontend: `npm run lint`
-- Frontend build: `npm run build`
-- CI verde no GitHub Actions
+```powershell
+npm ci --prefix backend
+npm test --prefix backend
+npm run prisma:generate
+
+npm ci --prefix frontend
+npm run lint --prefix frontend
+npm run build --prefix frontend
+```
+
+Tambem deve permanecer verde no GitHub Actions:
+
+- Backend Prisma validation
+- Frontend lint and build
+
+Observacoes:
+
+- O backend possui o script `test` dentro de `backend/package.json`.
+- O frontend possui os scripts `lint` e `build` dentro de `frontend/package.json`.
+- A raiz possui o script `prisma:generate`, que aponta para `backend/prisma/schema.prisma`.
+- Nao usar `npm test`, `npm run lint`, `npm run build` ou `npx prisma generate --schema=prisma/schema.prisma` diretamente da raiz, porque esses comandos nao representam a estrutura atual do monorepo.
 
 ## Gestao de riscos
 

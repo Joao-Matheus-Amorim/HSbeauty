@@ -39,6 +39,10 @@ jobs:
         run: npm run lint
         working-directory: frontend
 
+      - name: Test frontend
+        run: npm test
+        working-directory: frontend
+
       - name: Build frontend
         run: npm run build
         working-directory: frontend
@@ -68,10 +72,12 @@ jobs:
         run: npm audit --audit-level=high
         working-directory: backend
 
-      - name: Run backend tests
-        run: npm test
-        working-directory: backend
-
-      - name: Generate Prisma Client
+      - name: Generate Prisma Client (schema validation)
         run: npx prisma generate --schema=prisma/schema.prisma
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/hsbeauty_ci
+
+      - name: Run backend tests
+        run: node --test src/__tests__/**/*.test.js
         working-directory: backend

@@ -1,23 +1,4 @@
-const PRODUCTION_API_URL = 'https://hsbeauty.onrender.com';
-const LOCAL_API_URL = 'http://localhost:3000';
-
-function resolveApiUrl() {
-  const envUrl = import.meta.env.VITE_API_URL;
-  const isBrowser = typeof window !== 'undefined';
-  const isLocalHost = isBrowser && ['localhost', '127.0.0.1'].includes(window.location.hostname);
-
-  if (isLocalHost) {
-    return envUrl || LOCAL_API_URL;
-  }
-
-  if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
-    return PRODUCTION_API_URL;
-  }
-
-  return envUrl;
-}
-
-const API_URL = resolveApiUrl();
+import { API_URL, parseJsonResponse } from './api';
 
 // ─── Público ──────────────────────────────────────────────────────────────────
 
@@ -43,7 +24,7 @@ export async function criarAgendamento(dados) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(dados),
   });
-  const json = await response.json();
+  const json = await parseJsonResponse(response);
   if (!response.ok) throw new Error(json.erro || 'Erro ao criar agendamento');
   return json;
 }

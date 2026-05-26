@@ -1,23 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { listarServicos, buscarDisponibilidade, criarAgendamento } from '../services/agendamentos';
+import { WHATSAPP, SERVICOS_PADRAO, SEMANAS_DISPONIVEIS } from '../constants';
+import { formatDuracao, formatDateOnly, getAvailableDays } from '../utils/date-utils';
 import './AgendamentoModal.css';
-
-const WHATSAPP = '5521970976928';
-
-const servicosPadrao = [
-  { id: 1, nome: 'Unhas', preco: 35, ativo: true },
-  { id: 2, nome: 'Cílios', preco: 140, ativo: true },
-  { id: 3, nome: 'Sobrancelhas', preco: 70, ativo: true },
-  { id: 4, nome: 'Depilação', preco: 50, ativo: true },
-];
-
-function formatDateOnly(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
 
 function formatDateTime(value) {
   return new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
@@ -31,43 +17,50 @@ function buildWhatsAppLink(agendamento) {
   return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensagem)}`;
 }
 
-function getCurrentWeekRange() {
+// Retorna os próximos N dias úteis a partir de hoje, agrupados por semana
+function getAvailableDays(semanas = SEMANAS_DISPONIVEIS) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  // Começa na segunda-feira desta semana
   const day = today.getDay();
   const diffToMonday = day === 0 ? -6 : 1 - day;
-
   const start = new Date(today);
   start.setDate(today.getDate() + diffToMonday);
-  start.setHours(0, 0, 0, 0);
 
-  const days = Array.from({ length: 7 }, (_, index) => {
+  const totalDias = semanas * 7;
+  const days = [];
+
+  for (let i = 0; i < totalDias; i++) {
     const date = new Date(start);
-    date.setDate(start.getDate() + index);
+    date.setDate(start.getDate() + i);
+
+    // Não mostra dias passados
+    if (date < today) continue;
+
     const value = formatDateOnly(date);
-    return {
+    days.push({
       value,
       weekday: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''),
       dayMonth: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-    };
-  });
+      weekLabel: `Semana de ${new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`,
+      weekIndex: Math.floor(i / 7),
+    });
+  }
 
   const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  end.setHours(0, 0, 0, 0);
+  end.setDate(start.getDate() + totalDias - 1);
 
   return {
-    start,
-    end,
     days,
-    min: formatDateOnly(start),
+    min: formatDateOnly(today),
     max: formatDateOnly(end),
   };
 }
 
 export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [step, setStep] = useState(1);
-  const [servicos, setServicos] = useState(servicosPadrao);
+  const [servicos, setServicos] = useState(SERVICOS_PADRAO);
   const [servicoId, setServicoId] = useState(servicoInicial?.id || '');
   const [data, setData] = useState('');
   const [slots, setSlots] = useState([]);
@@ -78,7 +71,19 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [erro, setErro] = useState('');
   const [agendado, setAgendado] = useState(null);
 
-  const semanaAtual = useMemo(() => getCurrentWeekRange(), []);
+  const janela = useMemo(() => getAvailableDays(SEMANAS_DISPONIVEIS), []);
+
+  // Semanas agrupadas para exibição
+  const semanas = useMemo(() => {
+    const grupos = [];
+    janela.days.forEach((dia) => {
+      if (!grupos[dia.weekIndex]) {
+        grupos[dia.weekIndex] = { label: dia.weekLabel, dias: [] };
+      }
+      grupos[dia.weekIndex].dias.push(dia);
+    });
+    return grupos.filter(Boolean);
+  }, [janela]);
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -90,23 +95,19 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
   useEffect(() => {
     let mounted = true;
-
     listarServicos({ ativo: true })
       .then((lista) => {
         if (!mounted) return;
         if (Array.isArray(lista) && lista.length > 0) {
           setServicos(lista);
         } else {
-          setServicos(servicosPadrao);
+          setServicos(SERVICOS_PADRAO);
         }
       })
       .catch(() => {
-        if (mounted) setServicos(servicosPadrao);
+        if (mounted) setServicos(SERVICOS_PADRAO);
       });
-
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
   function selecionarServico(id) {
@@ -125,10 +126,6 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
   async function buscarSlots() {
     if (!servicoId || !data) return;
-    if (data < semanaAtual.min || data > semanaAtual.max) {
-      setErro('Escolha um dia da semana atual.');
-      return;
-    }
 
     setLoading(true);
     setErro('');
@@ -169,6 +166,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   }
 
   const servicoSelecionado = servicos.find((s) => String(s.id) === String(servicoId));
+  const duracaoLabel = servicoSelecionado ? formatDuracao(servicoSelecionado.duracao) : '';
 
   const modal = (
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -201,19 +199,24 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
             <div className="modal-label">
               Dia
-              <div className="week-days-grid">
-                {semanaAtual.days.map((dia) => (
-                  <button
-                    type="button"
-                    key={dia.value}
-                    className={`week-day-btn${data === dia.value ? ' selected' : ''}`}
-                    onClick={() => selecionarData(dia.value)}
-                  >
-                    <span>{dia.weekday}</span>
-                    <strong>{dia.dayMonth}</strong>
-                  </button>
-                ))}
-              </div>
+              {semanas.map((semana, idx) => (
+                <div key={idx} className="week-group">
+                  <span className="week-group-label">{semana.label}</span>
+                  <div className="week-days-grid">
+                    {semana.dias.map((dia) => (
+                      <button
+                        type="button"
+                        key={dia.value}
+                        className={`week-day-btn${data === dia.value ? ' selected' : ''}`}
+                        onClick={() => selecionarData(dia.value)}
+                      >
+                        <span>{dia.weekday}</span>
+                        <strong>{dia.dayMonth}</strong>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
 
             {erro && <p className="modal-erro">{erro}</p>}
@@ -233,11 +236,13 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             <button className="modal-back" onClick={() => setStep(1)}>← Voltar</button>
             <h2 className="modal-title">Escolha o horário</h2>
             <p className="modal-sub">
-              {servicoSelecionado?.nome} · 2h30 · {data ? new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : ''}
+              {servicoSelecionado?.nome}
+              {duracaoLabel ? ` · ${duracaoLabel}` : ''}
+              {data ? ` · ${new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}` : ''}
             </p>
 
             {slots.length === 0 ? (
-              <p className="modal-vazio">Nenhum horário disponível neste dia. Tente outro dia da semana.</p>
+              <p className="modal-vazio">Nenhum horário disponível neste dia. Tente outro dia.</p>
             ) : (
               <div className="slots-grid">
                 {slots.map((slot) => (
@@ -269,7 +274,10 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             <button className="modal-back" onClick={() => setStep(2)}>← Voltar</button>
             <h2 className="modal-title">Seus dados</h2>
             <p className="modal-sub">
-              {servicoSelecionado?.nome} · {slotSelecionado?.horario} · 2h30 · {data ? new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}
+              {servicoSelecionado?.nome}
+              {slotSelecionado?.horario ? ` · ${slotSelecionado.horario}` : ''}
+              {duracaoLabel ? ` · ${duracaoLabel}` : ''}
+              {data ? ` · ${new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}` : ''}
             </p>
 
             <label className="modal-label">
@@ -315,7 +323,9 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             </p>
             <div className="confirmacao-box">
               <p><strong>Serviço:</strong> {agendado.servico?.nome}</p>
-              <p><strong>Duração:</strong> 2h30</p>
+              {agendado.servico?.duracao && (
+                <p><strong>Duração:</strong> {formatDuracao(agendado.servico.duracao)}</p>
+              )}
               <p><strong>Data/Hora:</strong> {formatDateTime(agendado.data)}</p>
               <p><strong>Status:</strong> {agendado.status}</p>
             </div>

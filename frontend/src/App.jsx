@@ -7,15 +7,9 @@ import ciliosImage from '../Saved Pictures/sobranchelha2.png'
 import depilacaoImage from '../Saved Pictures/depil1.png'
 import { listarServicos } from './services/agendamentos'
 import AgendamentoModal from './components/AgendamentoModal'
+import { WHATSAPP, SERVICOS_PADRAO } from './constants'
 
-const WHATSAPP = '5521970976928'
-
-const fallbackServices = [
-	{ id: 1, nome: 'Unhas', preco: 35, duracao: 150, ativo: true },
-	{ id: 2, nome: 'Cílios', preco: 140, duracao: 150, ativo: true },
-	{ id: 3, nome: 'Sobrancelhas', preco: 70, duracao: 150, ativo: true },
-	{ id: 4, nome: 'Depilação', preco: 50, duracao: 150, ativo: true },
-]
+const fallbackServices = SERVICOS_PADRAO
 
 const serviceNameOrder = ['unhas', 'cilios', 'sobrancelhas', 'depilacao']
 

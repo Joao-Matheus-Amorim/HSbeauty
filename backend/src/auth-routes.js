@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
 import { validateLoginPayload, validateRefreshTokenPayload } from './auth-payload-rules.js';
 import { logError, sendError } from './http-response.js';
+import { buildLoginRateLimitConfig } from './rate-limit-config-rules.js';
 
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
@@ -12,13 +13,7 @@ const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 export function createAuthRouter({ prisma, jwtSecret }) {
   const router = express.Router();
 
-  const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 5,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { erro: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
-  });
+  const loginLimiter = rateLimit(buildLoginRateLimitConfig());
 
   function generateAccessToken(admin) {
     return jwt.sign({ id: admin.id, email: admin.email }, jwtSecret, { expiresIn: ACCESS_TOKEN_EXPIRY });

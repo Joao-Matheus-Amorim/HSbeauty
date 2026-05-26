@@ -14,6 +14,7 @@ import adminRouter, {
   setupAdminHorarios,
 } from './admin-routes.js';
 import { validateAppointmentUpdatePayload } from './appointment-mutation-rules.js';
+import { buildAllowedOrigins, isOriginAllowed } from './cors-config-rules.js';
 import { buildPublicServiceByIdQuery, buildPublicServiceQuery } from './public-service-query-rules.js';
 import { legacyAdminRouteDeprecation } from './legacy-route-deprecation.js';
 import { logError, sendError } from './http-response.js';
@@ -43,15 +44,12 @@ app.use(express.json());
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
-const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const allowedOrigins = buildAllowedOrigins(process.env.FRONTEND_URL);
 
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      if (isOriginAllowed(origin, allowedOrigins)) return callback(null, true);
       return callback(new Error('Origem não permitida pelo CORS'));
     },
   })

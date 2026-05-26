@@ -1,5 +1,10 @@
 import express from 'express';
 import { buildAdminAppointmentQuery } from './admin-appointment-query-rules.js';
+import {
+  buildDashboardSummary,
+  buildStatusCount,
+  buildTopServices,
+} from './admin-dashboard-rules.js';
 import { buildAdminScheduleQuery } from './admin-schedule-query-rules.js';
 import {
   validateAdminScheduleCreatePayload,
@@ -53,32 +58,6 @@ export function setupAdminDashboard(prisma, authMiddleware) {
         include: { servico: true },
       });
 
-      // Contar agendamentos por status
-      const statusCount = {
-        pendente: agendamentosMes.filter((a) => a.status === 'pendente').length,
-        confirmado: agendamentosMes.filter((a) => a.status === 'confirmado').length,
-        cancelado: agendamentosMes.filter((a) => a.status === 'cancelado').length,
-        concluido: agendamentosMes.filter((a) => a.status === 'concluído').length,
-      };
-
-      // Calcular receita do mês
-      const receitaMes = agendamentosMes
-        .filter((a) => a.status === 'concluído' || a.status === 'confirmado')
-        .reduce((total, a) => total + (a.servico?.preco || 0), 0);
-
-      // Serviços mais populares
-      const servicosPopulares = {};
-      agendamentosMes.forEach((a) => {
-        if (a.servico) {
-          servicosPopulares[a.servico.nome] = (servicosPopulares[a.servico.nome] || 0) + 1;
-        }
-      });
-
-      const topServicos = Object.entries(servicosPopulares)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([nome, quantidade]) => ({ nome, quantidade }));
-
       // Total de serviços
       const totalServicos = await prisma.servico.count({ where: { ativo: true } });
 
@@ -88,14 +67,9 @@ export function setupAdminDashboard(prisma, authMiddleware) {
           dataInicio: inicioMes.toISOString(),
           dataFim: fimMes.toISOString(),
         },
-        resumo: {
-          totalAgendamentos: agendamentosMes.length,
-          agendamentosHoje: agendamentosHoje.length,
-          receitaMes: parseFloat(receitaMes.toFixed(2)),
-          totalServicos,
-        },
-        statusCount,
-        topServicos,
+        resumo: buildDashboardSummary({ agendamentosMes, agendamentosHoje, totalServicos }),
+        statusCount: buildStatusCount(agendamentosMes),
+        topServicos: buildTopServices(agendamentosMes),
       });
     } catch (error) {
       logError('GET /admin/dashboard', error, req);

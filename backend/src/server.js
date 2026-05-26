@@ -15,6 +15,7 @@ import adminRouter, {
 } from './admin-routes.js';
 import { validateAppointmentUpdatePayload } from './appointment-mutation-rules.js';
 import { buildAllowedOrigins, isOriginAllowed } from './cors-config-rules.js';
+import { assertRequiredEnv } from './env-config-rules.js';
 import { buildPublicServiceByIdQuery, buildPublicServiceQuery } from './public-service-query-rules.js';
 import { legacyAdminRouteDeprecation } from './legacy-route-deprecation.js';
 import { logError, sendError } from './http-response.js';
@@ -57,8 +58,7 @@ app.use(
 
 app.use(legacyAdminRouteDeprecation);
 
-if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL é obrigatório');
-if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET é obrigatório');
+assertRequiredEnv(process.env);
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });

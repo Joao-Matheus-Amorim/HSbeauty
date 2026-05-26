@@ -12,6 +12,7 @@ import adminRouter, {
 } from './admin-routes.js';
 import { validateAppointmentUpdatePayload } from './appointment-mutation-rules.js';
 import { createAuthRouter } from './auth-routes.js';
+import { calculateAvailability, getDayOccupancy } from './availability-service.js';
 import { buildAllowedOrigins, isOriginAllowed } from './cors-config-rules.js';
 import { assertRequiredEnv } from './env-config-rules.js';
 import { createPublicServiceRouter } from './public-service-routes.js';
@@ -19,19 +20,12 @@ import { legacyAdminRouteDeprecation } from './legacy-route-deprecation.js';
 import { logError, sendError } from './http-response.js';
 import {
   addMinutes,
-  buildDateTime,
-  BUSINESS_CLOSE_HOUR,
-  BUSINESS_OPEN_HOUR,
   formatDateOnly,
-  getCurrentWeekRange,
   getHoraFromDate,
   hasConflict,
   isDateInCurrentWeek,
   isWithinBusinessHours,
-  parseDateOnly,
-  parseDayBounds,
   PUBLIC_BOOKING_INITIAL_STATUS,
-  SLOT_STEP_MINUTES,
   validatePublicBookingPayload,
 } from './booking-rules.js';
 
@@ -59,97 +53,6 @@ const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
-
-// -- Helpers de data --
-
-function buildAvailableSlots(baseDay, servico, ocupados) {
-  const inicioExpediente = buildDateTime(baseDay, BUSINESS_OPEN_HOUR, 0);
-  const fimExpediente = buildDateTime(baseDay, BUSINESS_CLOSE_HOUR, 0);
-  const slotsDisponiveis = [];
-
-  for (
-    let cursor = new Date(inicioExpediente);
-    addMinutes(cursor, servico.duracao) <= fimExpediente;
-    cursor = addMinutes(cursor, SLOT_STEP_MINUTES)
-  ) {
-    const inicioSlot = new Date(cursor);
-    const fimSlot = addMinutes(inicioSlot, servico.duracao);
-    if (!hasConflict(inicioSlot, fimSlot, ocupados)) {
-      slotsDisponiveis.push({
-        horario: getHoraFromDate(inicioSlot),
-        inicio: inicioSlot.toISOString(),
-        fim: fimSlot.toISOString(),
-      });
-    }
-  }
-
-  return slotsDisponiveis;
-}
-
-// -- Ocupancy helpers --
-
-async function getDayOccupancy(dateString) {
-  const { start: dayStart, end: dayEnd } = parseDayBounds(dateString);
-  const [agendamentos, bloqueios] = await Promise.all([
-    prisma.agendamento.findMany({
-      // Exclui cancelados do calculo de conflitos
-      where: { data: { gte: dayStart, lte: dayEnd }, status: { not: 'cancelado' } },
-      include: { servico: true },
-      orderBy: { id: 'asc' },
-    }),
-    prisma.bloqueioHorario.findMany({
-      where: {
-        ativo: true,
-        AND: [{ dataInicio: { lte: dayEnd } }, { dataFim: { gte: dayStart } }],
-      },
-      orderBy: { id: 'asc' },
-    }),
-  ]);
-
-  const ocupados = [
-    ...agendamentos.map((a) => {
-      const inicio = new Date(a.data);
-      const fim = addMinutes(inicio, a.servico.duracao);
-      return { inicio, fim, tipo: 'agendamento', id: a.id };
-    }),
-    ...bloqueios.map((b) => ({
-      inicio: new Date(b.dataInicio),
-      fim: new Date(b.dataFim),
-      tipo: 'bloqueio',
-      id: b.id,
-    })),
-  ];
-
-  return { dayStart, dayEnd, agendamentos, bloqueios, ocupados };
-}
-
-async function calculateAvailability(dateString, servico) {
-  const baseDay = parseDateOnly(dateString);
-  const semanaAtual = getCurrentWeekRange();
-  const duracaoMinutos = servico.duracao;
-
-  if (!isDateInCurrentWeek(baseDay)) {
-    return {
-      expediente: { inicio: '09:00', fim: '18:00' },
-      semanaAtual,
-      duracaoServicoMinutos: duracaoMinutos,
-      total: 0,
-      slotsDisponiveis: [],
-      mensagem: 'Agendamentos disponíveis apenas para a semana atual.',
-    };
-  }
-
-  const { ocupados } = await getDayOccupancy(dateString);
-  const slotsDisponiveis = buildAvailableSlots(baseDay, servico, ocupados);
-
-  return {
-    expediente: { inicio: '09:00', fim: '18:00' },
-    semanaAtual,
-    duracaoServicoMinutos: duracaoMinutos,
-    total: slotsDisponiveis.length,
-    slotsDisponiveis,
-  };
-}
 
 // -- Auth middleware --
 
@@ -276,7 +179,7 @@ app.post('/agendamentos', async (req, res) => {
     const fimSlot = addMinutes(inicioSlot, servico.duracao);
     if (!isWithinBusinessHours(inicioSlot, fimSlot)) return sendError(res, 400, 'Horário fora do expediente (09:00–18:00)');
     const dataString = formatDateOnly(dataAgendamento);
-    const disponibilidade = await calculateAvailability(dataString, servico);
+    const disponibilidade = await calculateAvailability({ prisma, dateString: dataString, servico });
     const slotDisponivel = disponibilidade.slotsDisponiveis.some((slot) => new Date(slot.inicio).getTime() === inicioSlot.getTime());
     if (!slotDisponivel) return sendError(res, 409, 'Horário indisponível');
     const novoAgendamento = await prisma.agendamento.create({
@@ -326,7 +229,7 @@ app.put('/agendamentos/:id', authMiddleware, async (req, res) => {
     const inicioSlot = new Date(dataAtual);
     const fimSlot = addMinutes(inicioSlot, servicoAtual.duracao);
     if (!isWithinBusinessHours(inicioSlot, fimSlot)) return sendError(res, 400, 'Horário fora do expediente (09:00–18:00)');
-    const { ocupados } = await getDayOccupancy(formatDateOnly(inicioSlot));
+    const { ocupados } = await getDayOccupancy({ prisma, dateString: formatDateOnly(inicioSlot) });
     const ocupadosSemAtual = ocupados.filter((item) => item.tipo !== 'agendamento' || item.id !== agendamentoExistente.id);
     if (hasConflict(inicioSlot, fimSlot, ocupadosSemAtual)) return sendError(res, 409, 'Horário indisponível');
     const agendamentoAtualizado = await prisma.agendamento.update({ where: { id }, data: payload, include: { servico: true } });
@@ -409,7 +312,7 @@ app.get('/disponibilidade', async (req, res) => {
     if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return sendError(res, 400, 'servicoId inválido');
     const servico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
     if (!servico || servico.ativo === false) return sendError(res, 404, 'Serviço não encontrado ou inativo');
-    const disponibilidade = await calculateAvailability(data, servico);
+    const disponibilidade = await calculateAvailability({ prisma, dateString: data, servico });
     res.json({ data, servico: { id: servico.id, nome: servico.nome, duracao: servico.duracao }, ...disponibilidade });
   } catch (error) {
     logError('GET /disponibilidade', error, req);

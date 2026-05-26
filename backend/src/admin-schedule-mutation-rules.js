@@ -1,7 +1,11 @@
 function parseDateField(value, fieldName, { required = false } = {}) {
-  if (value === undefined || value === null || value === '') {
+  if (value === undefined) {
     if (required) return { valid: false, status: 400, message: `${fieldName} é obrigatória` };
     return { valid: true, value: undefined };
+  }
+
+  if (value === null || value === '') {
+    return { valid: false, status: 400, message: `${fieldName} inválida` };
   }
 
   const date = new Date(value);

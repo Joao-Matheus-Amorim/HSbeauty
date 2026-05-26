@@ -107,6 +107,32 @@ test('validateAdminScheduleUpdatePayload rejects invalid ativo', () => {
   });
 });
 
+test('validateAdminScheduleUpdatePayload rejects explicitly empty date fields', () => {
+  assert.deepEqual(
+    validateAdminScheduleUpdatePayload(
+      { dataInicio: '', motivo: 'x' },
+      { dataInicio: new Date('2026-05-25T09:00:00.000'), dataFim: new Date('2026-05-25T10:00:00.000') },
+    ),
+    {
+      valid: false,
+      status: 400,
+      message: 'dataInicio inválida',
+    },
+  );
+
+  assert.deepEqual(
+    validateAdminScheduleUpdatePayload(
+      { dataFim: null, motivo: 'x' },
+      { dataInicio: new Date('2026-05-25T09:00:00.000'), dataFim: new Date('2026-05-25T10:00:00.000') },
+    ),
+    {
+      valid: false,
+      status: 400,
+      message: 'dataFim inválida',
+    },
+  );
+});
+
 test('validateAdminScheduleUpdatePayload validates effective date range', () => {
   assert.deepEqual(
     validateAdminScheduleUpdatePayload(

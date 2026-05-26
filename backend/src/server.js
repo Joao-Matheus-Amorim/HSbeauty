@@ -14,6 +14,7 @@ import adminRouter, {
   setupAdminHorarios,
 } from './admin-routes.js';
 import { validateAppointmentUpdatePayload } from './appointment-mutation-rules.js';
+import { buildPublicServiceQuery } from './public-service-query-rules.js';
 import { legacyAdminRouteDeprecation } from './legacy-route-deprecation.js';
 import { logError, sendError } from './http-response.js';
 import {
@@ -251,11 +252,10 @@ app.post('/auth/logout', async (req, res) => {
 
 app.get('/servicos', async (req, res) => {
   try {
-    const { ativo } = req.query;
-    const where = {};
-    if (ativo === 'true') where.ativo = true;
-    if (ativo === 'false') where.ativo = false;
-    const servicos = await prisma.servico.findMany({ where, orderBy: { id: 'asc' } });
+    const query = buildPublicServiceQuery(req.query);
+    if (!query.valid) return sendError(res, query.status, query.message);
+
+    const servicos = await prisma.servico.findMany({ where: query.where, orderBy: { id: 'asc' } });
     res.json(servicos);
   } catch (error) {
     logError('GET /servicos', error, req);

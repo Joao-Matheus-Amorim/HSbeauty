@@ -14,7 +14,7 @@ import { validateAppointmentUpdatePayload } from './appointment-mutation-rules.j
 import { createAuthRouter } from './auth-routes.js';
 import { buildAllowedOrigins, isOriginAllowed } from './cors-config-rules.js';
 import { assertRequiredEnv } from './env-config-rules.js';
-import { buildPublicServiceByIdQuery, buildPublicServiceQuery } from './public-service-query-rules.js';
+import { createPublicServiceRouter } from './public-service-routes.js';
 import { legacyAdminRouteDeprecation } from './legacy-route-deprecation.js';
 import { logError, sendError } from './http-response.js';
 import {
@@ -171,33 +171,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/auth', createAuthRouter({ prisma, jwtSecret: JWT_SECRET }));
-
-app.get('/servicos', async (req, res) => {
-  try {
-    const query = buildPublicServiceQuery(req.query);
-    if (!query.valid) return sendError(res, query.status, query.message);
-
-    const servicos = await prisma.servico.findMany({ where: query.where, orderBy: { id: 'asc' } });
-    res.json(servicos);
-  } catch (error) {
-    logError('GET /servicos', error, req);
-    return sendError(res, 500, 'Erro ao buscar serviços');
-  }
-});
-
-app.get('/servicos/:id', async (req, res) => {
-  try {
-    const query = buildPublicServiceByIdQuery(req.params.id);
-    if (!query.valid) return sendError(res, query.status, query.message);
-
-    const servico = await prisma.servico.findFirst({ where: query.where });
-    if (!servico) return sendError(res, 404, 'Serviço não encontrado');
-    res.json(servico);
-  } catch (error) {
-    logError('GET /servicos/:id', error, req);
-    return sendError(res, 500, 'Erro ao buscar serviço');
-  }
-});
+app.use('/servicos', createPublicServiceRouter({ prisma }));
 
 app.post('/servicos', authMiddleware, async (req, res) => {
   try {

@@ -1,17 +1,5 @@
 import { VALID_BOOKING_STATUSES } from './admin-booking-rules.js';
-
-function parsePositiveInteger(value, fieldName, { defaultValue, max } = {}) {
-  if (value === undefined || value === null || value === '') {
-    return { valid: true, value: defaultValue };
-  }
-
-  const number = Number(value);
-  if (!Number.isInteger(number) || number <= 0) {
-    return { valid: false, status: 400, message: `${fieldName} inválido` };
-  }
-
-  return { valid: true, value: max ? Math.min(number, max) : number };
-}
+import { buildPagination, parsePositiveInteger } from './admin-query-utils.js';
 
 function parseDate(value, fieldName) {
   if (!value) return { valid: true, value: undefined };
@@ -59,17 +47,12 @@ export function buildAdminAppointmentQuery(query = {}) {
     where.servicoId = servicoIdResult.value;
   }
 
-  const pageResult = parsePositiveInteger(page, 'page', { defaultValue: 1 });
-  if (!pageResult.valid) return pageResult;
-
-  const limitResult = parsePositiveInteger(limit, 'limit', { defaultValue: 20, max: 100 });
-  if (!limitResult.valid) return limitResult;
+  const pagination = buildPagination({ page, limit });
+  if (!pagination.valid) return pagination;
 
   return {
     valid: true,
     where,
-    pageNum: pageResult.value,
-    limitNum: limitResult.value,
-    skip: (pageResult.value - 1) * limitResult.value,
+    ...pagination,
   };
 }

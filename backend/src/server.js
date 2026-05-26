@@ -14,6 +14,7 @@ import adminRouter, {
   setupAdminHorarios,
 } from './admin-routes.js';
 import { validateAppointmentUpdatePayload } from './appointment-mutation-rules.js';
+import { validateLoginPayload, validateRefreshTokenPayload } from './auth-payload-rules.js';
 import { buildAllowedOrigins, isOriginAllowed } from './cors-config-rules.js';
 import { assertRequiredEnv } from './env-config-rules.js';
 import { buildPublicServiceByIdQuery, buildPublicServiceQuery } from './public-service-query-rules.js';
@@ -203,8 +204,10 @@ app.all('/auth/register', (_req, res) => {
 
 app.post('/auth/login', loginLimiter, async (req, res) => {
   try {
-    const { email, senha } = req.body;
-    if (!email || !senha) return sendError(res, 400, 'Email e senha são obrigatórios');
+    const validation = validateLoginPayload(req.body);
+    if (!validation.valid) return sendError(res, validation.status, validation.message);
+
+    const { email, senha } = validation.data;
     const admin = await prisma.admin.findUnique({ where: { email } });
     if (!admin || admin.ativo === false) return sendError(res, 401, 'Credenciais inválidas');
     const ok = await bcrypt.compare(senha, admin.senha);
@@ -220,8 +223,10 @@ app.post('/auth/login', loginLimiter, async (req, res) => {
 
 app.post('/auth/refresh', async (req, res) => {
   try {
-    const { refreshToken } = req.body;
-    if (!refreshToken) return sendError(res, 400, 'refreshToken é obrigatório');
+    const validation = validateRefreshTokenPayload(req.body);
+    if (!validation.valid) return sendError(res, validation.status, validation.message);
+
+    const { refreshToken } = validation.data;
     const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken }, include: { admin: true } });
     if (!stored || stored.revogado || stored.expiresAt < new Date()) return sendError(res, 401, 'Refresh token inválido ou expirado');
     if (!stored.admin || stored.admin.ativo === false) return sendError(res, 401, 'Usuário inativo');
@@ -237,8 +242,10 @@ app.post('/auth/refresh', async (req, res) => {
 
 app.post('/auth/logout', async (req, res) => {
   try {
-    const { refreshToken } = req.body;
-    if (!refreshToken) return sendError(res, 400, 'refreshToken é obrigatório');
+    const validation = validateRefreshTokenPayload(req.body);
+    if (!validation.valid) return sendError(res, validation.status, validation.message);
+
+    const { refreshToken } = validation.data;
     const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
     if (stored && !stored.revogado) await prisma.refreshToken.update({ where: { id: stored.id }, data: { revogado: true } });
     res.json({ mensagem: 'Logout realizado com sucesso' });

@@ -1,6 +1,10 @@
 import express from 'express';
 import { buildAdminAppointmentQuery } from './admin-appointment-query-rules.js';
 import { buildAdminScheduleQuery } from './admin-schedule-query-rules.js';
+import {
+  validateAdminScheduleCreatePayload,
+  validateAdminScheduleUpdatePayload,
+} from './admin-schedule-mutation-rules.js';
 import { buildAdminServiceQuery } from './admin-service-query-rules.js';
 import { validateAdminBookingUpdatePayload } from './admin-booking-rules.js';
 import { handlePrismaConflict, logError, sendError } from './http-response.js';
@@ -456,31 +460,11 @@ export function setupAdminHorarios(prisma, authMiddleware) {
    */
   router.post('/horarios', authMiddleware, async (req, res) => {
     try {
-      const { dataInicio, dataFim, horaInicio, horaFim, motivo } = req.body;
-
-      if (!dataInicio || !dataFim) {
-        return sendError(res, 400, 'Data de início e fim são obrigatórias');
-      }
-
-      const dataInicioDate = new Date(dataInicio);
-      const dataFimDate = new Date(dataFim);
-
-      if (Number.isNaN(dataInicioDate.getTime()) || Number.isNaN(dataFimDate.getTime())) {
-        return sendError(res, 400, 'Datas inválidas');
-      }
-
-      if (dataFimDate <= dataInicioDate) {
-        return sendError(res, 400, 'Data de fim deve ser posterior à data de início');
-      }
+      const validation = validateAdminScheduleCreatePayload(req.body);
+      if (!validation.valid) return sendError(res, validation.status, validation.message);
 
       const novoBloqueio = await prisma.bloqueioHorario.create({
-        data: {
-          dataInicio: dataInicioDate,
-          dataFim: dataFimDate,
-          horaInicio: horaInicio || null,
-          horaFim: horaFim || null,
-          motivo: motivo || null,
-        },
+        data: validation.data,
       });
 
       res.status(201).json(novoBloqueio);
@@ -502,51 +486,12 @@ export function setupAdminHorarios(prisma, authMiddleware) {
       const bloqueioExistente = await prisma.bloqueioHorario.findUnique({ where: { id } });
       if (!bloqueioExistente) return sendError(res, 404, 'Bloqueio não encontrado');
 
-      const { dataInicio, dataFim, horaInicio, horaFim, motivo, ativo } = req.body;
-      const data = {};
-
-      if (dataInicio !== undefined) {
-        const dataInicioDate = new Date(dataInicio);
-        if (Number.isNaN(dataInicioDate.getTime())) {
-          return sendError(res, 400, 'Data de início inválida');
-        }
-        data.dataInicio = dataInicioDate;
-      }
-
-      if (dataFim !== undefined) {
-        const dataFimDate = new Date(dataFim);
-        if (Number.isNaN(dataFimDate.getTime())) {
-          return sendError(res, 400, 'Data de fim inválida');
-        }
-        data.dataFim = dataFimDate;
-      }
-
-      if (horaInicio !== undefined) {
-        data.horaInicio = horaInicio;
-      }
-
-      if (horaFim !== undefined) {
-        data.horaFim = horaFim;
-      }
-
-      if (motivo !== undefined) {
-        data.motivo = motivo;
-      }
-
-      if (ativo !== undefined) {
-        if (typeof ativo !== 'boolean') {
-          return sendError(res, 400, 'Ativo deve ser true ou false');
-        }
-        data.ativo = ativo;
-      }
-
-      if (Object.keys(data).length === 0) {
-        return sendError(res, 400, 'Nenhum campo para atualizar');
-      }
+      const validation = validateAdminScheduleUpdatePayload(req.body, bloqueioExistente);
+      if (!validation.valid) return sendError(res, validation.status, validation.message);
 
       const bloqueioAtualizado = await prisma.bloqueioHorario.update({
         where: { id },
-        data,
+        data: validation.data,
       });
 
       res.json(bloqueioAtualizado);

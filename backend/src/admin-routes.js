@@ -5,6 +5,10 @@ import {
   validateAdminScheduleCreatePayload,
   validateAdminScheduleUpdatePayload,
 } from './admin-schedule-mutation-rules.js';
+import {
+  validateAdminServiceCreatePayload,
+  validateAdminServiceUpdatePayload,
+} from './admin-service-mutation-rules.js';
 import { buildAdminServiceQuery } from './admin-service-query-rules.js';
 import { validateAdminBookingUpdatePayload } from './admin-booking-rules.js';
 import { handlePrismaConflict, logError, sendError } from './http-response.js';
@@ -281,32 +285,11 @@ export function setupAdminServicos(prisma, authMiddleware) {
    */
   router.post('/servicos', authMiddleware, async (req, res) => {
     try {
-      const { nome, descricao, preco, duracao, categoria, ativo } = req.body;
-
-      // Validações
-      if (!nome || typeof nome !== 'string' || !nome.trim()) {
-        return sendError(res, 400, 'Nome é obrigatório');
-      }
-
-      const precoNumero = Number(preco);
-      if (Number.isNaN(precoNumero) || precoNumero <= 0) {
-        return sendError(res, 400, 'Preço inválido');
-      }
-
-      const duracaoNumero = Number(duracao);
-      if (!Number.isInteger(duracaoNumero) || duracaoNumero <= 0) {
-        return sendError(res, 400, 'Duração inválida');
-      }
+      const validation = validateAdminServiceCreatePayload(req.body);
+      if (!validation.valid) return sendError(res, validation.status, validation.message);
 
       const novoServico = await prisma.servico.create({
-        data: {
-          nome: nome.trim(),
-          descricao: descricao || null,
-          preco: precoNumero,
-          duracao: duracaoNumero,
-          categoria: categoria || null,
-          ativo: typeof ativo === 'boolean' ? ativo : true,
-        },
+        data: validation.data,
       });
 
       res.status(201).json(novoServico);
@@ -330,54 +313,12 @@ export function setupAdminServicos(prisma, authMiddleware) {
       const servicoExistente = await prisma.servico.findUnique({ where: { id } });
       if (!servicoExistente) return sendError(res, 404, 'Serviço não encontrado');
 
-      const { nome, descricao, preco, duracao, categoria, ativo } = req.body;
-      const data = {};
-
-      if (nome !== undefined) {
-        if (typeof nome !== 'string' || !nome.trim()) {
-          return sendError(res, 400, 'Nome inválido');
-        }
-        data.nome = nome.trim();
-      }
-
-      if (descricao !== undefined) {
-        data.descricao = descricao;
-      }
-
-      if (preco !== undefined) {
-        const precoNumero = Number(preco);
-        if (Number.isNaN(precoNumero) || precoNumero <= 0) {
-          return sendError(res, 400, 'Preço inválido');
-        }
-        data.preco = precoNumero;
-      }
-
-      if (duracao !== undefined) {
-        const duracaoNumero = Number(duracao);
-        if (!Number.isInteger(duracaoNumero) || duracaoNumero <= 0) {
-          return sendError(res, 400, 'Duração inválida');
-        }
-        data.duracao = duracaoNumero;
-      }
-
-      if (categoria !== undefined) {
-        data.categoria = categoria;
-      }
-
-      if (ativo !== undefined) {
-        if (typeof ativo !== 'boolean') {
-          return sendError(res, 400, 'Ativo deve ser true ou false');
-        }
-        data.ativo = ativo;
-      }
-
-      if (Object.keys(data).length === 0) {
-        return sendError(res, 400, 'Nenhum campo para atualizar');
-      }
+      const validation = validateAdminServiceUpdatePayload(req.body);
+      if (!validation.valid) return sendError(res, validation.status, validation.message);
 
       const servicoAtualizado = await prisma.servico.update({
         where: { id },
-        data,
+        data: validation.data,
       });
 
       res.json(servicoAtualizado);

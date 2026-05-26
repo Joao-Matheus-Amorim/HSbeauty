@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPublicServiceQuery } from '../src/public-service-query-rules.js';
+import {
+  buildPublicServiceByIdQuery,
+  buildPublicServiceQuery,
+} from '../src/public-service-query-rules.js';
 
 test('buildPublicServiceQuery returns empty filter by default', () => {
   assert.deepEqual(buildPublicServiceQuery({}), {
@@ -33,5 +36,29 @@ test('buildPublicServiceQuery rejects invalid ativo filter', () => {
     valid: false,
     status: 400,
     message: 'ativo deve ser true ou false',
+  });
+});
+
+test('buildPublicServiceByIdQuery builds active-only lookup filter', () => {
+  assert.deepEqual(buildPublicServiceByIdQuery('7'), {
+    valid: true,
+    where: {
+      id: 7,
+      ativo: true,
+    },
+  });
+});
+
+test('buildPublicServiceByIdQuery rejects invalid ids', () => {
+  assert.deepEqual(buildPublicServiceByIdQuery('x'), {
+    valid: false,
+    status: 400,
+    message: 'ID inválido',
+  });
+
+  assert.deepEqual(buildPublicServiceByIdQuery('0'), {
+    valid: false,
+    status: 400,
+    message: 'ID inválido',
   });
 });

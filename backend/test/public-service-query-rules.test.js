@@ -1,4 +1,4 @@
-﻿import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildPublicServiceQuery } from '../src/public-service-query-rules.js';
 

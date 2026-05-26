@@ -20,7 +20,7 @@ test('validateRequiredEnv reports missing required variables', () => {
 test('validateRequiredEnv reports multiple missing variables', () => {
   assert.deepEqual(validateRequiredEnv({}), {
     valid: false,
-    message: 'DATABASE_URL, JWT_SECRET é obrigatório',
+    message: 'DATABASE_URL, JWT_SECRET são obrigatórios',
     missing: ['DATABASE_URL', 'JWT_SECRET'],
   });
 });

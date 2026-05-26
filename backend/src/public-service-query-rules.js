@@ -1,4 +1,4 @@
-﻿export function buildPublicServiceQuery(query = {}) {
+export function buildPublicServiceQuery(query = {}) {
   const { ativo } = query;
   const where = {};
 

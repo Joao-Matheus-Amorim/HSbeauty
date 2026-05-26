@@ -1,10 +1,7 @@
 import 'dotenv/config';
-import crypto from 'crypto';
 import express from 'express';
 import cors from 'cors';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import rateLimit from 'express-rate-limit';
 import pkg from '@prisma/client';
 import { PrismaNeon } from '@prisma/adapter-neon';
 import adminRouter, {
@@ -14,7 +11,7 @@ import adminRouter, {
   setupAdminHorarios,
 } from './admin-routes.js';
 import { validateAppointmentUpdatePayload } from './appointment-mutation-rules.js';
-import { validateLoginPayload, validateRefreshTokenPayload } from './auth-payload-rules.js';
+import { createAuthRouter } from './auth-routes.js';
 import { buildAllowedOrigins, isOriginAllowed } from './cors-config-rules.js';
 import { assertRequiredEnv } from './env-config-rules.js';
 import { buildPublicServiceByIdQuery, buildPublicServiceQuery } from './public-service-query-rules.js';
@@ -43,9 +40,6 @@ const { PrismaClient } = pkg;
 const app = express();
 app.use(express.json());
 
-const ACCESS_TOKEN_EXPIRY = '15m';
-const REFRESH_TOKEN_EXPIRY_DAYS = 7;
-
 const allowedOrigins = buildAllowedOrigins(process.env.FRONTEND_URL);
 
 app.use(
@@ -65,14 +59,6 @@ const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
-
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { erro: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
-});
 
 // -- Helpers de data --
 
@@ -98,20 +84,6 @@ function buildAvailableSlots(baseDay, servico, ocupados) {
   }
 
   return slotsDisponiveis;
-}
-
-// -- Helpers de token --
-
-function generateAccessToken(admin) {
-  return jwt.sign({ id: admin.id, email: admin.email }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
-}
-
-async function generateRefreshToken(adminId) {
-  const token = crypto.randomBytes(48).toString('hex');
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
-  await prisma.refreshToken.create({ data: { token, adminId, expiresAt } });
-  return token;
 }
 
 // -- Ocupancy helpers --
@@ -198,62 +170,7 @@ app.get('/', (req, res) => {
   res.json({ status: 'ok', mensagem: 'API HSBeauty rodando' });
 });
 
-app.all('/auth/register', (_req, res) => {
-  return sendError(res, 410, 'Registro de admin via HTTP desativado. Use o script CLI backend/scripts/create-admin.js.');
-});
-
-app.post('/auth/login', loginLimiter, async (req, res) => {
-  try {
-    const validation = validateLoginPayload(req.body);
-    if (!validation.valid) return sendError(res, validation.status, validation.message);
-
-    const { email, senha } = validation.data;
-    const admin = await prisma.admin.findUnique({ where: { email } });
-    if (!admin || admin.ativo === false) return sendError(res, 401, 'Credenciais inválidas');
-    const ok = await bcrypt.compare(senha, admin.senha);
-    if (!ok) return sendError(res, 401, 'Credenciais inválidas');
-    const accessToken = generateAccessToken(admin);
-    const refreshToken = await generateRefreshToken(admin.id);
-    res.json({ accessToken, refreshToken, expiresIn: 900, admin: { id: admin.id, email: admin.email } });
-  } catch (error) {
-    logError('POST /auth/login', error, req);
-    return sendError(res, 500, 'Erro ao fazer login');
-  }
-});
-
-app.post('/auth/refresh', async (req, res) => {
-  try {
-    const validation = validateRefreshTokenPayload(req.body);
-    if (!validation.valid) return sendError(res, validation.status, validation.message);
-
-    const { refreshToken } = validation.data;
-    const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken }, include: { admin: true } });
-    if (!stored || stored.revogado || stored.expiresAt < new Date()) return sendError(res, 401, 'Refresh token inválido ou expirado');
-    if (!stored.admin || stored.admin.ativo === false) return sendError(res, 401, 'Usuário inativo');
-    await prisma.refreshToken.update({ where: { id: stored.id }, data: { revogado: true } });
-    const newAccessToken = generateAccessToken(stored.admin);
-    const newRefreshToken = await generateRefreshToken(stored.admin.id);
-    res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken, expiresIn: 900 });
-  } catch (error) {
-    logError('POST /auth/refresh', error, req);
-    return sendError(res, 500, 'Erro ao renovar token');
-  }
-});
-
-app.post('/auth/logout', async (req, res) => {
-  try {
-    const validation = validateRefreshTokenPayload(req.body);
-    if (!validation.valid) return sendError(res, validation.status, validation.message);
-
-    const { refreshToken } = validation.data;
-    const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
-    if (stored && !stored.revogado) await prisma.refreshToken.update({ where: { id: stored.id }, data: { revogado: true } });
-    res.json({ mensagem: 'Logout realizado com sucesso' });
-  } catch (error) {
-    logError('POST /auth/logout', error, req);
-    return sendError(res, 500, 'Erro ao fazer logout');
-  }
-});
+app.use('/auth', createAuthRouter({ prisma, jwtSecret: JWT_SECRET }));
 
 app.get('/servicos', async (req, res) => {
   try {

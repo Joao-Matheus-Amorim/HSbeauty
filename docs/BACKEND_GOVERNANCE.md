@@ -47,10 +47,12 @@ O script agregado executa:
 
 ```powershell
 npm ci --prefix backend
+npm audit --audit-level=high --prefix backend
 npm test --prefix backend
 npm run prisma:generate
 
 npm ci --prefix frontend
+npm audit --audit-level=high --prefix frontend
 npm run lint --prefix frontend
 npm run build --prefix frontend
 ```
@@ -63,8 +65,8 @@ Tambem deve permanecer verde no GitHub Actions:
 Observacoes:
 
 - A raiz possui o script `quality`, que agrega os gates de backend e frontend.
-- A raiz possui o script `quality:backend`, que instala dependencias, executa testes do backend e gera o Prisma Client.
-- A raiz possui o script `quality:frontend`, que instala dependencias, executa lint e build do frontend.
+- A raiz possui o script `quality:backend`, que instala dependencias, audita vulnerabilidades high, executa testes do backend e gera o Prisma Client.
+- A raiz possui o script `quality:frontend`, que instala dependencias, audita vulnerabilidades high, executa lint e build do frontend.
 - A raiz possui o script `prisma:generate`, que aponta para `backend/prisma/schema.prisma`.
 - Nao usar `npm test`, `npm run lint`, `npm run build` ou `npx prisma generate --schema=prisma/schema.prisma` diretamente da raiz, porque esses comandos nao representam a estrutura atual do monorepo.
 

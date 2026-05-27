@@ -26,6 +26,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [slotSelecionado, setSlotSelecionado] = useState(null);
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
+  const [emailCliente, setEmailCliente] = useState('');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
   const [agendado, setAgendado] = useState(null);
@@ -114,6 +115,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
         telefone: telefone.trim(),
         data: slotSelecionado.inicio,
         servicoId: Number(servicoId),
+        ...(emailCliente.trim() ? { email: emailCliente.trim() } : {}),
       });
       setAgendado(resultado);
       setStep(4);
@@ -240,6 +242,11 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             <label className="modal-label">
               WhatsApp / Telefone
               <input className="modal-input" type="tel" placeholder="(21) 99999-9999" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
+            </label>
+
+            <label className="modal-label">
+              Email <span style={{ fontWeight: 400, fontSize: '0.85em', color: '#888' }}>(opcional — receba confirmação por email)</span>
+              <input className="modal-input" type="email" placeholder="seu@email.com" value={emailCliente} onChange={(e) => setEmailCliente(e.target.value)} />
             </label>
 
             {erro && <p className="modal-erro">{erro}</p>}

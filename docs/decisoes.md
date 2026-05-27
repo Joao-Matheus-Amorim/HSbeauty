@@ -93,3 +93,30 @@ Decisao: rotacao manual documentada com procedimento padrao. Nao ha rotacao auto
 3. Reiniciar o servidor de backend.
 4. Executar `npx prisma generate` localmente para confirmar conexao com novo DSN.
 5. Registrar a rotacao em `docs/action-register.md` com data e motivo.
+
+## D009 — Provider de email para confirmacao de agendamento (A-017)
+
+Decisao: usar **Resend** como provider de email transacional para confirmacao de agendamento ao cliente.
+
+Motivo: plano gratuito de 3.000 emails/mes e 100/dia e suficiente para o volume atual; SDK oficial para Node.js; API simples sem configuracao de SMTP; dominio verificado via DNS permite sender customizado.
+
+### Variaveis de ambiente necessarias no backend
+
+| Variavel | Exemplo | Descricao |
+|---|---|---|
+| `RESEND_API_KEY` | `re_abc123...` | Chave de API gerada no painel Resend |
+| `RESEND_FROM_EMAIL` | `agendamentos@seudominio.com` | Endereco remetente verificado no Resend |
+
+### Comportamento
+
+- O campo **email** e opcional no formulario de agendamento publico.
+- Se o cliente nao fornecer email, ou se as variaveis de ambiente nao estiverem configuradas, o envio e silenciosamente ignorado — o agendamento e criado normalmente.
+- O envio e fire-and-forget: falha no envio do email nao afeta a resposta HTTP do agendamento.
+- O email enviado contem: servico, data formatada em pt-BR (America/Sao_Paulo) e horario.
+
+### Como ativar em producao
+
+1. Criar conta em resend.com (plano gratuito).
+2. Verificar dominio no painel Resend → Domains.
+3. Gerar API Key em Resend → API Keys.
+4. Configurar `RESEND_API_KEY` e `RESEND_FROM_EMAIL` como variaveis de ambiente no provedor de backend.

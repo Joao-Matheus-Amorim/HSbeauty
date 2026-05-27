@@ -21,7 +21,7 @@ Atualizado em: 27/05/2026
 | ~~A-014~~ | ~~P2~~ | ~~9~~ | ~~Remover rotas legadas fora de `/admin`.~~ | Concluido em C-029. | — |
 | ~~A-015~~ | ~~P3~~ | ~~9~~ | ~~Refatorar `server.js` conforme BACKEND_REFACTOR_ROADMAP.~~ | Concluido em C-033. | — |
 | A-016 | P2 | 7 | Implementar notificacao ao admin para novo agendamento. | Frontend nao notifica; admin descobre apenas ao recarregar a pagina. | Decidir mecanismo (polling, WebSocket ou webhook) e registrar em `docs/decisoes.md`. |
-| A-017 | P2 | 7 | Substituir link WhatsApp por confirmacao real ao cliente. | Apos agendar, frontend gera link WhatsApp manual; nao ha envio automatico. | Avaliar Z-API ou Twilio; registrar decisao de provider em `docs/decisoes.md`. |
+| ~~A-017~~ | ~~P2~~ | ~~7~~ | ~~Substituir link WhatsApp por confirmacao real ao cliente.~~ | Concluido em C-035. | — |
 | ~~A-018~~ | ~~P3~~ | ~~8~~ | ~~Criar visualizacao de agenda semanal no painel admin.~~ | Concluido em C-034. | — |
 | ~~A-019~~ | ~~P3~~ | ~~8~~ | ~~Adicionar export de agendamentos para CSV.~~ | Concluido em C-028. | — |
 | ~~A-020~~ | ~~P1~~ | ~~9~~ | ~~Definir politica de rotacao de credenciais.~~ | Concluido em C-030. | — |
@@ -64,3 +64,4 @@ Atualizado em: 27/05/2026
 | C-032 | Esta frente | Suite de integracao criada: conflito de horario, lock concorrente e auth flow; skip automatico sem `DATABASE_URL_INTEGRATION` (A-013). |
 | C-033 | Esta frente | `server.js` virou bootstrap puro; `app.js` criado como composition root com `createApp()` (A-015). |
 | C-034 | Esta frente | `WeekCalendar` criado sem dependencias externas; toggle lista/calendario adicionado ao `AppointmentManager` (A-018). |
+| C-035 | Esta frente | Email de confirmacao via Resend: `email-service.js`, campo email opcional no formulario publico, fire-and-forget pos-transacao, decisao D009 documentada (A-017). |

@@ -150,7 +150,7 @@ export function hasConflict(startA, endA, items) {
 }
 
 export function validatePublicBookingPayload(payload) {
-  const { nomeCliente, telefone, data, servicoId, observacoes } = payload || {};
+  const { nomeCliente, telefone, data, servicoId, observacoes, email } = payload || {};
 
   if (!nomeCliente || typeof nomeCliente !== 'string' || !nomeCliente.trim()) {
     return { valid: false, status: 400, message: 'Nome do cliente é obrigatório' };
@@ -182,6 +182,12 @@ export function validatePublicBookingPayload(payload) {
     }
   }
 
+  if (email !== undefined && email !== null && email !== '') {
+    if (typeof email !== 'string' || !email.includes('@') || email.trim().length < 3) {
+      return { valid: false, status: 400, message: 'Email inválido' };
+    }
+  }
+
   const dataAgendamento = parsePublicBookingDateTime(data);
 
   if (!dataAgendamento) {
@@ -210,6 +216,7 @@ export function validatePublicBookingPayload(payload) {
       dataAgendamento,
       servicoIdNumero,
       observacoes: observacoes ? observacoes.trim() : undefined,
+      email: email && typeof email === 'string' ? email.trim() : undefined,
     },
   };
 }

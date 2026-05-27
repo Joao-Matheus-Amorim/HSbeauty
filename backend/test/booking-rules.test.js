@@ -173,4 +173,36 @@ test('validatePublicBookingPayload rejects invalid public booking payloads', () 
       message: 'Horário deve estar alinhado ao intervalo de 30 minutos',
     },
   );
+
+  assert.deepEqual(
+    validatePublicBookingPayload({
+      nomeCliente: 'Maria',
+      telefone: '(11) 98765-4321',
+      data: '2026-05-25T09:00:00.000Z',
+      servicoId: 1,
+      email: 'nao-e-email',
+    }),
+    { valid: false, status: 400, message: 'Email inválido' },
+  );
+});
+
+test('validatePublicBookingPayload accepts optional email and passes it through', () => {
+  const semEmail = validatePublicBookingPayload({
+    nomeCliente: 'Maria',
+    telefone: '(11) 98765-4321',
+    data: '2026-05-25T09:00:00.000Z',
+    servicoId: 1,
+  });
+  assert.equal(semEmail.valid, true);
+  assert.equal(semEmail.data.email, undefined);
+
+  const comEmail = validatePublicBookingPayload({
+    nomeCliente: 'Maria',
+    telefone: '(11) 98765-4321',
+    data: '2026-05-25T09:00:00.000Z',
+    servicoId: 1,
+    email: ' maria@example.com ',
+  });
+  assert.equal(comEmail.valid, true);
+  assert.equal(comEmail.data.email, 'maria@example.com');
 });

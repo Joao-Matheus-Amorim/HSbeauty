@@ -11,6 +11,7 @@ import {
   validatePublicBookingPayload,
 } from './booking-rules.js';
 import { logError, sendError } from './http-response.js';
+import { sendBookingConfirmationEmail } from './email-service.js';
 
 export function createPublicBookingRouter({ prisma }) {
   const router = express.Router();
@@ -20,7 +21,7 @@ export function createPublicBookingRouter({ prisma }) {
       const validation = validatePublicBookingPayload(req.body);
       if (!validation.valid) return sendError(res, validation.status, validation.message);
 
-      const { nomeCliente, telefone, dataAgendamento, servicoIdNumero, observacoes } = validation.data;
+      const { nomeCliente, telefone, dataAgendamento, servicoIdNumero, observacoes, email } = validation.data;
 
       if (!isDateInCurrentWeek(dataAgendamento)) return sendError(res, 400, 'Agendamentos disponíveis apenas para a semana atual');
 
@@ -56,6 +57,7 @@ export function createPublicBookingRouter({ prisma }) {
             servicoId: servicoIdNumero,
             status: PUBLIC_BOOKING_INITIAL_STATUS,
             ...(observacoes ? { observacoes } : {}),
+            ...(email ? { email } : {}),
           },
           include: { servico: true },
         });
@@ -64,7 +66,17 @@ export function createPublicBookingRouter({ prisma }) {
       });
 
       if (result.erro) return sendError(res, result.erro.status, result.erro.message);
-      res.status(201).json(result.agendamento);
+
+      const { agendamento } = result;
+      res.status(201).json(agendamento);
+
+      sendBookingConfirmationEmail({
+        nomeCliente: agendamento.nomeCliente,
+        email: agendamento.email,
+        servico: agendamento.servico?.nome || 'Serviço',
+        data: agendamento.data,
+        hora: agendamento.hora,
+      }).catch((err) => logError('email/booking-confirmation', err, req));
     } catch (error) {
       logError('POST /agendamentos', error, req);
       return sendError(res, 500, 'Erro ao criar agendamento');

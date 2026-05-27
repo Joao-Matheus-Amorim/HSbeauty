@@ -128,6 +128,12 @@ Atualizado em: 27/05/2026
 - Controle: modal de agendamento carregado via lazy import.
 - Gaps: imagens ainda pesadas; otimizar formato/tamanho em frente propria.
 
+### Constantes publicas
+
+- Arquivo: `frontend/src/constants.js`
+- Estado: operacional.
+- Controle: WhatsApp usa `VITE_WHATSAPP` quando configurado e fallback versionado quando ausente.
+
 ### Modal de agendamento
 
 - Arquivos:

@@ -14,7 +14,7 @@ function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-export default function AdminLayout({ children, activeTab, onTabChange, admin, onLogout }) {
+export default function AdminLayout({ children, activeTab, onTabChange, admin, onLogout, pendingCount = 0 }) {
   const menuItems = [
     { id: 'agendamentos', label: 'Agenda', desktopLabel: 'Agendamentos', icon: Calendar },
     { id: 'horarios', label: 'Horários', desktopLabel: 'Horários', icon: Clock },
@@ -39,6 +39,7 @@ export default function AdminLayout({ children, activeTab, onTabChange, admin, o
         <nav className="flex-1 p-4 flex flex-col gap-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
+            const badge = item.id === 'agendamentos' && activeTab !== 'agendamentos' && pendingCount > 0;
             return (
               <button
                 key={item.id}
@@ -52,6 +53,11 @@ export default function AdminLayout({ children, activeTab, onTabChange, admin, o
               >
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.desktopLabel}</span>
+                {badge && (
+                  <span className="ml-auto bg-rose-500 text-white text-xs font-bold rounded-full min-w-[1.25rem] h-5 flex items-center justify-center px-1">
+                    {pendingCount > 99 ? '99+' : pendingCount}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -82,6 +88,7 @@ export default function AdminLayout({ children, activeTab, onTabChange, admin, o
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
+            const badge = item.id === 'agendamentos' && activeTab !== 'agendamentos' && pendingCount > 0;
             return (
               <button
                 key={item.id}
@@ -90,7 +97,14 @@ export default function AdminLayout({ children, activeTab, onTabChange, admin, o
                 aria-label={item.desktopLabel}
                 title={item.desktopLabel}
               >
-                <Icon className="w-5 h-5" />
+                <div className="relative">
+                  <Icon className="w-5 h-5" />
+                  {badge && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-0.5 leading-none">
+                      {pendingCount > 99 ? '99+' : pendingCount}
+                    </span>
+                  )}
+                </div>
                 <span>{item.label}</span>
               </button>
             );

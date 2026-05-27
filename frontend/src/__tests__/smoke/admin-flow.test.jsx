@@ -42,7 +42,7 @@ describe('Smoke admin', () => {
           servico: { id: 1, nome: 'Unhas', preco: 60 },
         },
       ],
-      paginacao: { pagina: 1, totalPaginas: 1 },
+      paginacao: { pagina: 1, totalPaginas: 1, total: 1 },
     });
   });
 

@@ -1,10 +1,4 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
-import heroBanner from '../Saved Pictures/principalmai.png'
-import ownerProfile from '../Saved Pictures/maiara2.png'
-import ownerSecondary from '../Saved Pictures/maiara1.png'
-import unhasImage from '../Saved Pictures/unha1.png'
-import ciliosImage from '../Saved Pictures/sobranchelha2.png'
-import depilacaoImage from '../Saved Pictures/depil1.png'
 import { listarServicos } from './services/agendamentos'
 import { WHATSAPP, SERVICOS_PADRAO } from './constants'
 
@@ -26,13 +20,13 @@ const normalizeServiceName = (name) => {
 	return normalized
 }
 
-const getServiceImage = (name) => {
+const serviceVisualLabel = (name) => {
 	const normalized = normalizeServiceName(name)
-	if (normalized === 'unhas') return unhasImage
-	if (normalized === 'cilios') return ownerSecondary
-	if (normalized === 'sobrancelhas') return ciliosImage
-	if (normalized === 'depilacao') return depilacaoImage
-	return ownerProfile
+	if (normalized === 'unhas') return 'UN'
+	if (normalized === 'cilios') return 'CL'
+	if (normalized === 'sobrancelhas') return 'SB'
+	if (normalized === 'depilacao') return 'DP'
+	return 'HS'
 }
 
 function App() {
@@ -108,7 +102,9 @@ function App() {
 							Agendar ›
 						</button>
 					</div>
-					<img src={heroBanner} alt="HSBeauty banner principal" className="hero-banner-art" />
+					<div className="hero-banner-art hero-banner-placeholder" aria-hidden="true">
+						<span>HSBeauty</span>
+					</div>
 				</section>
 
 				<div className="hero-dots" aria-hidden="true">
@@ -140,7 +136,9 @@ function App() {
 								tabIndex={0}
 								aria-label={`Reservar ${service.nome}`}
 							>
-								<img src={getServiceImage(service.nome)} alt={service.nome} loading="lazy" />
+								<div className="service-card-media" aria-hidden="true">
+									<span>{serviceVisualLabel(service.nome)}</span>
+								</div>
 								<div className="service-card-body">
 									<h4>{service.nome}</h4>
 									<button
@@ -160,8 +158,8 @@ function App() {
 					<h3>Galeria de Resultados</h3>
 					<p>Resultados reais com acabamento de alta definição para valorizar seu estilo.</p>
 					<div className="gallery-strip">
-						<img src={ownerSecondary} alt="Resultado de atendimento HSBeauty" loading="lazy" />
-						<img src={ciliosImage} alt="Cílios feitos no studio" loading="lazy" />
+						<div className="gallery-placeholder" aria-hidden="true"><span>Resultado A</span></div>
+						<div className="gallery-placeholder" aria-hidden="true"><span>Resultado B</span></div>
 					</div>
 					<div className="cta-stack">
 						<a className="cta-button cta-primary" href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer">
@@ -176,7 +174,7 @@ function App() {
 				</section>
 
 				<footer className="bottom-note">
-					<img src={ownerProfile} alt="Gestora HSBeauty" loading="lazy" />
+					<div className="bottom-note-avatar" aria-hidden="true">HS</div>
 					<p>HSBeauty Studio - atendimento para clientes</p>
 				</footer>
 			</section>

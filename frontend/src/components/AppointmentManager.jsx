@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Search,
   Check,
@@ -15,25 +15,26 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { listarAgendamentosAdmin, atualizarAgendamentoAdmin, cancelarAgendamentoAdmin } from '../services/admin';
+import { STATUS } from '../constants';
 import { clsx } from 'clsx';
 
 const STATUS_CONFIG = {
-  pendente: {
-    label: 'Confirmar',
+  [STATUS.PENDENTE]: {
+    label: 'Pendente',
     badge: 'admin-status-badge is-pending',
     card: 'is-pending',
   },
-  confirmado: {
+  [STATUS.CONFIRMADO]: {
     label: 'Confirmado',
     badge: 'admin-status-badge is-confirmed',
     card: 'is-confirmed',
   },
-  cancelado: {
+  [STATUS.CANCELADO]: {
     label: 'Cancelado',
     badge: 'admin-status-badge is-canceled',
     card: 'is-canceled',
   },
-  concluído: {
+  [STATUS.CONCLUIDO]: {
     label: 'Concluído',
     badge: 'admin-status-badge is-done',
     card: 'is-done',
@@ -41,10 +42,10 @@ const STATUS_CONFIG = {
 };
 
 const FILTER_TABS = [
-  { value: 'pendente', label: 'Confirmar', helper: 'Novos pedidos' },
-  { value: 'confirmado', label: 'Confirmados', helper: 'Já aprovados' },
+  { value: STATUS.PENDENTE, label: 'Confirmar', helper: 'Novos pedidos' },
+  { value: STATUS.CONFIRMADO, label: 'Confirmados', helper: 'Já aprovados' },
   { value: '', label: 'Todos', helper: 'Agenda geral' },
-  { value: 'cancelado', label: 'Cancelados', helper: 'Histórico' },
+  { value: STATUS.CANCELADO, label: 'Cancelados', helper: 'Histórico' },
 ];
 
 function cleanPhone(phone = '') {
@@ -65,11 +66,13 @@ function formatPrice(value) {
 
 function formatDate(value) {
   if (!value) return '--/--';
-  return new Date(value).toLocaleDateString('pt-BR', {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-  }).replace('.', '');
+  return new Date(value)
+    .toLocaleDateString('pt-BR', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+    })
+    .replace('.', '');
 }
 
 function formatFullDate(value) {
@@ -78,17 +81,19 @@ function formatFullDate(value) {
 }
 
 function AppointmentCard({ appointment, onConfirm, onComplete, onCancel }) {
-  const status = STATUS_CONFIG[appointment.status] || STATUS_CONFIG.pendente;
+  const status = STATUS_CONFIG[appointment.status] || STATUS_CONFIG[STATUS.PENDENTE];
   const phone = cleanPhone(appointment.telefone);
   const whatsappHref = phone ? `https://wa.me/55${phone}` : null;
   const telHref = phone ? `tel:+55${phone}` : null;
   const serviceName = appointment.servico?.nome || 'Serviço';
   const servicePrice = formatPrice(appointment.servico?.preco);
-  const primaryAction = appointment.status === 'pendente'
-    ? { label: 'Confirmar', icon: Check, className: 'confirm', onClick: () => onConfirm(appointment.id) }
-    : appointment.status === 'confirmado'
-      ? { label: 'Concluir', icon: CheckCircle2, className: 'done', onClick: () => onComplete(appointment.id) }
-      : null;
+
+  const primaryAction =
+    appointment.status === STATUS.PENDENTE
+      ? { label: 'Confirmar', icon: Check, className: 'confirm', onClick: () => onConfirm(appointment.id) }
+      : appointment.status === STATUS.CONFIRMADO
+        ? { label: 'Concluir', icon: CheckCircle2, className: 'done', onClick: () => onComplete(appointment.id) }
+        : null;
   const PrimaryIcon = primaryAction?.icon;
 
   return (
@@ -156,13 +161,17 @@ function AppointmentCard({ appointment, onConfirm, onComplete, onCancel }) {
         )}
 
         {primaryAction && (
-          <button type="button" onClick={primaryAction.onClick} className={clsx('admin-mini-action admin-mini-primary', primaryAction.className)}>
+          <button
+            type="button"
+            onClick={primaryAction.onClick}
+            className={clsx('admin-mini-action admin-mini-primary', primaryAction.className)}
+          >
             <PrimaryIcon className="w-4 h-4" />
             {primaryAction.label}
           </button>
         )}
 
-        {appointment.status !== 'cancelado' && (
+        {appointment.status !== STATUS.CANCELADO && (
           <button type="button" onClick={() => onCancel(appointment.id)} className="admin-mini-action cancel">
             <X className="w-4 h-4" />
             Cancelar
@@ -177,8 +186,11 @@ export default function AppointmentManager() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [actionError, setActionError] = useState(null);
+  const [confirmCancelId, setConfirmCancelId] = useState(null);
+
   const [filters, setFilters] = useState({
-    status: 'pendente',
+    status: STATUS.PENDENTE,
     dataInicio: '',
     dataFim: '',
     search: '',
@@ -191,88 +203,82 @@ export default function AppointmentManager() {
   const dataInicioFilter = dataInicio ? `${dataInicio}T00:00:00.000` : '';
   const dataFimFilter = effectiveDataFim ? `${effectiveDataFim}T23:59:59.999` : '';
 
-  async function loadAppointments() {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await listarAgendamentosAdmin({
-        status,
-        dataInicio: dataInicioFilter,
-        dataFim: dataFimFilter,
-        page,
-        limit: 10,
-      });
-      setAppointments(data.agendamentos || []);
-      setPagination(data.paginacao || {});
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const loadAppointments = useCallback(
+    async ({ silent = false, shouldIgnore = () => false } = {}) => {
+      if (!silent && !shouldIgnore()) setLoading(true);
+      if (!shouldIgnore()) setError(null);
+
+      try {
+        const data = await listarAgendamentosAdmin({
+          status,
+          dataInicio: dataInicioFilter,
+          dataFim: dataFimFilter,
+          search,
+          page,
+          limit: 10,
+        });
+
+        if (shouldIgnore()) return;
+
+        setError(null);
+        setAppointments(data.agendamentos || []);
+        setPagination(data.paginacao || {});
+      } catch (err) {
+        if (shouldIgnore()) return;
+
+        setError(err.message);
+        setAppointments([]);
+        setPagination({});
+      } finally {
+        if (!shouldIgnore()) setLoading(false);
+      }
+    },
+    [status, dataInicioFilter, dataFimFilter, search, page],
+  );
 
   useEffect(() => {
     let ignore = false;
 
-    listarAgendamentosAdmin({
-      status,
-      dataInicio: dataInicioFilter,
-      dataFim: dataFimFilter,
-      page,
-      limit: 10,
-    })
-      .then((data) => {
-        if (ignore) return;
-        setError(null);
-        setAppointments(data.agendamentos || []);
-        setPagination(data.paginacao || {});
-      })
-      .catch((err) => {
-        if (ignore) return;
-        setError(err.message);
-      })
-      .finally(() => {
-        if (ignore) return;
-        setLoading(false);
-      });
+    const timerId = window.setTimeout(() => {
+      loadAppointments({ shouldIgnore: () => ignore });
+    }, 0);
 
     return () => {
       ignore = true;
+      window.clearTimeout(timerId);
     };
-  }, [status, dataInicioFilter, dataFimFilter, page]);
+  }, [loadAppointments]);
 
   const handleStatusUpdate = async (id, newStatus) => {
+    setActionError(null);
     try {
       await atualizarAgendamentoAdmin(id, { status: newStatus });
-      loadAppointments();
+      await loadAppointments({ silent: true });
     } catch (err) {
-      alert('Erro ao atualizar status: ' + err.message);
+      setActionError('Erro ao atualizar status: ' + err.message);
     }
   };
 
-  const handleCancel = async (id) => {
-    if (!confirm('Deseja realmente cancelar este agendamento?')) return;
+  const handleCancelRequest = (id) => {
+    setConfirmCancelId(id);
+    setActionError(null);
+  };
+
+  const handleCancelConfirm = async () => {
+    const id = confirmCancelId;
+    setConfirmCancelId(null);
     try {
       await cancelarAgendamentoAdmin(id);
-      loadAppointments();
+      await loadAppointments({ silent: true });
     } catch (err) {
-      alert('Erro ao cancelar: ' + err.message);
+      setActionError('Erro ao cancelar: ' + err.message);
     }
   };
 
-  const filteredAppointments = useMemo(() => {
-    if (!search) return appointments;
-    const s = search.toLowerCase();
-    return appointments.filter((a) => {
-      const nameMatch = a.nomeCliente?.toLowerCase().includes(s);
-      const phoneMatch = a.telefone?.includes(s);
-      const serviceMatch = a.servico?.nome?.toLowerCase().includes(s);
-      return nameMatch || phoneMatch || serviceMatch;
-    });
-  }, [appointments, search]);
+  const filteredAppointments = useMemo(() => appointments, [appointments]);
 
-  const title = status === 'pendente' ? 'Para confirmar' : 'Agendamentos';
-  const emptyMessage = status === 'pendente'
+  const title = status === STATUS.PENDENTE ? 'Para confirmar' : 'Agendamentos';
+  const emptyMessage = status === STATUS.PENDENTE
     ? 'Nenhum agendamento pendente para confirmar.'
     : 'Nenhum agendamento encontrado.';
 
@@ -284,6 +290,7 @@ export default function AppointmentManager() {
   }
 
   function changeSearch(value) {
+    setPage(1);
     setFilters((current) => ({ ...current, search: value }));
   }
 
@@ -307,12 +314,12 @@ export default function AppointmentManager() {
           <span className="admin-section-kicker">Agenda</span>
           <h2>{title}</h2>
           <p>
-            {status === 'pendente'
+            {status === STATUS.PENDENTE
               ? 'Confirme ou cancele os pedidos que chegaram pelo site.'
               : 'Veja e gerencie todos os agendamentos.'}
           </p>
         </div>
-        <button type="button" onClick={loadAppointments} className="admin-refresh-btn" aria-label="Atualizar agenda">
+        <button type="button" onClick={() => loadAppointments()} className="admin-refresh-btn" aria-label="Atualizar agenda">
           <RefreshCcw className={clsx('w-5 h-5', loading && 'animate-spin')} />
         </button>
       </div>
@@ -352,6 +359,29 @@ export default function AppointmentManager() {
         </div>
       </div>
 
+      {actionError && (
+        <div className="admin-error-card" role="alert">
+          <AlertCircle className="w-5 h-5" />
+          <span>{actionError}</span>
+          <button type="button" onClick={() => setActionError(null)} className="ml-auto text-sm underline">Fechar</button>
+        </div>
+      )}
+
+      {confirmCancelId && (
+        <div className="admin-error-card" role="alertdialog" aria-label="Confirmar cancelamento">
+          <AlertCircle className="w-5 h-5" />
+          <span>Deseja realmente cancelar este agendamento?</span>
+          <div className="flex gap-2 ml-auto">
+            <button type="button" onClick={handleCancelConfirm} className="text-sm font-bold text-red-700 underline">
+              Sim, cancelar
+            </button>
+            <button type="button" onClick={() => setConfirmCancelId(null)} className="text-sm underline">
+              Não
+            </button>
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="admin-error-card">
           <AlertCircle className="w-5 h-5" />
@@ -360,21 +390,17 @@ export default function AppointmentManager() {
       )}
 
       <section className="admin-appointments-list" aria-label="Lista de agendamentos">
-        {loading && (
-          <div className="admin-loading-card">Carregando agendamentos...</div>
-        )}
+        {loading && <div className="admin-loading-card">Carregando agendamentos...</div>}
 
-        {!loading && filteredAppointments.length === 0 && (
-          <div className="admin-empty-card">{emptyMessage}</div>
-        )}
+        {!loading && filteredAppointments.length === 0 && <div className="admin-empty-card">{emptyMessage}</div>}
 
         {!loading && filteredAppointments.map((appointment) => (
           <AppointmentCard
             key={appointment.id}
             appointment={appointment}
-            onConfirm={(id) => handleStatusUpdate(id, 'confirmado')}
-            onComplete={(id) => handleStatusUpdate(id, 'concluído')}
-            onCancel={handleCancel}
+            onConfirm={(id) => handleStatusUpdate(id, STATUS.CONFIRMADO)}
+            onComplete={(id) => handleStatusUpdate(id, STATUS.CONCLUIDO)}
+            onCancel={handleCancelRequest}
           />
         ))}
       </section>

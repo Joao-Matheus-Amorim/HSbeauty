@@ -1,23 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { listarServicos, buscarDisponibilidade, criarAgendamento } from '../services/agendamentos';
+import { WHATSAPP, SERVICOS_PADRAO, SEMANAS_DISPONIVEIS } from '../constants';
+import { formatDuracao, getAvailableDays } from '../utils/date-utils';
 import './AgendamentoModal.css';
-
-const WHATSAPP = '5521970976928';
-
-const servicosPadrao = [
-  { id: 1, nome: 'Unhas', preco: 35, ativo: true },
-  { id: 2, nome: 'Cílios', preco: 140, ativo: true },
-  { id: 3, nome: 'Sobrancelhas', preco: 70, ativo: true },
-  { id: 4, nome: 'Depilação', preco: 50, ativo: true },
-];
-
-function formatDateOnly(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
 
 function formatDateTime(value) {
   return new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
@@ -31,43 +17,9 @@ function buildWhatsAppLink(agendamento) {
   return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensagem)}`;
 }
 
-function getCurrentWeekRange() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const day = today.getDay();
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-
-  const start = new Date(today);
-  start.setDate(today.getDate() + diffToMonday);
-  start.setHours(0, 0, 0, 0);
-
-  const days = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(start);
-    date.setDate(start.getDate() + index);
-    const value = formatDateOnly(date);
-    return {
-      value,
-      weekday: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''),
-      dayMonth: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-    };
-  });
-
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  end.setHours(0, 0, 0, 0);
-
-  return {
-    start,
-    end,
-    days,
-    min: formatDateOnly(start),
-    max: formatDateOnly(end),
-  };
-}
-
 export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [step, setStep] = useState(1);
-  const [servicos, setServicos] = useState(servicosPadrao);
+  const [servicos, setServicos] = useState(SERVICOS_PADRAO);
   const [servicoId, setServicoId] = useState(servicoInicial?.id || '');
   const [data, setData] = useState('');
   const [slots, setSlots] = useState([]);
@@ -78,7 +30,16 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [erro, setErro] = useState('');
   const [agendado, setAgendado] = useState(null);
 
-  const semanaAtual = useMemo(() => getCurrentWeekRange(), []);
+  const janela = useMemo(() => getAvailableDays(SEMANAS_DISPONIVEIS), []);
+
+  const semanas = useMemo(() => {
+    const grupos = [];
+    janela.days.forEach((dia) => {
+      if (!grupos[dia.weekIndex]) grupos[dia.weekIndex] = { label: dia.weekLabel || `Semana ${dia.weekIndex + 1}`, dias: [] };
+      grupos[dia.weekIndex].dias.push(dia);
+    });
+    return grupos.filter(Boolean);
+  }, [janela]);
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -90,20 +51,14 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
   useEffect(() => {
     let mounted = true;
-
     listarServicos({ ativo: true })
       .then((lista) => {
         if (!mounted) return;
-        if (Array.isArray(lista) && lista.length > 0) {
-          setServicos(lista);
-        } else {
-          setServicos(servicosPadrao);
-        }
+        setServicos(Array.isArray(lista) && lista.length > 0 ? lista : SERVICOS_PADRAO);
       })
       .catch(() => {
-        if (mounted) setServicos(servicosPadrao);
+        if (mounted) setServicos(SERVICOS_PADRAO);
       });
-
     return () => {
       mounted = false;
     };
@@ -125,10 +80,6 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
   async function buscarSlots() {
     if (!servicoId || !data) return;
-    if (data < semanaAtual.min || data > semanaAtual.max) {
-      setErro('Escolha um dia da semana atual.');
-      return;
-    }
 
     setLoading(true);
     setErro('');
@@ -146,10 +97,15 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   }
 
   async function confirmarAgendamento() {
+    if (!slotSelecionado) {
+      setErro('Selecione um horário');
+      return;
+    }
     if (!nome.trim() || !telefone.trim()) {
       setErro('Preencha nome e telefone');
       return;
     }
+
     setLoading(true);
     setErro('');
     try {
@@ -169,6 +125,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   }
 
   const servicoSelecionado = servicos.find((s) => String(s.id) === String(servicoId));
+  const duracaoLabel = servicoSelecionado ? formatDuracao(servicoSelecionado.duracao) : '';
 
   const modal = (
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -201,28 +158,29 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
             <div className="modal-label">
               Dia
-              <div className="week-days-grid">
-                {semanaAtual.days.map((dia) => (
-                  <button
-                    type="button"
-                    key={dia.value}
-                    className={`week-day-btn${data === dia.value ? ' selected' : ''}`}
-                    onClick={() => selecionarData(dia.value)}
-                  >
-                    <span>{dia.weekday}</span>
-                    <strong>{dia.dayMonth}</strong>
-                  </button>
-                ))}
-              </div>
+              {semanas.map((semana, idx) => (
+                <div key={idx} className="week-group">
+                  <span className="week-group-label">{semana.label}</span>
+                  <div className="week-days-grid">
+                    {semana.dias.map((dia) => (
+                      <button
+                        type="button"
+                        key={dia.value}
+                        className={`week-day-btn${data === dia.value ? ' selected' : ''}`}
+                        onClick={() => selecionarData(dia.value)}
+                      >
+                        <span>{dia.weekday}</span>
+                        <strong>{dia.dayMonth}</strong>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
 
             {erro && <p className="modal-erro">{erro}</p>}
 
-            <button
-              className="modal-btn primary"
-              onClick={buscarSlots}
-              disabled={!servicoId || !data || loading}
-            >
+            <button className="modal-btn primary" onClick={buscarSlots} disabled={!servicoId || !data || loading}>
               {loading ? 'Buscando...' : 'Ver horários'}
             </button>
           </div>
@@ -233,15 +191,18 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             <button className="modal-back" onClick={() => setStep(1)}>← Voltar</button>
             <h2 className="modal-title">Escolha o horário</h2>
             <p className="modal-sub">
-              {servicoSelecionado?.nome} · 2h30 · {data ? new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : ''}
+              {servicoSelecionado?.nome}
+              {duracaoLabel ? ` · ${duracaoLabel}` : ''}
+              {data ? ` · ${new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}` : ''}
             </p>
 
             {slots.length === 0 ? (
-              <p className="modal-vazio">Nenhum horário disponível neste dia. Tente outro dia da semana.</p>
+              <p className="modal-vazio">Nenhum horário disponível neste dia. Tente outro dia.</p>
             ) : (
               <div className="slots-grid">
                 {slots.map((slot) => (
                   <button
+                    type="button"
                     key={slot.inicio}
                     className={`slot-btn${slotSelecionado?.inicio === slot.inicio ? ' selected' : ''}`}
                     onClick={() => setSlotSelecionado(slot)}
@@ -254,11 +215,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
             {erro && <p className="modal-erro">{erro}</p>}
 
-            <button
-              className="modal-btn primary"
-              onClick={() => setStep(3)}
-              disabled={!slotSelecionado}
-            >
+            <button className="modal-btn primary" onClick={() => setStep(3)} disabled={!slotSelecionado}>
               Continuar
             </button>
           </div>
@@ -269,38 +226,25 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             <button className="modal-back" onClick={() => setStep(2)}>← Voltar</button>
             <h2 className="modal-title">Seus dados</h2>
             <p className="modal-sub">
-              {servicoSelecionado?.nome} · {slotSelecionado?.horario} · 2h30 · {data ? new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}
+              {servicoSelecionado?.nome}
+              {slotSelecionado?.horario ? ` · ${slotSelecionado.horario}` : ''}
+              {duracaoLabel ? ` · ${duracaoLabel}` : ''}
+              {data ? ` · ${new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}` : ''}
             </p>
 
             <label className="modal-label">
               Seu nome
-              <input
-                className="modal-input"
-                type="text"
-                placeholder="Maria da Silva"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-              />
+              <input className="modal-input" type="text" placeholder="Maria da Silva" value={nome} onChange={(e) => setNome(e.target.value)} />
             </label>
 
             <label className="modal-label">
               WhatsApp / Telefone
-              <input
-                className="modal-input"
-                type="tel"
-                placeholder="(21) 99999-9999"
-                value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
-              />
+              <input className="modal-input" type="tel" placeholder="(21) 99999-9999" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
             </label>
 
             {erro && <p className="modal-erro">{erro}</p>}
 
-            <button
-              className="modal-btn primary"
-              onClick={confirmarAgendamento}
-              disabled={loading}
-            >
+            <button className="modal-btn primary" onClick={confirmarAgendamento} disabled={loading}>
               {loading ? 'Agendando...' : 'Confirmar agendamento'}
             </button>
           </div>
@@ -315,16 +259,11 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             </p>
             <div className="confirmacao-box">
               <p><strong>Serviço:</strong> {agendado.servico?.nome}</p>
-              <p><strong>Duração:</strong> 2h30</p>
+              {agendado.servico?.duracao && <p><strong>Duração:</strong> {formatDuracao(agendado.servico.duracao)}</p>}
               <p><strong>Data/Hora:</strong> {formatDateTime(agendado.data)}</p>
               <p><strong>Status:</strong> {agendado.status}</p>
             </div>
-            <a
-              className="modal-btn whatsapp"
-              href={buildWhatsAppLink(agendado)}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a className="modal-btn whatsapp" href={buildWhatsAppLink(agendado)} target="_blank" rel="noreferrer">
               Confirmar pelo WhatsApp
             </a>
             <button className="modal-btn secondary" onClick={onClose}>Fechar</button>

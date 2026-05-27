@@ -1,45 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Calendar as CalendarIcon, 
-  Clock, 
-  Plus, 
-  Trash2, 
-  AlertCircle, 
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  Plus,
+  Trash2,
+  AlertCircle,
   X,
   Info,
-  ChevronRight
+  ChevronRight,
 } from 'lucide-react';
-import { 
-  listarHorariosAdmin, 
-  criarHorarioAdmin, 
-  desativarHorarioAdmin 
+import {
+  listarHorariosAdmin,
+  criarHorarioAdmin,
+  desativarHorarioAdmin,
 } from '../services/admin';
+import { buildISODate, buildISODateEnd } from '../utils/date-utils';
 
 export default function ScheduleManager() {
   const [horarios, setHorarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [actionError, setActionError] = useState(null);
+  const [confirmRemoveId, setConfirmRemoveId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     dataInicio: '',
     dataFim: '',
     horaInicio: '',
     horaFim: '',
-    motivo: ''
+    motivo: '',
   });
 
-  async function loadHorarios() {
+  const loadHorarios = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await listarHorariosAdmin({ ativo: 'true' });
-      setHorarios(data.horarios);
+      setHorarios(data.horarios || []);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -48,7 +51,7 @@ export default function ScheduleManager() {
       .then((data) => {
         if (ignore) return;
         setError(null);
-        setHorarios(data.horarios);
+        setHorarios(data.horarios || []);
       })
       .catch((err) => {
         if (ignore) return;
@@ -59,20 +62,31 @@ export default function ScheduleManager() {
         setLoading(false);
       });
 
-    return () => {
-      ignore = true;
-    };
-  }, []);
+    return () => { ignore = true; };
+  }, [loadHorarios]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setActionError(null);
+
+    // Validação básica de datas
+    if (formData.dataFim < formData.dataInicio) {
+      setActionError('A data de fim não pode ser anterior à data de início.');
+      return;
+    }
+    if (formData.horaFim && formData.horaInicio && formData.dataInicio === formData.dataFim && formData.horaFim <= formData.horaInicio) {
+      setActionError('O horário de fim deve ser posterior ao horário de início.');
+      return;
+    }
+
     try {
       const payload = {
-        dataInicio: new Date(formData.dataInicio + (formData.horaInicio ? `T${formData.horaInicio}` : 'T00:00:00')).toISOString(),
-        dataFim: new Date(formData.dataFim + (formData.horaFim ? `T${formData.horaFim}` : 'T23:59:59')).toISOString(),
+        // Usa Date.UTC para evitar shift de timezone
+        dataInicio: buildISODate(formData.dataInicio, formData.horaInicio),
+        dataFim: buildISODateEnd(formData.dataFim, formData.horaFim),
         horaInicio: formData.horaInicio || null,
         horaFim: formData.horaFim || null,
-        motivo: formData.motivo || null
+        motivo: formData.motivo || null,
       };
 
       await criarHorarioAdmin(payload);
@@ -80,17 +94,24 @@ export default function ScheduleManager() {
       setFormData({ dataInicio: '', dataFim: '', horaInicio: '', horaFim: '', motivo: '' });
       loadHorarios();
     } catch (err) {
-      alert('Erro ao criar bloqueio: ' + err.message);
+      setActionError(err.message);
     }
   };
 
-  const handleRemove = async (id) => {
-    if (!confirm('Deseja remover este bloqueio de horário?')) return;
+  // Confirmação inline antes de remover (substitui confirm())
+  const handleRemoveRequest = (id) => {
+    setConfirmRemoveId(id);
+    setActionError(null);
+  };
+
+  const handleRemoveConfirm = async () => {
+    const id = confirmRemoveId;
+    setConfirmRemoveId(null);
     try {
       await desativarHorarioAdmin(id);
       loadHorarios();
     } catch (err) {
-      alert('Erro ao remover: ' + err.message);
+      setActionError('Erro ao remover bloqueio: ' + err.message);
     }
   };
 
@@ -101,7 +122,7 @@ export default function ScheduleManager() {
           <h2 className="text-xl font-bold text-gray-800">Gestão de Horários</h2>
           <p className="text-sm text-gray-500">Bloqueie datas ou períodos específicos para impedir novos agendamentos.</p>
         </div>
-        <button 
+        <button
           onClick={() => setIsModalOpen(true)}
           className="bg-[#1e0f07] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-[#2c1810] transition-colors shadow-lg"
         >
@@ -116,6 +137,31 @@ export default function ScheduleManager() {
         </div>
       )}
 
+      {/* Feedback de ação inline */}
+      {actionError && !isModalOpen && (
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl flex items-center gap-3" role="alert">
+          <AlertCircle className="w-5 h-5" />
+          <span>{actionError}</span>
+          <button type="button" onClick={() => setActionError(null)} className="ml-auto text-sm underline">Fechar</button>
+        </div>
+      )}
+
+      {/* Confirmação inline de remoção */}
+      {confirmRemoveId && (
+        <div className="bg-amber-50 text-amber-800 p-4 rounded-xl flex items-center gap-3" role="alertdialog">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <span>Deseja remover este bloqueio de horário?</span>
+          <div className="flex gap-3 ml-auto">
+            <button type="button" onClick={handleRemoveConfirm} className="text-sm font-bold text-red-700 underline">
+              Sim, remover
+            </button>
+            <button type="button" onClick={() => setConfirmRemoveId(null)} className="text-sm underline">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-[#b5936a] text-white p-6 rounded-3xl shadow-sm">
@@ -125,7 +171,7 @@ export default function ScheduleManager() {
             <ul className="space-y-3 text-sm text-white/90">
               <li className="flex gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-white mt-1.5 shrink-0" />
-                <span>Para bloquear um **dia inteiro**, deixe os campos de hora em branco.</span>
+                <span>Para bloquear um dia inteiro, deixe os campos de hora em branco.</span>
               </li>
               <li className="flex gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-white mt-1.5 shrink-0" />
@@ -133,7 +179,7 @@ export default function ScheduleManager() {
               </li>
               <li className="flex gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-white mt-1.5 shrink-0" />
-                <span>Agendamentos já existentes **não** são cancelados automaticamente.</span>
+                <span>Agendamentos já existentes não são cancelados automaticamente.</span>
               </li>
             </ul>
           </div>
@@ -147,7 +193,7 @@ export default function ScheduleManager() {
                 {horarios.length} Total
               </span>
             </div>
-            
+
             <div className="divide-y divide-gray-50">
               {loading ? (
                 <div className="p-12 text-center text-gray-400">Carregando bloqueios...</div>
@@ -187,9 +233,10 @@ export default function ScheduleManager() {
                         )}
                       </div>
                     </div>
-                    <button 
-                      onClick={() => handleRemove(h.id)}
+                    <button
+                      onClick={() => handleRemoveRequest(h.id)}
                       className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                      aria-label="Remover bloqueio"
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -212,27 +259,36 @@ export default function ScheduleManager() {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {/* Erro do submit dentro do modal */}
+              {actionError && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-xl flex items-center gap-2 text-sm" role="alert">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{actionError}</span>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Data Início</label>
-                  <input 
+                  <input
                     required
-                    type="date" 
+                    type="date"
                     className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#b5936a]"
                     value={formData.dataInicio}
-                    onChange={e => setFormData({...formData, dataInicio: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, dataInicio: e.target.value })}
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Data Fim</label>
-                  <input 
+                  <input
                     required
-                    type="date" 
+                    type="date"
+                    min={formData.dataInicio}
                     className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#b5936a]"
                     value={formData.dataFim}
-                    onChange={e => setFormData({...formData, dataFim: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, dataFim: e.target.value })}
                   />
                 </div>
               </div>
@@ -240,44 +296,44 @@ export default function ScheduleManager() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Hora Início (opcional)</label>
-                  <input 
-                    type="time" 
+                  <input
+                    type="time"
                     className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#b5936a]"
                     value={formData.horaInicio}
-                    onChange={e => setFormData({...formData, horaInicio: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, horaInicio: e.target.value })}
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Hora Fim (opcional)</label>
-                  <input 
-                    type="time" 
+                  <input
+                    type="time"
                     className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#b5936a]"
                     value={formData.horaFim}
-                    onChange={e => setFormData({...formData, horaFim: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, horaFim: e.target.value })}
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Motivo / Descrição</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#b5936a]"
                   placeholder="Ex: Feriado Nacional, Folga, Reforma..."
                   value={formData.motivo}
-                  onChange={e => setFormData({...formData, motivo: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
                 />
               </div>
 
               <div className="pt-4 flex gap-3">
-                <button 
+                <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   className="flex-1 px-6 py-3 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 transition-colors"
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   type="submit"
                   className="flex-1 px-6 py-3 bg-[#1e0f07] text-white rounded-2xl font-bold hover:bg-[#2c1810] transition-colors shadow-lg"
                 >

@@ -10,6 +10,9 @@ export default defineConfig({
   reporter: 'list',
   use: {
     baseURL: 'http://127.0.0.1:4173',
+    locale: 'pt-BR',
+    timezoneId: 'America/Sao_Paulo',
+    colorScheme: 'light',
     trace: 'on-first-retry',
   },
   webServer: {

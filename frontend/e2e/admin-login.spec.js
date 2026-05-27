@@ -59,3 +59,21 @@ test('admin: login e carregamento inicial do painel', async ({ page }) => {
 
   await expect(page.getByText('Ana Lima')).toBeVisible();
 });
+
+test('admin: login invalido exibe erro de credenciais', async ({ page }) => {
+  await page.route('**/auth/login', async (route) => {
+    await route.fulfill({
+      status: 401,
+      contentType: 'application/json',
+      body: JSON.stringify({ erro: 'Credenciais invalidas' }),
+    });
+  });
+
+  await page.goto('/admin');
+
+  await page.getByLabel('Email').fill('admin@hsbeauty.com');
+  await page.getByLabel('Senha').fill('senha-errada');
+  await page.getByRole('button', { name: /^entrar$/i }).click();
+
+  await expect(page.getByText(/credenciais invalidas/i)).toBeVisible();
+});

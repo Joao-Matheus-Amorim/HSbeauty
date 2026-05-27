@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import heroBanner from '../Saved Pictures/principalmai.png'
 import ownerProfile from '../Saved Pictures/maiara2.png'
 import ownerSecondary from '../Saved Pictures/maiara1.png'
@@ -6,8 +6,9 @@ import unhasImage from '../Saved Pictures/unha1.png'
 import ciliosImage from '../Saved Pictures/sobranchelha2.png'
 import depilacaoImage from '../Saved Pictures/depil1.png'
 import { listarServicos } from './services/agendamentos'
-import AgendamentoModal from './components/AgendamentoModal'
 import { WHATSAPP, SERVICOS_PADRAO } from './constants'
+
+const AgendamentoModal = lazy(() => import('./components/AgendamentoModal'))
 
 const fallbackServices = SERVICOS_PADRAO
 
@@ -89,10 +90,12 @@ function App() {
 	return (
 		<main className="beauty-app">
 			{modalAberto && (
-				<AgendamentoModal
-					servicoInicial={servicoModal}
-					onClose={() => setModalAberto(false)}
-				/>
+				<Suspense fallback={null}>
+					<AgendamentoModal
+						servicoInicial={servicoModal}
+						onClose={() => setModalAberto(false)}
+					/>
+				</Suspense>
 			)}
 
 			<section className="phone-frame" aria-label="Landing page HSBeauty">

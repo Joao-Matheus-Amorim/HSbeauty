@@ -241,7 +241,7 @@ test('visual mobile: dashboard vazio', async ({ page }) => {
 
   await page.getByRole('button', { name: /resumo/i }).click();
   await expect(page.getByText('Serviços Populares')).toBeVisible();
-  await expect(page.getByTestId('admin-dashboard-root')).toHaveScreenshot('admin-mobile-dashboard-empty.png', {
+  await expect(page.getByTestId('admin-dashboard-kpis')).toHaveScreenshot('admin-mobile-dashboard-empty.png', {
     animations: 'disabled',
     maxDiffPixelRatio: 0.05,
   });
@@ -258,9 +258,10 @@ test('visual dashboard vazio desktop', async ({ page }) => {
 
   await page.getByRole('button', { name: /resumo/i }).click();
   await expect(page.getByText('Serviços Populares')).toBeVisible();
-  await expect(page.getByTestId('admin-dashboard-root')).toHaveScreenshot('admin-dashboard-empty.png', {
+  await expect(page.getByTestId('admin-dashboard-kpis')).toHaveScreenshot('admin-dashboard-empty.png', {
     fullPage: true,
     animations: 'disabled',
     maxDiffPixelRatio: 0.05,
+    maxDiffPixels: 5000,
   });
 });

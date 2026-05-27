@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   addMinutes,
+  buildPublicBookingLockKey,
   formatDateOnly,
   getCurrentWeekRange,
   getHoraFromDate,
@@ -100,6 +101,13 @@ test('date formatting helpers return stable public values', () => {
     inicio: '2026-05-25',
     fim: '2026-05-31',
   });
+});
+
+test('buildPublicBookingLockKey scopes public booking locks by day', () => {
+  assert.equal(
+    buildPublicBookingLockKey(new Date('2026-05-25T09:30:00')),
+    'hsbeauty:public-booking:2026-05-25',
+  );
 });
 
 test('isDateInWeek validates against an explicit reference date', () => {

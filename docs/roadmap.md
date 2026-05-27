@@ -59,12 +59,12 @@ Estado: operacional.
 - [x] Criar dashboard, agenda, servicos e horarios.
 - [x] Separar bundle publico/admin por lazy loading.
 - [x] Remover assets versionados sem uso.
+- [x] Remover imagens pesadas remanescentes do codigo publico.
 
 Pendencias futuras:
 
 - [ ] Criar teste E2E do fluxo publico.
 - [ ] Criar teste E2E do fluxo admin.
-- [ ] Otimizar imagens remanescentes.
 
 ## Fase 5 - CI e qualidade
 
@@ -75,10 +75,10 @@ Estado: operacional.
 - [x] Frontend executa audit, lint, test e build.
 - [x] Backend executa audit, Prisma generate e testes reais.
 - [x] Script raiz `npm run quality` valida backend e frontend.
+- [x] Dependabot habilitado com cadencia semanal controlada.
 
 Pendencias futuras:
 
-- [ ] Habilitar Dependabot com cadencia controlada.
 - [ ] Criar quality gate E2E.
 
 ## Fase 6 - Deploy
@@ -93,6 +93,13 @@ Estado: manual/controlado.
 Pendencias futuras:
 
 - [x] Criar checklist de release manual.
+- [x] Documentar rollback no checklist de deploy manual.
 - [ ] Definir ambiente staging.
-- [ ] Documentar rollback.
+
+## Gestao de release
+
+Estado: pendente para release formal.
+
+- [ ] Definir politica de versionamento entre produto, pacote raiz, backend e frontend.
+- [ ] Fechar ou atualizar issues GitHub ja cobertas por codigo e testes.
 

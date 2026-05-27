@@ -10,7 +10,8 @@ Resultado da validacao executada:
 
 ```text
 npm run quality
-backend tests: 105 passed
+backend tests: 111 passed
+frontend tests: 79 passed
 frontend lint: passed
 frontend build: passed
 frontend audit high: 0 high/critical
@@ -42,10 +43,10 @@ Fora de escopo nesta rodada:
 
 Estado de integracao:
 
-- `main` remoto consolidado ate PR #132.
+- `main` remoto consolidado ate o commit `d7cced2`.
 - CI verde nos merges recentes.
 - Deploy automatico Vercel permanece desativado por decisao operacional.
-- Fluxo recomendado permanece branch curta, PR, CI verde, merge manual.
+- Fluxo recomendado permanece frente pequena, validacao local, CI verde e registro operacional.
 
 Controle recomendado:
 
@@ -74,16 +75,15 @@ Prioridade P0:
 Prioridade P1:
 
 - Fechar documentacao divergente entre README, roadmap e rotas reais.
-- Atualizar dependencias patch/minor seguras.
-- Revisar issue #78 e fechar se o filtro de data ja estiver coberto.
-- Revisar issue #80 e fechar se o tratamento de resposta de API ja estiver coberto.
+- Fechar ou atualizar issues #17, #78 e #80 com evidencia.
+- Avaliar indices em `Agendamento` para consultas por data, status e servico.
+- Definir politica de versionamento entre produto e packages.
 
 Prioridade P2:
 
-- Habilitar Dependabot com cadencia controlada.
 - Criar referencia formal de API.
 - Planejar testes de integracao com banco real/staging.
-- Criar checklist de release/deploy manual.
+- Criar smoke/E2E do fluxo publico e admin.
 
 ## 6. Custos e restricoes
 
@@ -115,8 +115,8 @@ npx prisma generate --schema=backend/prisma/schema.prisma
 
 Resultado atual:
 
-- Backend: 105 testes.
-- Frontend: 77 testes.
+- Backend: 111 testes.
+- Frontend: 79 testes.
 - Build frontend sem aviso de chunk acima de 500 KB.
 - Backend audit possui 3 vulnerabilidades moderadas indiretas ligadas a Prisma dev tooling.
 - Frontend audit sem vulnerabilidades.
@@ -144,6 +144,7 @@ Necessidades:
 - Definir ambiente staging.
 - Definir responsavel por deploy manual.
 - Definir processo de rotacao de `JWT_SECRET` e credenciais de banco.
+- Definir politica de versionamento/release.
 
 ## 9. Comunicacoes
 

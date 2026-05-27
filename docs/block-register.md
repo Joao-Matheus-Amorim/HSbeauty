@@ -128,7 +128,7 @@ Atualizado em: 27/05/2026
 - Arquivo: `frontend/src/App.jsx`
 - Estado: operacional.
 - Controle: modal de agendamento carregado via lazy import.
-- Gaps: imagens ainda pesadas; otimizar formato/tamanho em frente propria.
+- Controle: imagens pesadas foram removidas do codigo publico; permanecem apenas icones/favicons publicos.
 
 ### Constantes publicas
 
@@ -188,8 +188,8 @@ Atualizado em: 27/05/2026
 - Jobs:
   - frontend lint, test e build;
   - backend audit high, Prisma generate e testes.
+- Controle: Dependabot roda semanalmente com agrupamento minor/patch e majors ignorados.
 - Gaps:
-  - Dependabot configurado mas inativo;
   - sem job E2E;
   - sem cache raiz para monorepo completo.
 

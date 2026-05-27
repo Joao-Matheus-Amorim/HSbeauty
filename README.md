@@ -61,40 +61,31 @@ A proprietária gerencia agendamentos, serviços e bloqueios de horário via pai
 
 ```
 HSbeauty/
-├── frontend/               # Interface web (React + Vite)
+├── frontend/                  # Interface web (React + Vite)
+│   ├── public/                # Favicons e icones publicos
 │   └── src/
-│       ├── assets/         # Imagens e ícones estáticos
-│       ├── components/     # Componentes reutilizáveis
-│       ├── pages/          # Páginas da aplicação
-│       └── services/       # Funções de chamada à API
-│
-├── backend/                # API REST (Node.js + Express)
-│   ├── prisma/             # Schema e migrations do banco
-│   ├── scripts/            # Scripts operacionais seguros
-│   └── src/
-│       ├── server.js       # Entry point — bootstrap e rotas
-│       ├── admin-routes.js # Rotas do painel administrativo
-│       └── seed.js         # Carga inicial de serviços
-│
-├── docs/                   # Documentação técnica do projeto
-│   ├── roadmap.md          # Fases e status de cada entrega
-│   ├── arquitetura.md      # Visão arquitetural e diagrama C4
-│   ├── api.md              # Referência completa da API
-│   ├── decisoes.md         # Registro de decisões de produto
-│   ├── dividas-tecnicas.md # Backlog de qualidade priorizado
-│   ├── CONTRIBUTING.md     # Guia de contribuição e fluxo Git
-│   └── adr/                # Architecture Decision Records
-│       ├── ADR-001-stack.md
-│       ├── ADR-002-banco-de-dados.md
-│       ├── ADR-003-deploy.md
-│       ├── ADR-004-autenticacao.md
-│       └── ADR-005-agendamento-semana-atual.md
-│
-├── scripts/                # Scripts utilitários
-├── dev.sh                  # Inicia frontend + backend (Linux/macOS)
-├── dev.bat                 # Inicia frontend + backend (Windows)
-├── package.json            # Scripts raiz do monorepo
-└── vercel.json             # Configuração de deploy Vercel
+│       ├── components/        # Componentes reutilizaveis
+│       ├── pages/             # Paginas da aplicacao
+│       ├── services/          # Chamadas para a API
+│       └── utils/             # Utilitarios compartilhados
+├── backend/                   # API REST (Node.js + Express)
+│   ├── prisma/                # Schema e migrations do banco
+│   ├── scripts/               # Scripts operacionais seguros
+│   ├── src/                   # Rotas, regras e bootstrap da API
+│   └── test/                  # Testes unitarios de regras e contratos
+├── docs/                      # Documentacao tecnica operacional
+│   ├── action-register.md     # Backlog tecnico priorizado
+│   ├── block-register.md      # Registro dos blocos tecnicos
+│   ├── roadmap.md             # Fases e status de entrega
+│   ├── technical-audit-pmbok.md
+│   ├── deploy-manual-checklist.md
+│   └── adr/
+│       └── ADR-003-deploy.md
+├── scripts/                   # Scripts utilitarios
+├── dev.sh                     # Inicia frontend + backend (Linux/macOS)
+├── dev.bat                    # Inicia frontend + backend (Windows)
+├── package.json               # Scripts raiz do monorepo
+└── vercel.json                # Configuracao de deploy Vercel
 ```
 
 ---
@@ -211,7 +202,7 @@ Consulte [`docs/adr/ADR-003-deploy.md`](docs/adr/ADR-003-deploy.md) para a decis
 
 ## Status do projeto
 
-**Versão:** `0.4.0-beta` — Frontend operacional, backend/API configurado por ambiente.
+**Estado:** MVP operacional em maturacao. A versao de produto deve ser definida em frente propria antes de release formal.
 Consulte [`docs/roadmap.md`](docs/roadmap.md) para o status detalhado de cada fase.
 
 ---

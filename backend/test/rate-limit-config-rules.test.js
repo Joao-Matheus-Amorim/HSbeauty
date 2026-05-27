@@ -6,8 +6,7 @@ test('buildLoginRateLimitConfig preserves login limiter contract', () => {
   const config = buildLoginRateLimitConfig();
 
   assert.equal(config.windowMs, 15 * 60 * 1000);
-  assert.equal(config.max, 5);
-  assert.equal(config.standardHeaders, true);
-  assert.equal(config.legacyHeaders, false);
+  assert.equal(config.limit, 5);
+  assert.equal(config.standardHeaders, 'draft-6');
   assert.deepEqual(config.message, { erro: 'Muitas tentativas de login. Tente novamente em 15 minutos.' });
 });

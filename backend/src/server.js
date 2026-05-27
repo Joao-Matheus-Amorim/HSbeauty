@@ -4,10 +4,10 @@ import cors from 'cors';
 import pkg from '@prisma/client';
 import { PrismaNeon } from '@prisma/adapter-neon';
 import adminRouter, {
-  setupAdminAgendamentos,
   setupAdminServicos,
   setupAdminHorarios,
 } from './admin-routes.js';
+import { createAdminAppointmentRouter } from './admin-appointment-routes.js';
 import { createAdminDashboardRouter } from './admin-dashboard-routes.js';
 import { createAuthMiddleware } from './auth-middleware.js';
 import { createAuthRouter } from './auth-routes.js';
@@ -62,7 +62,7 @@ app.use('/disponibilidade', createAvailabilityRouter({ prisma }));
 app.use('/bloqueios', createBlockRouter({ prisma, authMiddleware }));
 
 app.use('/admin', createAdminDashboardRouter({ prisma, authMiddleware }));
-setupAdminAgendamentos(prisma, authMiddleware);
+app.use('/admin', createAdminAppointmentRouter({ prisma, authMiddleware }));
 setupAdminServicos(prisma, authMiddleware);
 setupAdminHorarios(prisma, authMiddleware);
 app.use('/admin', adminRouter);

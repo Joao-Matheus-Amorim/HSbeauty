@@ -5,9 +5,8 @@ export const LOGIN_RATE_LIMIT_MESSAGE = 'Muitas tentativas de login. Tente novam
 export function buildLoginRateLimitConfig() {
   return {
     windowMs: LOGIN_RATE_LIMIT_WINDOW_MS,
-    max: LOGIN_RATE_LIMIT_MAX_ATTEMPTS,
-    standardHeaders: true,
-    legacyHeaders: false,
+    limit: LOGIN_RATE_LIMIT_MAX_ATTEMPTS,
+    standardHeaders: 'draft-6',
     message: { erro: LOGIN_RATE_LIMIT_MESSAGE },
   };
 }

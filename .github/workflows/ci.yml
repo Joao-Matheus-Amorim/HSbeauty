@@ -79,5 +79,5 @@ jobs:
           DATABASE_URL: postgresql://user:password@localhost:5432/hsbeauty_ci
 
       - name: Run backend tests
-        run: node --test src/__tests__/**/*.test.js
+        run: npm test
         working-directory: backend

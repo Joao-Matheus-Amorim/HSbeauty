@@ -43,3 +43,53 @@ npm run build
 ```
 
 Depois, publicar pela Vercel CLI ou painel da Vercel de forma manual e consciente.
+
+## D007 — Politica de versionamento (A-011)
+
+Decisao: adotar SemVer com versao de produto unica alinhada entre `package.json` raiz, backend e frontend.
+
+Versao inicial de produto: `1.0.0` (MVP operacional).
+
+Regras:
+- **Patch** (`x.x.Z`): correcao de bug, ajuste de documentacao ou dependencia.
+- **Minor** (`x.Y.0`): nova funcionalidade sem quebra de contrato de API ou UI.
+- **Major** (`X.0.0`): mudanca de contrato de API, schema de banco ou arquitetura que exija migracao.
+
+Implementacao:
+- Os tres `package.json` (raiz, `backend/`, `frontend/`) devem ter a mesma versao a cada release.
+- A versao e atualizada manualmente antes do merge de release; nao e automatizada.
+- O commit de bump segue o padrao: `chore: bump version to X.Y.Z`.
+
+## D008 — Politica de rotacao de credenciais (A-020)
+
+Decisao: rotacao manual documentada com procedimento padrao. Nao ha rotacao automatica na fase atual.
+
+### Credenciais sob controle
+
+| Credencial | Onde fica | Como rotacionar |
+|---|---|---|
+| `JWT_SECRET` | Variavel de ambiente no servidor de backend (Render, Railway ou similar) | Ver procedimento abaixo |
+| `DATABASE_URL` | Variavel de ambiente no servidor de backend + Vercel (se usado) | Ver procedimento abaixo |
+| Token de deploy Vercel | Painel Vercel | Revogar e regenerar no painel Vercel → Settings → Tokens |
+
+### Quando rotacionar
+
+- Suspeita de comprometimento (vazamento de credencial, acesso nao autorizado).
+- Saida de pessoa com acesso as variaveis de ambiente.
+- Rotina preventiva: recomendado a cada 6 meses.
+
+### Procedimento de rotacao do `JWT_SECRET`
+
+1. Gerar novo segredo aleatorio seguro (minimo 64 caracteres): `openssl rand -hex 64`
+2. Atualizar a variavel `JWT_SECRET` no painel do provedor de backend.
+3. Reiniciar o servidor de backend para aplicar.
+4. Efeito imediato: todos os tokens de acesso e refresh existentes ficam invalidos. Admins precisarao fazer login novamente.
+5. Registrar a rotacao em `docs/action-register.md` com data e motivo.
+
+### Procedimento de rotacao do `DATABASE_URL`
+
+1. Acessar o painel Neon → Branch → Reset password (ou criar novo usuario).
+2. Atualizar `DATABASE_URL` no painel do provedor de backend e no Vercel (se usado para migracao).
+3. Reiniciar o servidor de backend.
+4. Executar `npx prisma generate` localmente para confirmar conexao com novo DSN.
+5. Registrar a rotacao em `docs/action-register.md` com data e motivo.

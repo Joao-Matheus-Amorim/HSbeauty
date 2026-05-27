@@ -15,7 +15,7 @@ Atualizado em: 27/05/2026
 |---|---|---|---|---|---|
 | A-006 | P2 | 9 | Avaliar upgrade major pendente de `express-rate-limit`. | Patch/minor backend e frontend ja aplicados; resta major 8.x. | Planejar PR dedicado com validacao de compatibilidade do middleware. |
 | A-007 | P2 | 9 | Monitorar vulnerabilidade moderada indireta do Prisma tooling. | `npm audit` aponta `@hono/node-server` via Prisma. | Nao aplicar downgrade automatico; acompanhar release Prisma. |
-| A-011 | P1 | 10 | Definir politica de versionamento. | README removido de versao solta; packages ainda usam versoes internas distintas. | Decidir versao de produto (SemVer ou CalVer) e regra para packages privados. |
+| ~~A-011~~ | ~~P1~~ | ~~10~~ | ~~Definir politica de versionamento.~~ | Concluido em C-030. | — |
 | A-012 | P2 | 9 | Provisionar ambiente de staging. | Apenas producao existe; testes de integracao exigem banco real isolado. | Criar branch Neon de staging e Vercel preview separado. |
 | A-013 | P2 | 9 | Criar testes de integracao com banco real. | Backend tem 117 testes unitarios; nenhum bate no banco real. | Criar suite de integracao cobrindo: agendamento com lock, conflito de horario, auth flow. |
 | ~~A-014~~ | ~~P2~~ | ~~9~~ | ~~Remover rotas legadas fora de `/admin`.~~ | Concluido em C-029. | — |
@@ -24,7 +24,7 @@ Atualizado em: 27/05/2026
 | A-017 | P2 | 7 | Substituir link WhatsApp por confirmacao real ao cliente. | Apos agendar, frontend gera link WhatsApp manual; nao ha envio automatico. | Avaliar Z-API ou Twilio; registrar decisao de provider em `docs/decisoes.md`. |
 | A-018 | P3 | 8 | Criar visualizacao de agenda semanal no painel admin. | Tabela paginada existe; sem visao de calendario. | Avaliar biblioteca (FullCalendar ou implementacao propria) e prototipar. |
 | ~~A-019~~ | ~~P3~~ | ~~8~~ | ~~Adicionar export de agendamentos para CSV.~~ | Concluido em C-028. | — |
-| A-020 | P1 | 9 | Definir politica de rotacao de `JWT_SECRET` e credenciais de banco. | Nenhuma politica documentada; rotacao manual em caso de comprometimento. | Documentar procedimento de rotacao e onde as credenciais ficam armazenadas. |
+| ~~A-020~~ | ~~P1~~ | ~~9~~ | ~~Definir politica de rotacao de credenciais.~~ | Concluido em C-030. | — |
 
 ## Acoes concluidas recentes
 
@@ -59,3 +59,4 @@ Atualizado em: 27/05/2026
 | C-027 | Esta frente | Polling de agendamentos pendentes a cada 30s com badge numerico no nav do painel admin (A-016). |
 | C-028 | Esta frente | Export CSV de agendamentos com filtros ativos; rota `GET /admin/agendamentos/export` + botao no painel (A-019). |
 | C-029 | Esta frente | Rotas legadas removidas: `protected-appointment-routes`, `protected-service-routes`, `block-routes`, `legacy-route-deprecation`, `appointment-mutation-rules` + 2 testes (A-014). |
+| C-030 | Esta frente | Politica SemVer documentada (D007), frontend alinhado para 1.0.0, politica de rotacao de credenciais documentada (D008) em `docs/decisoes.md` (A-011, A-020). |

@@ -43,7 +43,7 @@ test('publico: conclui fluxo minimo de agendamento', async ({ page }) => {
   await page.goto('/');
 
   await page.getByRole('button', { name: /agendar/i }).click();
-  await page.getByRole('button', { name: /reservar unhas/i }).click();
+  await page.locator('.service-choice-btn').first().click();
   await page.locator('.week-day-btn').first().click();
   await page.locator('.modal-step .modal-btn.primary').click();
   await page.getByRole('button', { name: '09:00' }).click();
@@ -91,7 +91,7 @@ test('publico: horario indisponivel exibe erro', async ({ page }) => {
   await page.goto('/');
 
   await page.getByRole('button', { name: /agendar/i }).click();
-  await page.getByRole('button', { name: /reservar unhas/i }).click();
+  await page.locator('.service-choice-btn').first().click();
   await page.locator('.week-day-btn').first().click();
   await page.locator('.modal-step .modal-btn.primary').click();
   await page.getByRole('button', { name: '09:00' }).click();

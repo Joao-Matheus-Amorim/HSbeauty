@@ -89,6 +89,32 @@ async function mockAdminApis(page) {
       }),
     });
   });
+
+  await page.route('**/admin/dashboard*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        resumo: {
+          agendamentosHoje: 3,
+          receitaMes: 1250.5,
+          totalServicos: 6,
+          totalAgendamentos: 12,
+        },
+        statusCount: {
+          pendente: 2,
+          confirmado: 5,
+          concluido: 4,
+          cancelado: 1,
+        },
+        topServicos: [
+          { nome: 'Unhas', quantidade: 6 },
+          { nome: 'Cilios', quantidade: 4 },
+          { nome: 'Sobrancelhas', quantidade: 2 },
+        ],
+      }),
+    });
+  });
 }
 
 test('visual: home publica', async ({ page }) => {
@@ -140,6 +166,38 @@ test('visual mobile: painel logado tabs principais', async ({ page }) => {
   await page.getByRole('button', { name: /hor/i }).click();
   await expect(page.getByRole('button', { name: /bloquear/i })).toBeVisible();
   await expect(page).toHaveScreenshot('admin-mobile-horarios.png', {
+    fullPage: true,
+    animations: 'disabled',
+    maxDiffPixelRatio: 0.01,
+  });
+
+  await page.getByRole('button', { name: /resumo/i }).click();
+  await expect(page.getByText('Serviços Populares')).toBeVisible();
+  await expect(page).toHaveScreenshot('admin-mobile-dashboard.png', {
+    fullPage: true,
+    animations: 'disabled',
+    maxDiffPixelRatio: 0.01,
+  });
+});
+
+test('visual mobile: erro em agendamentos', async ({ page }) => {
+  await mockAdminApis(page);
+  await page.route('**/admin/agendamentos*', async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: JSON.stringify({ erro: 'Erro ao carregar agendamentos' }),
+    });
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/admin');
+  await page.getByLabel('Email').fill('admin@hsbeauty.com');
+  await page.getByLabel('Senha').fill('123456');
+  await page.getByRole('button', { name: /^entrar$/i }).click();
+
+  await expect(page.getByText(/erro ao carregar agendamentos/i)).toBeVisible();
+  await expect(page).toHaveScreenshot('admin-mobile-agendamentos-erro.png', {
     fullPage: true,
     animations: 'disabled',
     maxDiffPixelRatio: 0.01,

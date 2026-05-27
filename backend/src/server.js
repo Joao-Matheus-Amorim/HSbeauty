@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import jwt from 'jsonwebtoken';
 import pkg from '@prisma/client';
 import { PrismaNeon } from '@prisma/adapter-neon';
 import adminRouter, {
@@ -10,6 +9,7 @@ import adminRouter, {
   setupAdminServicos,
   setupAdminHorarios,
 } from './admin-routes.js';
+import { createAuthMiddleware } from './auth-middleware.js';
 import { validateAppointmentUpdatePayload } from './appointment-mutation-rules.js';
 import { createAuthRouter } from './auth-routes.js';
 import { calculateAvailability, getDayOccupancy } from './availability-service.js';
@@ -51,19 +51,7 @@ const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
-
-// -- Auth middleware --
-
-function authMiddleware(req, res, next) {
-  const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) return sendError(res, 401, 'Token não fornecido');
-  try {
-    req.admin = jwt.verify(header.split(' ')[1], JWT_SECRET);
-    next();
-  } catch {
-    return sendError(res, 401, 'Token inválido ou expirado');
-  }
-}
+const authMiddleware = createAuthMiddleware({ jwtSecret: JWT_SECRET });
 
 // -- Rotas --
 

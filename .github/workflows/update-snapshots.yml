@@ -31,11 +31,12 @@ jobs:
         working-directory: frontend
 
       - name: Update snapshots
-        run: npx playwright test --update-snapshots
+        run: |
+          unset CI
+          npx playwright test --update-snapshots
         working-directory: frontend
         env:
           SNAPSHOT_CHANNEL: product
-          ALLOW_SNAPSHOT_UPDATE: 'true'
 
       - name: Commit updated snapshots
         run: |

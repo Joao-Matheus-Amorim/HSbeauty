@@ -1,4 +1,4 @@
-# Registro de blocos tecnicos
+﻿# Registro de blocos tecnicos
 
 Atualizado em: 27/05/2026
 
@@ -58,7 +58,7 @@ Atualizado em: 27/05/2026
 - Rota:
   - `GET /admin/dashboard`
 - Estado: operacional.
-- Controle: status concluido usa valor canonico `concluido` e aceita leitura de legado `concluído`.
+- Controle: status concluido usa valor canonico `concluido` e aceita leitura de legado `concluÃ­do`.
 
 ### Admin agendamentos
 
@@ -73,7 +73,7 @@ Atualizado em: 27/05/2026
   - `DELETE /admin/agendamentos/:id`
 - Estado: operacional.
 - Controle: filtro de data usa `dataInicio` e `dataFim`.
-- Controle: mutacoes de status normalizam `concluído` legado para `concluido`.
+- Controle: mutacoes de status normalizam `concluÃ­do` legado para `concluido`.
 
 ### Admin servicos
 
@@ -142,7 +142,7 @@ Atualizado em: 27/05/2026
   - `frontend/src/components/AgendamentoModal.jsx`
   - `frontend/src/components/AgendamentoModal.css`
 - Estado: operacional.
-- Gaps: sem teste E2E do fluxo completo.
+- Gaps: sem teste de integracao com banco real; fluxo publico e admin possui smoke em vitest.
 
 ### Admin UI
 
@@ -201,4 +201,6 @@ Atualizado em: 27/05/2026
 - Controle: `git.deploymentEnabled` esta `false`.
 - Gaps:
   - sem ambiente de staging formalizado.
+
+
 

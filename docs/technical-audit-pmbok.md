@@ -1,4 +1,4 @@
-# Auditoria tecnica operacional - PMBOK
+﻿# Auditoria tecnica operacional - PMBOK
 
 Atualizado em: 27/05/2026
 
@@ -83,7 +83,7 @@ Prioridade P2:
 
 - Criar referencia formal de API.
 - Planejar testes de integracao com banco real/staging.
-- Criar smoke/E2E do fluxo publico e admin.
+- Smoke/E2E do fluxo publico e admin implementado no frontend via `frontend/src/__tests__/smoke` (publico + admin).
 
 ## 6. Custos e restricoes
 
@@ -123,7 +123,7 @@ Resultado atual:
 
 Gap de qualidade:
 
-- Nao ha testes E2E.
+- Smoke/E2E minimo (publico + admin) esta implementado em `frontend/src/__tests__/smoke` e cobre login admin + agendamento publico.
 - Nao ha teste de integracao com banco real.
 - Nao ha cobertura automatizada de fluxo completo cliente -> agendamento -> painel admin.
 
@@ -161,7 +161,7 @@ Padrao recomendado:
 | R-001 | API de producao nao configurada no Vercel | Media | Alto | Exigir `VITE_API_URL` em ambiente publicado. |
 | R-002 | Dependencias ficarem defasadas | Media | Medio | Atualizacoes em PRs pequenos e Dependabot controlado. |
 | R-003 | Divergencia documental | Alta | Medio | Atualizar docs por bloco e revisar por PR. |
-| R-004 | Falta de E2E | Media | Alto | Criar smoke test para fluxo publico e admin. |
+| R-004 | Cobertura ponta a ponta no frontend | Media | Medio | Smoke tests implementados em `frontend/src/__tests__/smoke` para fluxo publico e admin. |
 | R-005 | Vulnerabilidade moderada indireta do Prisma tooling | Baixa | Baixo/Medio | Monitorar Prisma; nao aplicar downgrade automatico. |
 
 ## 11. Aquisicoes
@@ -194,4 +194,5 @@ Controle:
 - Fallback hardcoded de API de producao nao deve voltar.
 - PRs pequenos seguem sendo o mecanismo padrao de controle.
 - Auditoria tecnica sera mantida por bloco, nao como texto solto.
+
 

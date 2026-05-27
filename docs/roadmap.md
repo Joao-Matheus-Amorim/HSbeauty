@@ -1,4 +1,4 @@
-# Roadmap - HSBeauty
+﻿# Roadmap - HSBeauty
 
 Atualizado em: 27/05/2026
 
@@ -63,8 +63,8 @@ Estado: operacional.
 
 Pendencias futuras:
 
-- [ ] Criar teste E2E do fluxo publico.
-- [ ] Criar teste E2E do fluxo admin.
+- [x] Criar teste E2E do fluxo publico.
+- [x] Criar teste E2E do fluxo admin.
 
 ## Fase 5 - CI e qualidade
 
@@ -102,4 +102,6 @@ Estado: pendente para release formal.
 
 - [ ] Definir politica de versionamento entre produto, pacote raiz, backend e frontend.
 - [ ] Fechar ou atualizar issues GitHub ja cobertas por codigo e testes.
+
+
 

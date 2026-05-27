@@ -5,7 +5,7 @@ import express from 'express';
 import { createAuthRouter } from '../src/auth-routes.js';
 import { createPublicBookingRouter } from '../src/public-booking-routes.js';
 
-function createPrismaMock() {
+function createPrismaMock(options = {}) {
   const refreshStore = new Map();
   let refreshId = 0;
 
@@ -60,7 +60,17 @@ function createPrismaMock() {
           findUnique: async ({ where }) => (where?.id === servico.id ? servico : null),
         },
         agendamento: {
-          findMany: async () => [],
+          findMany: async () => {
+            if (!options.busySlotIso) return [];
+            return [
+              {
+                id: 999,
+                data: new Date(options.busySlotIso),
+                status: 'confirmado',
+                servico,
+              },
+            ];
+          },
           create: async ({ data, include }) => {
             const created = {
               id: createdBookings.length + 1,
@@ -143,6 +153,22 @@ test('smoke: auth login refresh logout flow', async () => {
   });
 });
 
+test('smoke: auth login fails with invalid credentials', async () => {
+  const { prisma } = createPrismaMock();
+  const app = express();
+  app.use(express.json());
+  app.use('/auth', createAuthRouter({ prisma, jwtSecret: 'smoke-secret' }));
+
+  await withServer(app, async (baseUrl) => {
+    const loginRes = await fetch(`${baseUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'admin@hsbeauty.com', senha: 'senha-errada' }),
+    });
+    assert.equal(loginRes.status, 401);
+  });
+});
+
 test('smoke: public booking creates appointment', async () => {
   const { prisma, createdBookings } = createPrismaMock();
   const app = express();
@@ -169,5 +195,55 @@ test('smoke: public booking creates appointment', async () => {
     assert.equal(body.nomeCliente, 'Maria');
     assert.equal(body.status, 'pendente');
     assert.equal(createdBookings.length, 1);
+  });
+});
+
+test('smoke: public booking fails with invalid payload', async () => {
+  const { prisma } = createPrismaMock();
+  const app = express();
+  app.use(express.json());
+  app.use('/agendamentos', createPublicBookingRouter({ prisma }));
+
+  const bookingDate = new Date();
+  bookingDate.setHours(10, 0, 0, 0);
+
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/agendamentos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nomeCliente: 'Maria',
+        telefone: '123',
+        data: bookingDate.toISOString(),
+        servicoId: 1,
+      }),
+    });
+
+    assert.equal(response.status, 400);
+  });
+});
+
+test('smoke: public booking fails with unavailable slot', async () => {
+  const bookingDate = new Date();
+  bookingDate.setHours(10, 0, 0, 0);
+
+  const { prisma } = createPrismaMock({ busySlotIso: bookingDate.toISOString() });
+  const app = express();
+  app.use(express.json());
+  app.use('/agendamentos', createPublicBookingRouter({ prisma }));
+
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/agendamentos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nomeCliente: 'Maria',
+        telefone: '(21) 99999-8888',
+        data: bookingDate.toISOString(),
+        servicoId: 1,
+      }),
+    });
+
+    assert.equal(response.status, 409);
   });
 });

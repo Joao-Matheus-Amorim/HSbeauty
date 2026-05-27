@@ -24,6 +24,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   listarHorariosAdmin.mockResolvedValue({ horarios: [HORARIO_MOCK] });
   criarHorarioAdmin.mockResolvedValue({ horario: HORARIO_MOCK });
+  desativarHorarioAdmin.mockResolvedValue({});
 });
 
 describe('ScheduleManager — renderização', () => {
@@ -33,7 +34,7 @@ describe('ScheduleManager — renderização', () => {
   });
 
   it('não crasha quando horarios é undefined na resposta', async () => {
-    listarHorariosAdmin.mockResolvedValue({}); // sem campo horarios
+    listarHorariosAdmin.mockResolvedValue({});
     render(<ScheduleManager />);
     expect(await screen.findByText(/nenhum bloqueio/i)).toBeInTheDocument();
   });
@@ -46,11 +47,8 @@ describe('ScheduleManager — criação de bloqueio com timezone correto', () =>
 
     fireEvent.click(screen.getByRole('button', { name: /bloquear horário/i }));
 
-    // Preenche o form
-    const [dataInicioInput, dataFimInput] = screen.getAllByDisplayValue('');
-    // Inputs de date
     const dateInputs = screen.getAllByDisplayValue('');
-    const [dInicio, dFim] = screen.getAllByDisplayValue('');
+    const [dInicio, dFim] = dateInputs;
 
     fireEvent.change(dInicio, { target: { value: '2026-06-15' } });
     fireEvent.change(dFim, { target: { value: '2026-06-15' } });
@@ -60,13 +58,8 @@ describe('ScheduleManager — criação de bloqueio com timezone correto', () =>
     await waitFor(() => {
       expect(criarHorarioAdmin).toHaveBeenCalledOnce();
       const [payload] = criarHorarioAdmin.mock.calls[0];
-
-      // dataInicio deve ser início do dia em UTC: 2026-06-15T00:00:00.000Z
       expect(payload.dataInicio).toBe('2026-06-15T00:00:00.000Z');
-      // dataFim deve ser fim do dia em UTC: 2026-06-15T23:59:59.000Z
       expect(payload.dataFim).toBe('2026-06-15T23:59:59.000Z');
-
-      // Nunca deve deslocar para dia anterior (bug corrigido)
       expect(payload.dataInicio).not.toMatch(/2026-06-14/);
       expect(payload.dataFim).not.toMatch(/2026-06-14/);
     });
@@ -75,23 +68,20 @@ describe('ScheduleManager — criação de bloqueio com timezone correto', () =>
 
 describe('ScheduleManager — remoção sem confirm()', () => {
   it('mostra confirmação inline ao clicar em remover', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm');
+    const confirmSpy = vi.spyOn(window, 'confirm').mockImplementation(() => true);
     render(<ScheduleManager />);
     await screen.findByText('Feriado');
 
-    // O botão de remoção fica visível no hover — dispara diretamente
     const removeBtn = screen.getByRole('button', { name: /remover bloqueio/i });
     fireEvent.click(removeBtn);
 
     expect(await screen.findByText(/deseja remover este bloqueio/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sim, remover/i })).toBeInTheDocument();
     expect(confirmSpy).not.toHaveBeenCalled();
     confirmSpy.mockRestore();
   });
 
   it('chama desativarHorarioAdmin ao confirmar remoção inline', async () => {
-    desativarHorarioAdmin.mockResolvedValue({});
-    listarHorariosAdmin.mockResolvedValue({ horarios: [] });
-
     render(<ScheduleManager />);
     await screen.findByText('Feriado');
 

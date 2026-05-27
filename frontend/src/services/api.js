@@ -1,14 +1,19 @@
-const PRODUCTION_API_URL = 'https://hsbeauty.onrender.com';
 const LOCAL_API_URL = 'http://localhost:3000';
 
-function resolveApiUrl() {
-  const envUrl = import.meta.env.VITE_API_URL;
-  const isBrowser = typeof window !== 'undefined';
-  const isLocalHost = isBrowser && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+function normalizeApiUrl(value) {
+  return typeof value === 'string' ? value.trim().replace(/\/+$/, '') : '';
+}
 
-  if (isLocalHost) return envUrl || LOCAL_API_URL;
-  if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) return PRODUCTION_API_URL;
-  return envUrl;
+export function resolveApiUrl({
+  envUrl = import.meta.env.VITE_API_URL,
+  hostname = typeof window !== 'undefined' ? window.location.hostname : '',
+} = {}) {
+  const configuredUrl = normalizeApiUrl(envUrl);
+  const isLocalHost = ['localhost', '127.0.0.1'].includes(hostname);
+
+  if (isLocalHost) return configuredUrl || LOCAL_API_URL;
+  if (!configuredUrl || configuredUrl.includes('localhost') || configuredUrl.includes('127.0.0.1')) return '';
+  return configuredUrl;
 }
 
 export const API_URL = resolveApiUrl();

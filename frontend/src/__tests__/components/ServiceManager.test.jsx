@@ -8,7 +8,7 @@ vi.mock('../../services/admin', () => ({
   atualizarServicoAdmin: vi.fn(),
 }));
 
-import { listarServicosAdmin, criarServicoAdmin, atualizarServicoAdmin } from '../../services/admin';
+import { listarServicosAdmin, criarServicoAdmin } from '../../services/admin';
 
 const SERVICO_MOCK = { id: 1, nome: 'Unhas', preco: 35, duracao: 60, ativo: true, descricao: '', categoria: '' };
 

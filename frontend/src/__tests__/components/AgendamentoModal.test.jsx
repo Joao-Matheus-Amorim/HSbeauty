@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import AgendamentoModal from '../../components/AgendamentoModal';
 
-// Mock dos serviços
 vi.mock('../../services/agendamentos', () => ({
   listarServicos: vi.fn(),
   buscarDisponibilidade: vi.fn(),
@@ -36,14 +34,18 @@ describe('AgendamentoModal — renderização inicial', () => {
 
   it('carrega serviços da API e exibe seus nomes', async () => {
     render(<AgendamentoModal onClose={() => {}} />);
-    expect(await screen.findByText('Cílios')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(listarServicos).toHaveBeenCalledWith({ ativo: true });
+    });
+
+    expect(await screen.findByRole('button', { name: /cílios/i })).toBeInTheDocument();
   });
 
   it('exibe mais de uma semana na lista de dias', async () => {
     render(<AgendamentoModal onClose={() => {}} />);
-    await screen.findByText('Cílios'); // aguarda serviços carregarem
+    await waitFor(() => expect(listarServicos).toHaveBeenCalled());
 
-    // Com SEMANAS_DISPONIVEIS = 3, deve haver dias de semanas diferentes
     const weekDayButtons = screen.getAllByRole('button', { name: /seg|ter|qua|qui|sex|sáb|dom/i });
     expect(weekDayButtons.length).toBeGreaterThan(7);
   });
@@ -52,16 +54,13 @@ describe('AgendamentoModal — renderização inicial', () => {
 describe('AgendamentoModal — duração dinâmica', () => {
   it('exibe a duração real do serviço (90 min = 1h30min), não "2h30"', async () => {
     render(<AgendamentoModal servicoInicial={SERVICO_MOCK} onClose={() => {}} />);
-    await screen.findByText('Cílios');
+    await waitFor(() => expect(listarServicos).toHaveBeenCalled());
 
-    // Seleciona um dia qualquer para avançar
     const dayButtons = screen.getAllByRole('button', { name: /\d{2}\/\d{2}/ });
     fireEvent.click(dayButtons[0]);
 
     fireEvent.click(screen.getByText('Ver horários'));
-    await screen.findByText(/1h30min/i);
-
-    // Garante que NÃO aparece o texto hardcoded antigo
+    expect(await screen.findByText(/1h30min/i)).toBeInTheDocument();
     expect(screen.queryByText('2h30')).not.toBeInTheDocument();
   });
 });

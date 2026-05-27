@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { listarServicos, buscarDisponibilidade, criarAgendamento } from '../services/agendamentos';
 import { WHATSAPP, SERVICOS_PADRAO, SEMANAS_DISPONIVEIS } from '../constants';
-import { formatDuracao, formatDateOnly, getAvailableDays } from '../utils/date-utils';
+import { formatDuracao, getAvailableDays } from '../utils/date-utils';
 import './AgendamentoModal.css';
 
 function formatDateTime(value) {
@@ -15,47 +15,6 @@ function buildWhatsAppLink(agendamento) {
   const nomeCliente = agendamento?.nomeCliente || '';
   const mensagem = `Olá! Acabei de agendar: ${servico} em ${dataHora}. Meu nome é ${nomeCliente}.`;
   return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensagem)}`;
-}
-
-// Retorna os próximos N dias úteis a partir de hoje, agrupados por semana
-function getAvailableDays(semanas = SEMANAS_DISPONIVEIS) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // Começa na segunda-feira desta semana
-  const day = today.getDay();
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  const start = new Date(today);
-  start.setDate(today.getDate() + diffToMonday);
-
-  const totalDias = semanas * 7;
-  const days = [];
-
-  for (let i = 0; i < totalDias; i++) {
-    const date = new Date(start);
-    date.setDate(start.getDate() + i);
-
-    // Não mostra dias passados
-    if (date < today) continue;
-
-    const value = formatDateOnly(date);
-    days.push({
-      value,
-      weekday: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''),
-      dayMonth: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-      weekLabel: `Semana de ${new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`,
-      weekIndex: Math.floor(i / 7),
-    });
-  }
-
-  const end = new Date(start);
-  end.setDate(start.getDate() + totalDias - 1);
-
-  return {
-    days,
-    min: formatDateOnly(today),
-    max: formatDateOnly(end),
-  };
 }
 
 export default function AgendamentoModal({ servicoInicial, onClose }) {
@@ -73,13 +32,10 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
   const janela = useMemo(() => getAvailableDays(SEMANAS_DISPONIVEIS), []);
 
-  // Semanas agrupadas para exibição
   const semanas = useMemo(() => {
     const grupos = [];
     janela.days.forEach((dia) => {
-      if (!grupos[dia.weekIndex]) {
-        grupos[dia.weekIndex] = { label: dia.weekLabel, dias: [] };
-      }
+      if (!grupos[dia.weekIndex]) grupos[dia.weekIndex] = { label: dia.weekLabel || `Semana ${dia.weekIndex + 1}`, dias: [] };
       grupos[dia.weekIndex].dias.push(dia);
     });
     return grupos.filter(Boolean);
@@ -98,16 +54,14 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
     listarServicos({ ativo: true })
       .then((lista) => {
         if (!mounted) return;
-        if (Array.isArray(lista) && lista.length > 0) {
-          setServicos(lista);
-        } else {
-          setServicos(SERVICOS_PADRAO);
-        }
+        setServicos(Array.isArray(lista) && lista.length > 0 ? lista : SERVICOS_PADRAO);
       })
       .catch(() => {
         if (mounted) setServicos(SERVICOS_PADRAO);
       });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   function selecionarServico(id) {
@@ -143,10 +97,15 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   }
 
   async function confirmarAgendamento() {
+    if (!slotSelecionado) {
+      setErro('Selecione um horário');
+      return;
+    }
     if (!nome.trim() || !telefone.trim()) {
       setErro('Preencha nome e telefone');
       return;
     }
+
     setLoading(true);
     setErro('');
     try {
@@ -221,11 +180,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
             {erro && <p className="modal-erro">{erro}</p>}
 
-            <button
-              className="modal-btn primary"
-              onClick={buscarSlots}
-              disabled={!servicoId || !data || loading}
-            >
+            <button className="modal-btn primary" onClick={buscarSlots} disabled={!servicoId || !data || loading}>
               {loading ? 'Buscando...' : 'Ver horários'}
             </button>
           </div>
@@ -247,6 +202,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
               <div className="slots-grid">
                 {slots.map((slot) => (
                   <button
+                    type="button"
                     key={slot.inicio}
                     className={`slot-btn${slotSelecionado?.inicio === slot.inicio ? ' selected' : ''}`}
                     onClick={() => setSlotSelecionado(slot)}
@@ -259,11 +215,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
             {erro && <p className="modal-erro">{erro}</p>}
 
-            <button
-              className="modal-btn primary"
-              onClick={() => setStep(3)}
-              disabled={!slotSelecionado}
-            >
+            <button className="modal-btn primary" onClick={() => setStep(3)} disabled={!slotSelecionado}>
               Continuar
             </button>
           </div>
@@ -282,33 +234,17 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
             <label className="modal-label">
               Seu nome
-              <input
-                className="modal-input"
-                type="text"
-                placeholder="Maria da Silva"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-              />
+              <input className="modal-input" type="text" placeholder="Maria da Silva" value={nome} onChange={(e) => setNome(e.target.value)} />
             </label>
 
             <label className="modal-label">
               WhatsApp / Telefone
-              <input
-                className="modal-input"
-                type="tel"
-                placeholder="(21) 99999-9999"
-                value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
-              />
+              <input className="modal-input" type="tel" placeholder="(21) 99999-9999" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
             </label>
 
             {erro && <p className="modal-erro">{erro}</p>}
 
-            <button
-              className="modal-btn primary"
-              onClick={confirmarAgendamento}
-              disabled={loading}
-            >
+            <button className="modal-btn primary" onClick={confirmarAgendamento} disabled={loading}>
               {loading ? 'Agendando...' : 'Confirmar agendamento'}
             </button>
           </div>
@@ -323,18 +259,11 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             </p>
             <div className="confirmacao-box">
               <p><strong>Serviço:</strong> {agendado.servico?.nome}</p>
-              {agendado.servico?.duracao && (
-                <p><strong>Duração:</strong> {formatDuracao(agendado.servico.duracao)}</p>
-              )}
+              {agendado.servico?.duracao && <p><strong>Duração:</strong> {formatDuracao(agendado.servico.duracao)}</p>}
               <p><strong>Data/Hora:</strong> {formatDateTime(agendado.data)}</p>
               <p><strong>Status:</strong> {agendado.status}</p>
             </div>
-            <a
-              className="modal-btn whatsapp"
-              href={buildWhatsAppLink(agendado)}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a className="modal-btn whatsapp" href={buildWhatsAppLink(agendado)} target="_blank" rel="noreferrer">
               Confirmar pelo WhatsApp
             </a>
             <button className="modal-btn secondary" onClick={onClose}>Fechar</button>

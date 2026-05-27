@@ -47,19 +47,23 @@ export default function WeekCalendar() {
   const dataInicio = `${dateKey(weekDays[0])}T00:00:00.000`;
   const dataFim = `${dateKey(weekDays[6])}T23:59:59.999`;
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (shouldIgnore = () => false) => {
     setLoading(true);
     try {
       const data = await listarAgendamentosAdmin({ dataInicio, dataFim, limit: 100, page: 1 });
-      setAppointments(data.agendamentos || []);
+      if (!shouldIgnore()) setAppointments(data.agendamentos || []);
     } catch {
-      setAppointments([]);
+      if (!shouldIgnore()) setAppointments([]);
     } finally {
-      setLoading(false);
+      if (!shouldIgnore()) setLoading(false);
     }
   }, [dataInicio, dataFim]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    let cancelled = false;
+    const id = window.setTimeout(() => { load(() => cancelled); }, 0);
+    return () => { cancelled = true; window.clearTimeout(id); };
+  }, [load]);
 
   const aptMap = {};
   appointments.forEach((apt) => {

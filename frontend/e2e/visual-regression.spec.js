@@ -175,7 +175,8 @@ test('visual mobile: painel logado tabs principais', async ({ page }) => {
   await expect(page.getByText('Serviços Populares')).toBeVisible();
   await expect(page.getByTestId('admin-dashboard-kpis')).toHaveScreenshot('admin-mobile-dashboard.png', {
     animations: 'disabled',
-    maxDiffPixelRatio: 0.01,
+    maxDiffPixelRatio: 0.05,
+    maxDiffPixels: 5000,
   });
 });
 

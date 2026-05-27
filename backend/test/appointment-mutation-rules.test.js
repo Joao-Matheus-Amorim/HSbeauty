@@ -92,6 +92,20 @@ test('validateAppointmentUpdatePayload rejects invalid service id', () => {
   });
 });
 
+test('validateAppointmentUpdatePayload accepts canonical completed status', () => {
+  const result = validateAppointmentUpdatePayload({ status: 'concluido' });
+
+  assert.equal(result.valid, true);
+  assert.equal(result.data.status, 'concluido');
+});
+
+test('validateAppointmentUpdatePayload normalizes legacy completed status', () => {
+  const result = validateAppointmentUpdatePayload({ status: 'concluído' });
+
+  assert.equal(result.valid, true);
+  assert.equal(result.data.status, 'concluido');
+});
+
 test('validateAppointmentUpdatePayload rejects invalid status', () => {
   assert.deepEqual(validateAppointmentUpdatePayload({ status: 'aprovado' }), {
     valid: false,

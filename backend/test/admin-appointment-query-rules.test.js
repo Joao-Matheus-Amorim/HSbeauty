@@ -32,6 +32,20 @@ test('buildAdminAppointmentQuery builds valid filters', () => {
   assert.equal(result.skip, 30);
 });
 
+test('buildAdminAppointmentQuery accepts canonical completed status', () => {
+  const result = buildAdminAppointmentQuery({ status: 'concluido' });
+
+  assert.equal(result.valid, true);
+  assert.equal(result.where.status, 'concluido');
+});
+
+test('buildAdminAppointmentQuery normalizes legacy completed status', () => {
+  const result = buildAdminAppointmentQuery({ status: 'concluído' });
+
+  assert.equal(result.valid, true);
+  assert.equal(result.where.status, 'concluido');
+});
+
 test('buildAdminAppointmentQuery rejects invalid status', () => {
   assert.deepEqual(buildAdminAppointmentQuery({ status: 'aprovado' }), {
     valid: false,

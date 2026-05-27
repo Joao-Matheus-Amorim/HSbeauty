@@ -28,7 +28,7 @@ model Agendamento {
   data        DateTime
   hora        String   // Formato HH:mm
   servicoId   Int
-  status      String   @default("pendente") // pendente, confirmado, cancelado, concluído
+  status      String   @default("pendente") // pendente, confirmado, cancelado, concluido
   observacoes String?
   criadoEm    DateTime @default(now())
   atualizadoEm DateTime @updatedAt

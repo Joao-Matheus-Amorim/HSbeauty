@@ -28,6 +28,20 @@ test('validateAdminBookingUpdatePayload accepts null observations', () => {
   });
 });
 
+test('validateAdminBookingUpdatePayload accepts canonical completed status', () => {
+  assert.deepEqual(validateAdminBookingUpdatePayload({ status: 'concluido' }), {
+    valid: true,
+    data: { status: 'concluido' },
+  });
+});
+
+test('validateAdminBookingUpdatePayload normalizes legacy completed status', () => {
+  assert.deepEqual(validateAdminBookingUpdatePayload({ status: 'concluído' }), {
+    valid: true,
+    data: { status: 'concluido' },
+  });
+});
+
 test('validateAdminBookingUpdatePayload rejects invalid status', () => {
   assert.deepEqual(validateAdminBookingUpdatePayload({ status: 'aprovado' }), {
     valid: false,

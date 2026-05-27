@@ -1,17 +1,34 @@
 import { isValidTelefone, OBSERVACOES_MAX_LENGTH } from './booking-rules.js';
 
-export const VALID_BOOKING_STATUSES = ['pendente', 'confirmado', 'cancelado', 'concluído'];
+export const BOOKING_STATUS = {
+  PENDENTE: 'pendente',
+  CONFIRMADO: 'confirmado',
+  CANCELADO: 'cancelado',
+  CONCLUIDO: 'concluido',
+};
+
+const LEGACY_BOOKING_STATUS_ALIASES = {
+  concluído: BOOKING_STATUS.CONCLUIDO,
+};
+
+export const VALID_BOOKING_STATUSES = Object.values(BOOKING_STATUS);
+
+export function normalizeBookingStatus(status) {
+  return LEGACY_BOOKING_STATUS_ALIASES[status] || status;
+}
 
 export function validateAdminBookingUpdatePayload(payload) {
   const { status, observacoes, nomeCliente, telefone, email } = payload || {};
   const data = {};
 
   if (status !== undefined) {
-    if (!VALID_BOOKING_STATUSES.includes(status)) {
+    const normalizedStatus = normalizeBookingStatus(status);
+
+    if (!VALID_BOOKING_STATUSES.includes(normalizedStatus)) {
       return { valid: false, status: 400, message: 'Status inválido' };
     }
 
-    data.status = status;
+    data.status = normalizedStatus;
   }
 
   if (observacoes !== undefined) {

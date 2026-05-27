@@ -38,3 +38,4 @@ Atualizado em: 27/05/2026
 | C-012 | Esta frente | Imagens pesadas removidas do frontend e substituidas por placeholders sem arquivo estatico. |
 | C-013 | Esta frente | Emojis e icones decorativos removidos de UI, scripts e README. |
 | C-014 | Esta frente | Checklist de deploy manual documentado sem alterar politica `deploymentEnabled: false`. |
+| C-015 | Esta frente | Status `concluido` normalizado como contrato canonico entre frontend, backend e banco. |

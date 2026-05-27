@@ -1,4 +1,4 @@
-import { VALID_BOOKING_STATUSES } from './admin-booking-rules.js';
+import { normalizeBookingStatus, VALID_BOOKING_STATUSES } from './admin-booking-rules.js';
 import {
   getHoraFromDate,
   isSlotStepAligned,
@@ -73,11 +73,13 @@ export function validateAppointmentUpdatePayload(payload = {}) {
   }
 
   if (payload.status !== undefined) {
-    if (!VALID_BOOKING_STATUSES.includes(payload.status)) {
+    const normalizedStatus = normalizeBookingStatus(payload.status);
+
+    if (!VALID_BOOKING_STATUSES.includes(normalizedStatus)) {
       return { valid: false, status: 400, message: 'Status inválido' };
     }
 
-    data.status = payload.status;
+    data.status = normalizedStatus;
   }
 
   if (Object.keys(data).length === 0 && servicoIdNumero === undefined) {

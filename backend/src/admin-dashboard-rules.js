@@ -1,15 +1,24 @@
+import { BOOKING_STATUS, normalizeBookingStatus } from './admin-booking-rules.js';
+
+function hasStatus(agendamento, status) {
+  return normalizeBookingStatus(agendamento.status) === status;
+}
+
 export function buildStatusCount(agendamentos = []) {
   return {
-    pendente: agendamentos.filter((agendamento) => agendamento.status === 'pendente').length,
-    confirmado: agendamentos.filter((agendamento) => agendamento.status === 'confirmado').length,
-    cancelado: agendamentos.filter((agendamento) => agendamento.status === 'cancelado').length,
-    concluido: agendamentos.filter((agendamento) => agendamento.status === 'concluído').length,
+    pendente: agendamentos.filter((agendamento) => hasStatus(agendamento, BOOKING_STATUS.PENDENTE)).length,
+    confirmado: agendamentos.filter((agendamento) => hasStatus(agendamento, BOOKING_STATUS.CONFIRMADO)).length,
+    cancelado: agendamentos.filter((agendamento) => hasStatus(agendamento, BOOKING_STATUS.CANCELADO)).length,
+    concluido: agendamentos.filter((agendamento) => hasStatus(agendamento, BOOKING_STATUS.CONCLUIDO)).length,
   };
 }
 
 export function calculateRevenue(agendamentos = []) {
   const receita = agendamentos
-    .filter((agendamento) => agendamento.status === 'concluído' || agendamento.status === 'confirmado')
+    .filter((agendamento) => {
+      const status = normalizeBookingStatus(agendamento.status);
+      return status === BOOKING_STATUS.CONCLUIDO || status === BOOKING_STATUS.CONFIRMADO;
+    })
     .reduce((total, agendamento) => total + (agendamento.servico?.preco || 0), 0);
 
   return parseFloat(receita.toFixed(2));

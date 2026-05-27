@@ -7,6 +7,7 @@ test('buildStatusCount counts dashboard statuses', () => {
     { status: 'pendente' },
     { status: 'confirmado' },
     { status: 'cancelado' },
+    { status: 'concluido' },
     { status: 'concluído' },
   ];
 
@@ -14,16 +15,17 @@ test('buildStatusCount counts dashboard statuses', () => {
     pendente: 1,
     confirmado: 1,
     cancelado: 1,
-    concluido: 1,
+    concluido: 2,
   });
 });
 
 test('calculateRevenue sums only confirmed and completed appointments', () => {
   const rows = [
     { status: 'confirmado', servico: { preco: 50 } },
+    { status: 'concluido', servico: { preco: 20.25 } },
     { status: 'concluído', servico: { preco: 20.25 } },
     { status: 'cancelado', servico: { preco: 999 } },
   ];
 
-  assert.equal(calculateRevenue(rows), 70.25);
+  assert.equal(calculateRevenue(rows), 90.5);
 });

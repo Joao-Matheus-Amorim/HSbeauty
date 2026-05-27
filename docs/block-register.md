@@ -58,6 +58,7 @@ Atualizado em: 27/05/2026
 - Rota:
   - `GET /admin/dashboard`
 - Estado: operacional.
+- Controle: status concluido usa valor canonico `concluido` e aceita leitura de legado `concluído`.
 
 ### Admin agendamentos
 
@@ -72,6 +73,7 @@ Atualizado em: 27/05/2026
   - `DELETE /admin/agendamentos/:id`
 - Estado: operacional.
 - Controle: filtro de data usa `dataInicio` e `dataFim`.
+- Controle: mutacoes de status normalizam `concluído` legado para `concluido`.
 
 ### Admin servicos
 

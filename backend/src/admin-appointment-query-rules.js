@@ -1,4 +1,4 @@
-import { VALID_BOOKING_STATUSES } from './admin-booking-rules.js';
+import { normalizeBookingStatus, VALID_BOOKING_STATUSES } from './admin-booking-rules.js';
 import { buildPagination, parsePositiveInteger } from './admin-query-utils.js';
 
 function parseDate(value, fieldName) {
@@ -17,11 +17,13 @@ export function buildAdminAppointmentQuery(query = {}) {
   const where = {};
 
   if (status) {
-    if (!VALID_BOOKING_STATUSES.includes(status)) {
+    const normalizedStatus = normalizeBookingStatus(status);
+
+    if (!VALID_BOOKING_STATUSES.includes(normalizedStatus)) {
       return { valid: false, status: 400, message: 'Status inválido' };
     }
 
-    where.status = status;
+    where.status = normalizedStatus;
   }
 
   const dataInicioResult = parseDate(dataInicio, 'dataInicio');

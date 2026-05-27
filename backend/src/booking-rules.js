@@ -56,6 +56,10 @@ export function formatDateOnly(date) {
   return `${y}-${m}-${d}`;
 }
 
+export function buildPublicBookingLockKey(date) {
+  return `hsbeauty:public-booking:${formatDateOnly(date)}`;
+}
+
 export function parseDateOnly(dateString) {
   if (!dateString || typeof dateString !== 'string') {
     throw new Error('Data inválida');

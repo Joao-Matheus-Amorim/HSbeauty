@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AppointmentManager from '../../components/AppointmentManager';
 import { STATUS } from '../../constants';
 
@@ -34,6 +34,8 @@ beforeEach(() => {
     agendamentos: [AGENDAMENTO_PENDENTE],
     paginacao: { pagina: 1, totalPaginas: 1 },
   });
+  atualizarAgendamentoAdmin.mockResolvedValue(AGENDAMENTO_CONFIRMADO);
+  cancelarAgendamentoAdmin.mockResolvedValue({});
 });
 
 describe('AppointmentManager — renderização', () => {
@@ -62,7 +64,6 @@ describe('AppointmentManager — status sem acento', () => {
 
     await waitFor(() => {
       expect(atualizarAgendamentoAdmin).toHaveBeenCalledWith(2, { status: 'concluido' });
-      // Garante sem acento
       const [, payload] = atualizarAgendamentoAdmin.mock.calls[0];
       expect(payload.status).not.toContain('í');
     });
@@ -71,7 +72,7 @@ describe('AppointmentManager — status sem acento', () => {
 
 describe('AppointmentManager — sem alert() / confirm()', () => {
   it('não usa window.alert — exibe erro inline', async () => {
-    const alertSpy = vi.spyOn(window, 'alert');
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     atualizarAgendamentoAdmin.mockRejectedValue(new Error('Falha de rede'));
 
     render(<AppointmentManager />);
@@ -86,27 +87,21 @@ describe('AppointmentManager — sem alert() / confirm()', () => {
   });
 
   it('mostra confirmação inline ao cancelar (sem window.confirm)', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm');
+    const confirmSpy = vi.spyOn(window, 'confirm').mockImplementation(() => true);
     render(<AppointmentManager />);
-    const cancelarBtn = await screen.findByRole('button', { name: /cancelar/i });
-    fireEvent.click(cancelarBtn);
+    const cancelarBtns = await screen.findAllByRole('button', { name: /cancelar/i });
+    fireEvent.click(cancelarBtns[0]);
 
-    // Deve aparecer a pergunta de confirmação inline
     expect(await screen.findByText(/deseja realmente cancelar/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sim, cancelar/i })).toBeInTheDocument();
     expect(confirmSpy).not.toHaveBeenCalled();
     confirmSpy.mockRestore();
   });
 
   it('cancela agendamento ao confirmar inline', async () => {
-    cancelarAgendamentoAdmin.mockResolvedValue({});
-    listarAgendamentosAdmin.mockResolvedValue({
-      agendamentos: [],
-      paginacao: { pagina: 1, totalPaginas: 1 },
-    });
-
     render(<AppointmentManager />);
-    const cancelarBtn = await screen.findByRole('button', { name: /cancelar/i });
-    fireEvent.click(cancelarBtn);
+    const cancelarBtns = await screen.findAllByRole('button', { name: /cancelar/i });
+    fireEvent.click(cancelarBtns[0]);
 
     const simBtn = await screen.findByRole('button', { name: /sim, cancelar/i });
     fireEvent.click(simBtn);
@@ -119,7 +114,7 @@ describe('AppointmentManager — sem alert() / confirm()', () => {
 
 describe('AppointmentManager — fallback de dados vazios', () => {
   it('não crasha quando agendamentos é undefined na resposta', async () => {
-    listarAgendamentosAdmin.mockResolvedValue({ paginacao: {} }); // sem agendamentos
+    listarAgendamentosAdmin.mockResolvedValue({ paginacao: {} });
     render(<AppointmentManager />);
     expect(await screen.findByText(/nenhum agendamento/i)).toBeInTheDocument();
   });

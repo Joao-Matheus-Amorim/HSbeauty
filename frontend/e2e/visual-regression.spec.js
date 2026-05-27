@@ -117,6 +117,32 @@ async function mockAdminApis(page) {
   });
 }
 
+function mockAdminDashboardEmptyState(page) {
+  return mockAdminApis(page).then(() =>
+    page.route('**/admin/dashboard*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          resumo: {
+            agendamentosHoje: 0,
+            receitaMes: 0,
+            totalServicos: 0,
+            totalAgendamentos: 0,
+          },
+          statusCount: {
+            pendente: 0,
+            confirmado: 0,
+            concluido: 0,
+            cancelado: 0,
+          },
+          topServicos: [],
+        }),
+      });
+    })
+  );
+}
+
 test('visual: home publica', async ({ page }) => {
   await mockPublicServices(page);
   await page.setViewportSize({ width: 1366, height: 768 });
@@ -198,6 +224,41 @@ test('visual mobile: erro em agendamentos', async ({ page }) => {
 
   await expect(page.getByText(/erro ao carregar agendamentos/i)).toBeVisible();
   await expect(page).toHaveScreenshot('admin-mobile-agendamentos-erro.png', {
+    fullPage: true,
+    animations: 'disabled',
+    maxDiffPixelRatio: 0.05,
+  });
+});
+
+test('visual mobile: dashboard vazio', async ({ page }) => {
+  await mockAdminDashboardEmptyState(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/admin');
+  await page.getByLabel('Email').fill('admin@hsbeauty.com');
+  await page.getByLabel('Senha').fill('123456');
+  await page.getByRole('button', { name: /^entrar$/i }).click();
+  await expect(page.getByText('Ana Lima')).toBeVisible();
+
+  await page.getByRole('button', { name: /resumo/i }).click();
+  await expect(page.getByText('Serviços Populares')).toBeVisible();
+  await expect(page.getByTestId('admin-dashboard-root')).toHaveScreenshot('admin-mobile-dashboard-empty.png', {
+    animations: 'disabled',
+    maxDiffPixelRatio: 0.05,
+  });
+});
+
+test('visual dashboard vazio desktop', async ({ page }) => {
+  await mockAdminDashboardEmptyState(page);
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto('/admin');
+  await page.getByLabel('Email').fill('admin@hsbeauty.com');
+  await page.getByLabel('Senha').fill('123456');
+  await page.getByRole('button', { name: /^entrar$/i }).click();
+  await expect(page.getByText('Ana Lima')).toBeVisible();
+
+  await page.getByRole('button', { name: /resumo/i }).click();
+  await expect(page.getByText('Serviços Populares')).toBeVisible();
+  await expect(page.getByTestId('admin-dashboard-root')).toHaveScreenshot('admin-dashboard-empty.png', {
     fullPage: true,
     animations: 'disabled',
     maxDiffPixelRatio: 0.05,

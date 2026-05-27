@@ -18,7 +18,7 @@ Atualizado em: 27/05/2026
 | A-011 | P1 | 10 | Definir politica de versionamento. | README removido de versao solta; packages ainda usam versoes internas distintas. | Decidir versao de produto (SemVer ou CalVer) e regra para packages privados. |
 | A-012 | P2 | 9 | Provisionar ambiente de staging. | Apenas producao existe; testes de integracao exigem banco real isolado. | Criar branch Neon de staging e Vercel preview separado. |
 | A-013 | P2 | 9 | Criar testes de integracao com banco real. | Backend tem 117 testes unitarios; nenhum bate no banco real. | Criar suite de integracao cobrindo: agendamento com lock, conflito de horario, auth flow. |
-| A-014 | P2 | 9 | Definir criterio e remover rotas legadas fora de `/admin`. | Rotas em `protected-appointment-routes.js`, `protected-service-routes.js` e `block-routes.js` com headers de depreciacao. | Verificar se algum cliente ativo usa essas rotas; definir data de sunset. |
+| ~~A-014~~ | ~~P2~~ | ~~9~~ | ~~Remover rotas legadas fora de `/admin`.~~ | Concluido em C-029. | — |
 | A-015 | P3 | 9 | Refatorar `server.js` conforme BACKEND_REFACTOR_ROADMAP. | `server.js` concentra bootstrap, config, CORS, rate limit, JWT e montagem de rotas. | Seguir ordem de PRs documentada em `docs/BACKEND_REFACTOR_ROADMAP.md`. |
 | A-016 | P2 | 7 | Implementar notificacao ao admin para novo agendamento. | Frontend nao notifica; admin descobre apenas ao recarregar a pagina. | Decidir mecanismo (polling, WebSocket ou webhook) e registrar em `docs/decisoes.md`. |
 | A-017 | P2 | 7 | Substituir link WhatsApp por confirmacao real ao cliente. | Apos agendar, frontend gera link WhatsApp manual; nao ha envio automatico. | Avaliar Z-API ou Twilio; registrar decisao de provider em `docs/decisoes.md`. |
@@ -58,3 +58,4 @@ Atualizado em: 27/05/2026
 | C-026 | Esta frente | Issues #17, #78 e #80 confirmadas como ja fechadas; A-003, A-004 e A-010 removidas do registro. |
 | C-027 | Esta frente | Polling de agendamentos pendentes a cada 30s com badge numerico no nav do painel admin (A-016). |
 | C-028 | Esta frente | Export CSV de agendamentos com filtros ativos; rota `GET /admin/agendamentos/export` + botao no painel (A-019). |
+| C-029 | Esta frente | Rotas legadas removidas: `protected-appointment-routes`, `protected-service-routes`, `block-routes`, `legacy-route-deprecation`, `appointment-mutation-rules` + 2 testes (A-014). |

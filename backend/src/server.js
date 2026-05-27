@@ -10,14 +10,10 @@ import { createAdminServiceRouter } from './admin-service-routes.js';
 import { createAuthMiddleware } from './auth-middleware.js';
 import { createAuthRouter } from './auth-routes.js';
 import { createAvailabilityRouter } from './availability-routes.js';
-import { createBlockRouter } from './block-routes.js';
 import { buildAllowedOrigins, isOriginAllowed } from './cors-config-rules.js';
 import { assertRequiredEnv } from './env-config-rules.js';
-import { createProtectedAppointmentRouter } from './protected-appointment-routes.js';
-import { createProtectedServiceRouter } from './protected-service-routes.js';
 import { createPublicBookingRouter } from './public-booking-routes.js';
 import { createPublicServiceRouter } from './public-service-routes.js';
-import { legacyAdminRouteDeprecation } from './legacy-route-deprecation.js';
 
 const { PrismaClient } = pkg;
 
@@ -35,8 +31,6 @@ app.use(
   })
 );
 
-app.use(legacyAdminRouteDeprecation);
-
 assertRequiredEnv(process.env);
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
@@ -53,11 +47,8 @@ app.get('/', (req, res) => {
 
 app.use('/auth', createAuthRouter({ prisma, jwtSecret: JWT_SECRET }));
 app.use('/servicos', createPublicServiceRouter({ prisma }));
-app.use('/servicos', createProtectedServiceRouter({ prisma, authMiddleware }));
 app.use('/agendamentos', createPublicBookingRouter({ prisma }));
-app.use('/agendamentos', createProtectedAppointmentRouter({ prisma, authMiddleware }));
 app.use('/disponibilidade', createAvailabilityRouter({ prisma }));
-app.use('/bloqueios', createBlockRouter({ prisma, authMiddleware }));
 
 app.use('/admin', createAdminDashboardRouter({ prisma, authMiddleware }));
 app.use('/admin', createAdminAppointmentRouter({ prisma, authMiddleware }));

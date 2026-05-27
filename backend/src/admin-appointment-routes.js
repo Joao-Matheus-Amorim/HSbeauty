@@ -42,6 +42,54 @@ export function createAdminAppointmentRouter({ prisma, authMiddleware }) {
   });
 
   /**
+   * GET /admin/agendamentos/export
+   * Exporta agendamentos filtrados em CSV (máx 1000 registros)
+   * Deve ficar antes de /:id para evitar conflito de rota
+   */
+  router.get('/agendamentos/export', authMiddleware, async (req, res) => {
+    try {
+      const query = buildAdminAppointmentQuery({ ...req.query, page: 1, limit: 1000 });
+      if (!query.valid) return sendError(res, query.status, query.message);
+
+      const agendamentos = await prisma.agendamento.findMany({
+        where: query.where,
+        include: { servico: true },
+        orderBy: { data: 'desc' },
+        take: 1000,
+      });
+
+      const BOM = '﻿';
+      const header = 'ID,Cliente,Telefone,Email,Data,Hora,Status,Serviço,Preço (R$)';
+
+      const rows = agendamentos.map((a) => {
+        const data = new Date(a.data).toLocaleDateString('pt-BR');
+        const preco = Number(a.servico?.preco ?? 0).toFixed(2);
+        const campos = [
+          a.id,
+          `"${(a.nomeCliente ?? '').replace(/"/g, '""')}"`,
+          a.telefone ?? '',
+          a.email ?? '',
+          data,
+          a.hora ?? '',
+          a.status,
+          `"${(a.servico?.nome ?? '').replace(/"/g, '""')}"`,
+          preco,
+        ];
+        return campos.join(',');
+      });
+
+      const csv = BOM + [header, ...rows].join('\r\n');
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename="agendamentos.csv"');
+      res.send(csv);
+    } catch (error) {
+      logError('GET /admin/agendamentos/export', error, req);
+      return sendError(res, 500, 'Erro ao exportar agendamentos');
+    }
+  });
+
+  /**
    * GET /admin/agendamentos/:id
    * Busca um agendamento específico
    */

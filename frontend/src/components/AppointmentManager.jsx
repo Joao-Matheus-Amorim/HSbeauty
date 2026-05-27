@@ -13,8 +13,9 @@ import {
   Scissors,
   UserRound,
   MessageCircle,
+  Download,
 } from 'lucide-react';
-import { listarAgendamentosAdmin, atualizarAgendamentoAdmin, cancelarAgendamentoAdmin } from '../services/admin';
+import { listarAgendamentosAdmin, atualizarAgendamentoAdmin, cancelarAgendamentoAdmin, exportarAgendamentosCSV } from '../services/admin';
 import { STATUS } from '../constants';
 import { clsx } from 'clsx';
 
@@ -188,6 +189,7 @@ export default function AppointmentManager() {
   const [error, setError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [confirmCancelId, setConfirmCancelId] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   const [filters, setFilters] = useState({
     status: STATUS.PENDENTE,
@@ -307,6 +309,27 @@ export default function AppointmentManager() {
     setPage(updater);
   }
 
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const blob = await exportarAgendamentosCSV({
+        status,
+        dataInicio: dataInicioFilter,
+        dataFim: dataFimFilter,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `agendamentos-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setActionError('Erro ao exportar: ' + err.message);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div className="space-y-6 admin-appointments-screen">
       <div className="admin-section-hero">
@@ -319,9 +342,14 @@ export default function AppointmentManager() {
               : 'Veja e gerencie todos os agendamentos.'}
           </p>
         </div>
-        <button type="button" onClick={() => loadAppointments()} className="admin-refresh-btn" aria-label="Atualizar agenda">
-          <RefreshCcw className={clsx('w-5 h-5', loading && 'animate-spin')} />
-        </button>
+        <div className="flex gap-2">
+          <button type="button" onClick={handleExport} disabled={exporting} className="admin-refresh-btn" aria-label="Exportar CSV">
+            <Download className={clsx('w-5 h-5', exporting && 'opacity-50')} />
+          </button>
+          <button type="button" onClick={() => loadAppointments()} className="admin-refresh-btn" aria-label="Atualizar agenda">
+            <RefreshCcw className={clsx('w-5 h-5', loading && 'animate-spin')} />
+          </button>
+        </div>
       </div>
 
       <div className="admin-status-tabs" aria-label="Filtros rápidos de agendamento">

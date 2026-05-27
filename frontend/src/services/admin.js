@@ -23,6 +23,13 @@ export async function atualizarAgendamentoAdmin(id, dados) {
   return handleAuthResponse(response);
 }
 
+export async function exportarAgendamentosCSV(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  const response = await authorizedFetch(`${API_URL}/admin/agendamentos/export?${query}`);
+  if (!response.ok) throw new Error('Erro ao exportar agendamentos');
+  return response.blob();
+}
+
 export async function cancelarAgendamentoAdmin(id) {
   const response = await authorizedFetch(`${API_URL}/admin/agendamentos/${id}`, {
     method: 'DELETE',

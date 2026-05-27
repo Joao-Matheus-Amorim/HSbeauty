@@ -23,7 +23,7 @@ Atualizado em: 27/05/2026
 | A-016 | P2 | 7 | Implementar notificacao ao admin para novo agendamento. | Frontend nao notifica; admin descobre apenas ao recarregar a pagina. | Decidir mecanismo (polling, WebSocket ou webhook) e registrar em `docs/decisoes.md`. |
 | A-017 | P2 | 7 | Substituir link WhatsApp por confirmacao real ao cliente. | Apos agendar, frontend gera link WhatsApp manual; nao ha envio automatico. | Avaliar Z-API ou Twilio; registrar decisao de provider em `docs/decisoes.md`. |
 | A-018 | P3 | 8 | Criar visualizacao de agenda semanal no painel admin. | Tabela paginada existe; sem visao de calendario. | Avaliar biblioteca (FullCalendar ou implementacao propria) e prototipar. |
-| A-019 | P3 | 8 | Adicionar export de agendamentos para CSV. | API retorna paginacao; nao ha endpoint de export. | Criar endpoint `GET /admin/agendamentos/export?formato=csv` e botao no frontend. |
+| ~~A-019~~ | ~~P3~~ | ~~8~~ | ~~Adicionar export de agendamentos para CSV.~~ | Concluido em C-028. | — |
 | A-020 | P1 | 9 | Definir politica de rotacao de `JWT_SECRET` e credenciais de banco. | Nenhuma politica documentada; rotacao manual em caso de comprometimento. | Documentar procedimento de rotacao e onde as credenciais ficam armazenadas. |
 
 ## Acoes concluidas recentes
@@ -56,3 +56,5 @@ Atualizado em: 27/05/2026
 | C-024 | Esta frente | Cobertura de regressao visual de dashboard para estado vazio (mobile + desktop) adicionada. |
 | C-025 | Esta frente | Contrato `SNAPSHOT_CHANNEL=product` definido para snapshots Playwright, com bloqueio de update em CI e documentacao operacional. |
 | C-026 | Esta frente | Issues #17, #78 e #80 confirmadas como ja fechadas; A-003, A-004 e A-010 removidas do registro. |
+| C-027 | Esta frente | Polling de agendamentos pendentes a cada 30s com badge numerico no nav do painel admin (A-016). |
+| C-028 | Esta frente | Export CSV de agendamentos com filtros ativos; rota `GET /admin/agendamentos/export` + botao no painel (A-019). |

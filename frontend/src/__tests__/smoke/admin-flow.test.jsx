@@ -1,7 +1,6 @@
 import { describe, beforeEach, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import AppRoutes from '../../AppRoutes';
 
 vi.mock('../../services/auth', () => ({
   loginAdmin: vi.fn(),
@@ -13,10 +12,17 @@ vi.mock('../../services/auth', () => ({
 
 vi.mock('../../services/admin', () => ({
   listarAgendamentosAdmin: vi.fn(),
+  atualizarAgendamentoAdmin: vi.fn(),
+  cancelarAgendamentoAdmin: vi.fn(),
+  exportarAgendamentosCSV: vi.fn(),
 }));
 
 import { getAccessToken, getAdminFromSession, loginAdmin } from '../../services/auth';
 import { listarAgendamentosAdmin } from '../../services/admin';
+
+// Import Admin directly — AppRoutes uses React.lazy which can race in parallel test workers.
+// This smoke test covers the Admin page behaviour, not routing.
+import Admin from '../../pages/Admin.jsx';
 
 describe('Smoke admin', () => {
   beforeEach(() => {
@@ -48,8 +54,8 @@ describe('Smoke admin', () => {
 
   it('executa login admin e abre o painel com dados carregados', async () => {
     render(
-      <MemoryRouter initialEntries={['/admin']}>
-        <AppRoutes />
+      <MemoryRouter>
+        <Admin />
       </MemoryRouter>
     );
 

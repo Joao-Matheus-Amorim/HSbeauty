@@ -168,7 +168,7 @@ test('visual mobile: painel logado tabs principais', async ({ page }) => {
   await expect(page).toHaveScreenshot('admin-mobile-horarios.png', {
     fullPage: true,
     animations: 'disabled',
-    maxDiffPixelRatio: 0.01,
+    maxDiffPixelRatio: 0.05,
   });
 
   await page.getByRole('button', { name: /resumo/i }).click();

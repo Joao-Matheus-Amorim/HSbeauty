@@ -1,5 +1,4 @@
 import express from 'express';
-import { buildAdminAppointmentQuery } from './admin-appointment-query-rules.js';
 import { buildAdminScheduleQuery } from './admin-schedule-query-rules.js';
 import {
   validateAdminScheduleCreatePayload,
@@ -10,129 +9,9 @@ import {
   validateAdminServiceUpdatePayload,
 } from './admin-service-mutation-rules.js';
 import { buildAdminServiceQuery } from './admin-service-query-rules.js';
-import { validateAdminBookingUpdatePayload } from './admin-booking-rules.js';
 import { handlePrismaConflict, logError, sendError } from './http-response.js';
 
 const router = express.Router();
-
-// ─── Admin Agendamentos ───────────────────────────────────────────────────────
-
-/**
- * GET /admin/agendamentos
- * Lista todos os agendamentos com filtros opcionais
- */
-export function setupAdminAgendamentos(prisma, authMiddleware) {
-  router.get('/agendamentos', authMiddleware, async (req, res) => {
-    try {
-      const query = buildAdminAppointmentQuery(req.query);
-      if (!query.valid) return sendError(res, query.status, query.message);
-
-      const [agendamentos, total] = await Promise.all([
-        prisma.agendamento.findMany({
-          where: query.where,
-          include: { servico: true },
-          orderBy: { data: 'desc' },
-          skip: query.skip,
-          take: query.limitNum,
-        }),
-        prisma.agendamento.count({ where: query.where }),
-      ]);
-
-      res.json({
-        agendamentos,
-        paginacao: {
-          total,
-          pagina: query.pageNum,
-          limite: query.limitNum,
-          totalPaginas: Math.ceil(total / query.limitNum),
-        },
-      });
-    } catch (error) {
-      logError('GET /admin/agendamentos', error, req);
-      return sendError(res, 500, 'Erro ao buscar agendamentos');
-    }
-  });
-
-  /**
-   * GET /admin/agendamentos/:id
-   * Busca um agendamento específico
-   */
-  router.get('/agendamentos/:id', authMiddleware, async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
-
-      const agendamento = await prisma.agendamento.findUnique({
-        where: { id },
-        include: { servico: true },
-      });
-
-      if (!agendamento) return sendError(res, 404, 'Agendamento não encontrado');
-
-      res.json(agendamento);
-    } catch (error) {
-      logError('GET /admin/agendamentos/:id', error, req);
-      return sendError(res, 500, 'Erro ao buscar agendamento');
-    }
-  });
-
-  /**
-   * PUT /admin/agendamentos/:id
-   * Atualiza um agendamento (status, observações, etc.)
-   */
-  router.put('/agendamentos/:id', authMiddleware, async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
-
-      const agendamento = await prisma.agendamento.findUnique({ where: { id } });
-      if (!agendamento) return sendError(res, 404, 'Agendamento não encontrado');
-
-      const validation = validateAdminBookingUpdatePayload(req.body);
-      if (!validation.valid) return sendError(res, validation.status, validation.message);
-
-      const agendamentoAtualizado = await prisma.agendamento.update({
-        where: { id },
-        data: validation.data,
-        include: { servico: true },
-      });
-
-      res.json(agendamentoAtualizado);
-    } catch (error) {
-      logError('PUT /admin/agendamentos/:id', error, req);
-      return sendError(res, 500, 'Erro ao atualizar agendamento');
-    }
-  });
-
-  /**
-   * DELETE /admin/agendamentos/:id
-   * Cancela um agendamento
-   */
-  router.delete('/agendamentos/:id', authMiddleware, async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
-
-      const agendamento = await prisma.agendamento.findUnique({ where: { id } });
-      if (!agendamento) return sendError(res, 404, 'Agendamento não encontrado');
-
-      // Ao invés de deletar, marcamos como cancelado
-      const agendamentoAtualizado = await prisma.agendamento.update({
-        where: { id },
-        data: { status: 'cancelado' },
-        include: { servico: true },
-      });
-
-      res.json({
-        mensagem: 'Agendamento cancelado com sucesso',
-        agendamento: agendamentoAtualizado,
-      });
-    } catch (error) {
-      logError('DELETE /admin/agendamentos/:id', error, req);
-      return sendError(res, 500, 'Erro ao cancelar agendamento');
-    }
-  });
-}
 
 // ─── Admin Serviços ───────────────────────────────────────────────────────────
 

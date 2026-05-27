@@ -19,12 +19,12 @@
     "postinstall": "prisma generate"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.9.1",
     "prisma": "^7.7.0"
   },
   "dependencies": {
     "@prisma/adapter-neon": "^7.8.0",
-    "@prisma/adapter-pg": "^7.7.0",
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",

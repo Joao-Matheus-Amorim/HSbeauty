@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { listarServicos, buscarDisponibilidade, criarAgendamento } from '../../services/agendamentos';
 
-// Mock global fetch
 const mockFetch = vi.fn();
-vi.stubGlobal('fetch', mockFetch);
 
 function makeResponse(body, status = 200) {
   return {
@@ -16,15 +14,13 @@ function makeResponse(body, status = 200) {
 
 beforeEach(() => {
   mockFetch.mockReset();
-  // Simula ambiente local para que API_URL seja o localhost
-  vi.stubGlobal('window', { location: { hostname: 'localhost' } });
+  vi.stubGlobal('fetch', mockFetch);
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-// ─── listarServicos ───────────────────────────────────────────────────────────
 describe('listarServicos', () => {
   it('chama o endpoint correto sem filtro', async () => {
     mockFetch.mockResolvedValueOnce(makeResponse([]));
@@ -36,6 +32,7 @@ describe('listarServicos', () => {
     mockFetch.mockResolvedValueOnce(makeResponse([]));
     await listarServicos({ ativo: true });
     const [url] = mockFetch.mock.calls[0];
+    expect(url).toContain('/servicos');
     expect(url).toContain('ativo=true');
   });
 
@@ -52,12 +49,12 @@ describe('listarServicos', () => {
   });
 });
 
-// ─── buscarDisponibilidade ────────────────────────────────────────────────────
 describe('buscarDisponibilidade', () => {
   it('inclui data e servicoId na URL', async () => {
     mockFetch.mockResolvedValueOnce(makeResponse({ slotsDisponiveis: [] }));
     await buscarDisponibilidade('2026-05-27', 2);
     const [url] = mockFetch.mock.calls[0];
+    expect(url).toContain('/disponibilidade');
     expect(url).toContain('data=2026-05-27');
     expect(url).toContain('servicoId=2');
   });
@@ -68,7 +65,6 @@ describe('buscarDisponibilidade', () => {
   });
 });
 
-// ─── criarAgendamento ─────────────────────────────────────────────────────────
 describe('criarAgendamento', () => {
   const payload = {
     nomeCliente: 'Maria Silva',
@@ -80,7 +76,8 @@ describe('criarAgendamento', () => {
   it('faz POST com Content-Type JSON', async () => {
     mockFetch.mockResolvedValueOnce(makeResponse({ id: 1, ...payload }));
     await criarAgendamento(payload);
-    const [, opts] = mockFetch.mock.calls[0];
+    const [url, opts] = mockFetch.mock.calls[0];
+    expect(url).toContain('/agendamentos');
     expect(opts.method).toBe('POST');
     expect(opts.headers['Content-Type']).toBe('application/json');
     expect(JSON.parse(opts.body)).toMatchObject(payload);

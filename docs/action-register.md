@@ -19,7 +19,7 @@ Atualizado em: 27/05/2026
 | A-012 | P2 | 9 | Provisionar ambiente de staging. | Apenas producao existe; testes de integracao exigem banco real isolado. | Criar branch Neon de staging e Vercel preview separado. |
 | ~~A-013~~ | ~~P2~~ | ~~9~~ | ~~Criar testes de integracao com banco real.~~ | Concluido em C-032. | — |
 | ~~A-014~~ | ~~P2~~ | ~~9~~ | ~~Remover rotas legadas fora de `/admin`.~~ | Concluido em C-029. | — |
-| A-015 | P3 | 9 | Refatorar `server.js` conforme BACKEND_REFACTOR_ROADMAP. | `server.js` concentra bootstrap, config, CORS, rate limit, JWT e montagem de rotas. | Seguir ordem de PRs documentada em `docs/BACKEND_REFACTOR_ROADMAP.md`. |
+| ~~A-015~~ | ~~P3~~ | ~~9~~ | ~~Refatorar `server.js` conforme BACKEND_REFACTOR_ROADMAP.~~ | Concluido em C-033. | — |
 | A-016 | P2 | 7 | Implementar notificacao ao admin para novo agendamento. | Frontend nao notifica; admin descobre apenas ao recarregar a pagina. | Decidir mecanismo (polling, WebSocket ou webhook) e registrar em `docs/decisoes.md`. |
 | A-017 | P2 | 7 | Substituir link WhatsApp por confirmacao real ao cliente. | Apos agendar, frontend gera link WhatsApp manual; nao ha envio automatico. | Avaliar Z-API ou Twilio; registrar decisao de provider em `docs/decisoes.md`. |
 | A-018 | P3 | 8 | Criar visualizacao de agenda semanal no painel admin. | Tabela paginada existe; sem visao de calendario. | Avaliar biblioteca (FullCalendar ou implementacao propria) e prototipar. |
@@ -62,3 +62,4 @@ Atualizado em: 27/05/2026
 | C-030 | Esta frente | Politica SemVer documentada (D007), frontend alinhado para 1.0.0, politica de rotacao de credenciais documentada (D008) em `docs/decisoes.md` (A-011, A-020). |
 | C-031 | Esta frente | `express-rate-limit` atualizado para v8.5.2; `max` -> `limit`, `standardHeaders: true` -> `'draft-6'` (A-006). |
 | C-032 | Esta frente | Suite de integracao criada: conflito de horario, lock concorrente e auth flow; skip automatico sem `DATABASE_URL_INTEGRATION` (A-013). |
+| C-033 | Esta frente | `server.js` virou bootstrap puro; `app.js` criado como composition root com `createApp()` (A-015). |

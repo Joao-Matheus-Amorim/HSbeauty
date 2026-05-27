@@ -169,16 +169,16 @@ cd frontend && npm run dev  # http://localhost:5173
 
 | Variável | Obrigatório | Descrição |
 |---|---|---|
-| `DATABASE_URL` | ✅ | Connection string do PostgreSQL (Neon) |
-| `JWT_SECRET` | ✅ | Segredo para assinar os tokens JWT (≥32 chars) |
-| `FRONTEND_URL` | ✅ | Origem(s) permitida(s) no CORS. Múltiplas separadas por vírgula |
+| `DATABASE_URL` | Sim | Connection string do PostgreSQL (Neon) |
+| `JWT_SECRET` | Sim | Segredo para assinar os tokens JWT (≥32 chars) |
+| `FRONTEND_URL` | Sim | Origem(s) permitida(s) no CORS. Múltiplas separadas por vírgula |
 | `PORT` | — | Porta do servidor (padrão: `3000`) |
 
 ### Frontend (`frontend/.env`)
 
 | Variável | Obrigatório | Descrição |
 |---|---|---|
-| `VITE_API_URL` | ✅ | URL base da API backend |
+| `VITE_API_URL` | Sim | URL base da API backend |
 | `VITE_WHATSAPP` | — | Número WhatsApp da proprietária (formato: `5521999999999`) |
 
 ---

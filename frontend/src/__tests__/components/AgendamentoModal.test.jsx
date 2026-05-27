@@ -66,7 +66,7 @@ describe('AgendamentoModal — duração dinâmica', () => {
 });
 
 describe('AgendamentoModal — fechar', () => {
-  it('chama onClose ao clicar no botão ✕', async () => {
+  it('chama onClose ao clicar no botao fechar', async () => {
     const onClose = vi.fn();
     render(<AgendamentoModal onClose={onClose} />);
     await screen.findByText('Escolha seu horário');

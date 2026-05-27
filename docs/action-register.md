@@ -20,7 +20,6 @@ Atualizado em: 27/05/2026
 | A-007 | P2 | Seguranca | Monitorar vulnerabilidade moderada indireta do Prisma tooling. | `npm audit` aponta `@hono/node-server` via Prisma. | Nao aplicar downgrade automatico; acompanhar release Prisma. |
 | A-009 | P2 | Qualidade | Criar smoke/E2E do fluxo publico e admin. | Nao ha E2E. | Escolher ferramenta e cobrir caminho principal. |
 | A-010 | P2 | Deploy | Criar checklist de deploy manual. | Deploy automatico desativado por decisao. | Documentar preflight, envs, build e rollback. |
-| A-012 | P3 | Limpeza | Tratar issue #17 sobre emojis/caracteres especiais. | Emojis encontrados em UI, scripts e docs. | Decidir se remove da UI ou fecha como nao requisito. |
 
 ## Acoes concluidas recentes
 
@@ -38,3 +37,4 @@ Atualizado em: 27/05/2026
 | C-010 | #135 | Dependencias patch/minor do backend atualizadas pelo Dependabot. |
 | C-011 | `0b817d1` | Dependencias patch/minor do frontend aplicadas direto na main a partir do PR #136. |
 | C-012 | Esta frente | Imagens pesadas removidas do frontend e substituidas por placeholders sem arquivo estatico. |
+| C-013 | Esta frente | Emojis e icones decorativos removidos de UI, scripts e README. |

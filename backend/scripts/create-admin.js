@@ -44,7 +44,7 @@ try {
     data: { email, senha: hash },
   });
 
-  console.log(`✅ Admin criado com sucesso!`);
+  console.log(`OK: Admin criado com sucesso!`);
   console.log(`   ID: ${admin.id}`);
   console.log(`   E-mail: ${admin.email}`);
 } catch (err) {

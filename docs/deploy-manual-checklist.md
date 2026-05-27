@@ -19,6 +19,8 @@ Atualizado em: 27/05/2026
   - `DATABASE_URL`
   - `JWT_SECRET`
   - `FRONTEND_URL`
+  - `RESEND_API_KEY` (opcional — necessario para email de confirmacao)
+  - `RESEND_FROM_EMAIL` (opcional — necessario para email de confirmacao)
 
 ## 2) Publicacao no frontend (Vercel)
 

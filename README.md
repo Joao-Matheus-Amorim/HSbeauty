@@ -27,14 +27,17 @@ A proprietária gerencia agendamentos, serviços e bloqueios de horário via pai
 **Funcionalidades do cliente:**
 - Ver serviços disponíveis com preço e duração
 - Escolher data, horário e serviço
-- Confirmar agendamento informando nome e telefone
+- Confirmar agendamento informando nome, telefone e email (opcional)
+- Receber email de confirmação automático após agendamento (quando email informado)
 
 **Funcionalidades do painel admin:**
 - Dashboard com KPIs da semana (total, pendentes, confirmados, receita)
 - Listagem e gerenciamento de agendamentos com filtros e busca
+- Badge numérico no nav com contagem de agendamentos pendentes (atualizado a cada 30s)
+- Export de agendamentos para CSV com filtros ativos
 - CRUD completo de serviços (nome, preço, ativo/inativo)
 - Bloqueio de horários (férias, folga, manutenção)
-- Visualização de agenda semanal
+- Visualização de agenda semanal (WeekCalendar) com toggle lista/calendário
 
 ---
 
@@ -164,6 +167,8 @@ cd frontend && npm run dev  # http://localhost:5173
 | `JWT_SECRET` | Sim | Segredo para assinar os tokens JWT (≥32 chars) |
 | `FRONTEND_URL` | Sim | Origem(s) permitida(s) no CORS. Múltiplas separadas por vírgula |
 | `PORT` | — | Porta do servidor (padrão: `3000`) |
+| `RESEND_API_KEY` | — | Chave de API do Resend para envio de email de confirmação |
+| `RESEND_FROM_EMAIL` | — | Endereço remetente verificado no Resend (ex: `agendamentos@seudominio.com`) |
 
 ### Frontend (`frontend/.env`)
 
@@ -202,7 +207,7 @@ Consulte [`docs/adr/ADR-003-deploy.md`](docs/adr/ADR-003-deploy.md) para a decis
 
 ## Status do projeto
 
-**Estado:** MVP operacional em maturacao. A versao de produto deve ser definida em frente propria antes de release formal.
+**Estado:** MVP operacional — versao `1.0.0` (SemVer, politica D007).
 Consulte [`docs/roadmap.md`](docs/roadmap.md) para o status detalhado de cada fase.
 
 ---

@@ -12,13 +12,13 @@ Estado dos gates de qualidade:
 
 ```
 npm run quality (raiz)
-  backend: 117 testes passando
+  backend: 105 testes passando (101 unitarios + 4 integracao com skip automatico)
   frontend: 81 testes passando
   frontend lint: passou
   frontend build: passou
   frontend audit high: 0 vulnerabilidades high/critical
   backend audit high: 0 vulnerabilidades high/critical
-  E2E Playwright: 6 testes com snapshots visuais (SNAPSHOT_CHANNEL=product)
+  E2E Playwright: 10 testes com snapshots visuais (SNAPSHOT_CHANNEL=product)
 ```
 
 ---
@@ -36,13 +36,10 @@ npm run quality (raiz)
 - Documentacao operacional completa.
 - Dependencias npm e vulnerabilidades auditadas.
 
-### Fora do escopo MVP
+### Fora do escopo MVP atual
 
-- Ambiente staging (Fase 9).
-- Notificacoes automaticas ao cliente e admin (Fase 7).
-- Visualizacao de calendario no painel admin (Fase 8).
-- Export de agendamentos (Fase 8).
-- Testes de integracao com banco real (Fase 9).
+- Ambiente staging (A-012, Fase 9).
+- Notificacoes via WhatsApp real ao cliente (Fase 7 — pendente decisao de provider).
 - Auditoria de infraestrutura Neon/Vercel por console.
 - Testes de carga.
 
@@ -66,19 +63,20 @@ Controle:
 
 | Bloco | Estado | Referencia |
 |---|---|---|
-| Agendamento publico | Operacional | `public-booking-routes.js`, `availability-service.js` |
+| Agendamento publico | Operacional | `public-booking-routes.js`, `availability-service.js`, campo email opcional |
 | Servicos publicos | Operacional | `public-service-routes.js` |
 | Disponibilidade | Operacional | `GET /disponibilidade` com calculo de slots |
+| Email de confirmacao | Operacional | `email-service.js`, Resend, fire-and-forget pos-transacao (D009) |
 | Painel admin — login | Operacional | JWT + refresh rotativo, sessionStorage |
 | Painel admin — dashboard | Operacional | 4 KPIs, chart Recharts, estado vazio coberto |
-| Painel admin — agendamentos | Operacional | Filtros, paginacao, confirmar/cancelar |
+| Painel admin — agendamentos | Operacional | Filtros, paginacao, confirmar/cancelar, export CSV |
+| Painel admin — badge pendentes | Operacional | Polling 30s, badge numerico no nav |
+| Painel admin — calendario | Operacional | `WeekCalendar`, toggle lista/calendario |
 | Painel admin — servicos | Operacional | CRUD completo |
 | Painel admin — horarios | Operacional | CRUD de bloqueios |
-| CI | Operacional | 3 jobs: frontend, backend, E2E com snapshots |
+| CI | Operacional | 3 jobs: frontend (81 testes), backend (105 testes), E2E (10 snapshots) |
 | Deploy | Controlado | Manual via Vercel, checklist documentado |
-| Notificacoes | Nao iniciado | Ver Fase 7 no roadmap |
-| Calendario visual | Nao iniciado | Ver Fase 8 no roadmap |
-| Export | Nao iniciado | Ver Fase 8 no roadmap |
+| Notificacoes WhatsApp | Nao iniciado | Depende de decisao de provider (Fase 7) |
 
 ---
 
@@ -90,30 +88,33 @@ Nenhum item identificado como bloqueador operacional atual.
 
 ### P1 — Risco relevante ou divida critica
 
-| ID | Item |
-|---|---|
-| A-011 | Definir politica de versionamento (packages com versoes desalinhadas). |
-| A-020 | Documentar politica de rotacao de `JWT_SECRET` e credenciais de banco. |
+Nenhum item P1 aberto.
 
 ### P2 — Melhorias planejadas
 
 | ID | Fase | Item |
 |---|---|---|
-| A-006 | 9 | Upgrade major `express-rate-limit` para versao 8.x. |
-| A-007 | 9 | Monitorar vulnerabilidade moderada indireta do Prisma tooling. |
-| A-012 | 9 | Provisionar ambiente de staging. |
-| A-013 | 9 | Criar testes de integracao com banco real. |
-| A-014 | 9 | Definir criterio e remover rotas legadas fora de `/admin`. |
-| A-016 | 7 | Notificacao ao admin para novo agendamento. |
-| A-017 | 7 | Confirmacao automatica ao cliente apos agendamento. |
+| A-007 | 9 | Monitorar vulnerabilidade moderada indireta do Prisma tooling; acompanhar release Prisma. |
+| A-012 | 9 | Provisionar ambiente de staging (banco Neon isolado + Vercel preview separado). |
 
 ### P3 — Oportunidades futuras
 
-| ID | Fase | Item |
+Nenhum item P3 aberto.
+
+### Concluidos neste ciclo
+
+| ID | Referencia | Item |
 |---|---|---|
-| A-015 | 9 | Refatorar `server.js` (app factory, organizacao por pastas). |
-| A-018 | 8 | Visualizacao de agenda semanal no painel admin. |
-| A-019 | 8 | Export de agendamentos para CSV. |
+| A-006 | C-031 | `express-rate-limit` atualizado para v8.5.2. |
+| A-011 | C-030 | Politica SemVer documentada (D007), versoes alinhadas para 1.0.0. |
+| A-013 | C-032 | Suite de integracao criada com skip automatico. |
+| A-014 | C-029 | Rotas legadas removidas. |
+| A-015 | C-033 | `server.js` virou bootstrap puro; `app.js` criado. |
+| A-016 | C-027 | Badge de pendentes + polling 30s no painel admin. |
+| A-017 | C-035 | Email de confirmacao via Resend (D009). |
+| A-018 | C-034 | `WeekCalendar` com toggle lista/calendario. |
+| A-019 | C-028 | Export CSV de agendamentos. |
+| A-020 | C-030 | Politica de rotacao de credenciais documentada (D008). |
 
 ---
 
@@ -142,26 +143,27 @@ npm run build
 # Job backend
 npm audit --audit-level=high
 npx prisma generate
-npm test            # 117 testes Node.js native
+npm test            # 105 testes Node.js native (4 integracao com skip sem DATABASE_URL_INTEGRATION)
 
 # Job frontend-e2e
 npx playwright install chromium
-npm run test:e2e    # 6 testes Playwright com SNAPSHOT_CHANNEL=product
+npm run test:e2e    # 10 testes Playwright com SNAPSHOT_CHANNEL=product
 ```
 
 ### Cobertura atual
 
 | Camada | Ferramenta | Testes | Estado |
 |---|---|---|---|
-| Backend — regras de negocio | Node.js native test | 117 | Cobrindo booking, auth, admin queries/mutations, cors, env, tokens |
+| Backend — regras de negocio | Node.js native test | 101 | Cobrindo booking, auth, admin queries/mutations, cors, env, tokens, email |
+| Backend — integracao | Node.js native test | 4 (skip sem DB) | Conflito de horario, lock concorrente, auth flow com banco real |
 | Frontend — componentes | Vitest + Testing Library | 81 | Cobrindo agendamento, admin components, services, utils |
 | Frontend — smoke | Vitest | 2 suites | Fluxo publico e admin com mocks |
-| E2E — visual regression | Playwright Chromium | 6 testes | Home publica, login, mobile tabs, dashboard empty (desktop + mobile) |
+| E2E — visual regression | Playwright Chromium | 10 testes | Home, login, mobile tabs, dashboard empty, agenda semanal, CSV export |
 
 ### Gaps de qualidade conhecidos
 
-- Sem testes de integracao com banco real (lock transacional, conflito de horario).
-- Sem cobertura de notificacoes (funcionalidade nao implementada).
+- Testes de integracao executam apenas com `DATABASE_URL_INTEGRATION` configurado (banco real de staging).
+- Sem cobertura de notificacao via WhatsApp (funcionalidade nao implementada).
 - Sem teste de carga ou stress do endpoint de agendamento concorrente.
 
 ---
@@ -183,9 +185,8 @@ npm run test:e2e    # 6 testes Playwright com SNAPSHOT_CHANNEL=product
 
 ### Necessidades futuras
 
-- Provider de mensagens (Twilio, Z-API ou outro) para Fase 7.
-- Banco Neon isolado para staging (Fase 9).
-- Definicao de responsavel por deploy manual e por rotacao de credenciais.
+- Provider de mensagens WhatsApp (Twilio, Z-API ou outro) para Fase 7.
+- Banco Neon isolado para staging (A-012, Fase 9).
 
 ---
 
@@ -210,9 +211,9 @@ Padrao operacional:
 | R-003 | Divergencia documental | Media | Medio | Docs atualizados por frente; bloco-register como fonte de verdade tecnica. |
 | R-004 | Race condition em agendamento concorrente | Baixa | Alto | Lock transacional ativo; sem constraint unica de slot no schema (mitigado, nao eliminado). |
 | R-005 | Vulnerabilidade moderada indireta via Prisma tooling | Baixa | Medio | Monitorar releases Prisma; nao aplicar downgrade automatico (A-007). |
-| R-006 | Comprometimento de `JWT_SECRET` | Baixa | Alto | Sem politica de rotacao documentada; dependente de acesso manual ao Neon/Vercel (A-020). |
+| R-006 | Comprometimento de `JWT_SECRET` | Baixa | Alto | Politica de rotacao documentada (D008); procedimento padrao em `docs/decisoes.md`. |
 | R-007 | Limite de build Vercel atingido | Baixa | Medio | Deploy automatico desativado; builds manuais e controlados. |
-| R-008 | Notificacao ausente causa perda de agendamento | Media | Alto | Admin precisa recarregar pagina; risco ate Fase 7 ser implementada (A-016). |
+| R-008 | Agendamento nao percebido pelo admin | Baixa | Medio | Badge de pendentes com polling 30s implementado (A-016); notificacao push nao implementada. |
 
 ---
 
@@ -223,8 +224,9 @@ Padrao operacional:
 | GitHub Actions | CI | Gates definidos em `.github/workflows/ci.yml` |
 | Neon | Banco PostgreSQL gerenciado | `DATABASE_URL` por variavel de ambiente |
 | Vercel | Hosting frontend estatico | Deploy manual; `VITE_API_URL` obrigatoria |
+| Resend | Email transacional de confirmacao | `RESEND_API_KEY` e `RESEND_FROM_EMAIL`; ausencia pula envio silenciosamente (D009) |
 | npm registry | Dependencias | Dependabot + audit high no CI |
-| Provider mensagens (futuro) | Notificacoes Fase 7 | Decisao pendente (A-017) |
+| Provider WhatsApp (futuro) | Notificacoes Fase 7 | Decisao de provider pendente |
 
 ---
 
@@ -249,5 +251,6 @@ Padrao operacional:
 | D004 | `docs/decisoes.md` | Neon substituiu Docker local. |
 | D005 | `docs/decisoes.md` | Custo zero na versao inicial. |
 | D006 | `docs/decisoes.md` + `docs/adr/ADR-003-deploy.md` | Deploy automatico desativado. |
-| — | `docs/decisoes.md` (pendente) | Provider de mensagens para Fase 7 (A-017). |
-| — | `docs/decisoes.md` (pendente) | Politica de versionamento de produto (A-011). |
+| D007 | `docs/decisoes.md` | Politica SemVer; versao 1.0.0 alinhada em todos os packages (A-011). |
+| D008 | `docs/decisoes.md` | Politica de rotacao manual de credenciais com procedimento documentado (A-020). |
+| D009 | `docs/decisoes.md` | Resend como provider de email transacional; fire-and-forget, campo email opcional (A-017). |

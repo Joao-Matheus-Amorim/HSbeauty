@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:smoke": "vitest run src/__tests__/smoke",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage"
   },
@@ -42,3 +43,5 @@
     "vitest": "^3.2.4"
   }
 }
+
+

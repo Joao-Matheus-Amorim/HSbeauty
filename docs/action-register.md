@@ -23,7 +23,6 @@ Atualizado em: 27/05/2026
 | A-010 | P2 | Deploy | Criar checklist de deploy manual. | Deploy automatico desativado por decisao. | Documentar preflight, envs, build e rollback. |
 | A-011 | P3 | Frontend | Otimizar imagens remanescentes. | `principalmai.png` ~1.4 MB. | Converter/redimensionar com controle visual. |
 | A-012 | P3 | Limpeza | Tratar issue #17 sobre emojis/caracteres especiais. | Emojis encontrados em UI, scripts e docs. | Decidir se remove da UI ou fecha como nao requisito. |
-| A-013 | P2 | Prisma | Remover `previewFeatures = ["driverAdapters"]` quando confirmado seguro. | Prisma avisa que `driverAdapters` esta deprecated. | Criar PR pequeno com `prisma generate` e testes. |
 
 ## Acoes concluidas recentes
 
@@ -36,3 +35,4 @@ Atualizado em: 27/05/2026
 | C-005 | Esta frente | README, roadmap e testes HTTP alinhados ao contrato atual. |
 | C-006 | Esta frente | Auditoria PMBOK, registro de blocos e ADR de deploy documentados. |
 | C-007 | Esta frente | `VITE_WHATSAPP` conectado ao frontend com fallback para o numero atual. |
+| C-008 | Esta frente | Flag deprecated `previewFeatures = ["driverAdapters"]` removida do Prisma schema. |

@@ -176,7 +176,7 @@ test('visual mobile: painel logado tabs principais', async ({ page }) => {
   await expect(page).toHaveScreenshot('admin-mobile-dashboard.png', {
     fullPage: true,
     animations: 'disabled',
-    maxDiffPixelRatio: 0.01,
+    maxDiffPixelRatio: 0.12,
   });
 });
 

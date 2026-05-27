@@ -13,7 +13,7 @@ Atualizado em: 27/05/2026
 
 | ID | Prioridade | Fase | Acao | Evidencia | Proximo passo |
 |---|---|---|---|---|---|
-| A-006 | P2 | 9 | Avaliar upgrade major pendente de `express-rate-limit`. | Patch/minor backend e frontend ja aplicados; resta major 8.x. | Planejar PR dedicado com validacao de compatibilidade do middleware. |
+| ~~A-006~~ | ~~P2~~ | ~~9~~ | ~~Avaliar upgrade major pendente de `express-rate-limit`.~~ | Concluido em C-031. | — |
 | A-007 | P2 | 9 | Monitorar vulnerabilidade moderada indireta do Prisma tooling. | `npm audit` aponta `@hono/node-server` via Prisma. | Nao aplicar downgrade automatico; acompanhar release Prisma. |
 | ~~A-011~~ | ~~P1~~ | ~~10~~ | ~~Definir politica de versionamento.~~ | Concluido em C-030. | — |
 | A-012 | P2 | 9 | Provisionar ambiente de staging. | Apenas producao existe; testes de integracao exigem banco real isolado. | Criar branch Neon de staging e Vercel preview separado. |
@@ -60,3 +60,4 @@ Atualizado em: 27/05/2026
 | C-028 | Esta frente | Export CSV de agendamentos com filtros ativos; rota `GET /admin/agendamentos/export` + botao no painel (A-019). |
 | C-029 | Esta frente | Rotas legadas removidas: `protected-appointment-routes`, `protected-service-routes`, `block-routes`, `legacy-route-deprecation`, `appointment-mutation-rules` + 2 testes (A-014). |
 | C-030 | Esta frente | Politica SemVer documentada (D007), frontend alinhado para 1.0.0, politica de rotacao de credenciais documentada (D008) em `docs/decisoes.md` (A-011, A-020). |
+| C-031 | Esta frente | `express-rate-limit` atualizado para v8.5.2; `max` -> `limit`, `standardHeaders: true` -> `'draft-6'` (A-006). |

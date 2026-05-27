@@ -29,6 +29,24 @@ PRs devem ter escopo claro. Infraestrutura e documentacao relacionada podem fica
 
 Mudancas de runtime, API, banco ou UI devem ser separadas quando aumentam risco ou dificultam review.
 
+## Politica de Dependabot
+
+Dependabot roda semanalmente na segunda-feira, 08:00 America/Sao_Paulo.
+
+Escopos monitorados:
+
+- raiz do monorepo;
+- `backend`;
+- `frontend`;
+- GitHub Actions.
+
+Controle operacional:
+
+- atualizacoes major de npm ficam ignoradas por padrao;
+- atualizacoes minor/patch de npm sao agrupadas por escopo;
+- limite baixo de PRs abertos evita fila excessiva de CI;
+- cada PR do Dependabot deve passar pelos mesmos gates do CI antes de merge.
+
 ## Deploy e custos
 
 O deploy automatico da Vercel deve permanecer desabilitado para preservar limite de builds.

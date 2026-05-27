@@ -18,7 +18,6 @@ Atualizado em: 27/05/2026
 | A-005 | P1 | Banco | Avaliar indices em `Agendamento`. | Consultas filtram por data/status/servico. | Criar migration com indices apos revisar queries reais. |
 | A-006 | P2 | Dependencias | Atualizar patch/minor seguros. | `npm outdated` aponta Vite, Tailwind, lucide, Prisma adapter e tipos. | PR por bloco: backend patch, frontend patch/minor. |
 | A-007 | P2 | Seguranca | Monitorar vulnerabilidade moderada indireta do Prisma tooling. | `npm audit` aponta `@hono/node-server` via Prisma. | Nao aplicar downgrade automatico; acompanhar release Prisma. |
-| A-008 | P2 | CI | Ativar Dependabot com frequencia controlada. | `.github/dependabot.yml` contem `updates: []`. | Criar configuracao semanal limitada. |
 | A-009 | P2 | Qualidade | Criar smoke/E2E do fluxo publico e admin. | Nao ha E2E. | Escolher ferramenta e cobrir caminho principal. |
 | A-010 | P2 | Deploy | Criar checklist de deploy manual. | Deploy automatico desativado por decisao. | Documentar preflight, envs, build e rollback. |
 | A-011 | P3 | Frontend | Otimizar imagens remanescentes. | `principalmai.png` ~1.4 MB. | Converter/redimensionar com controle visual. |
@@ -36,3 +35,4 @@ Atualizado em: 27/05/2026
 | C-006 | Esta frente | Auditoria PMBOK, registro de blocos e ADR de deploy documentados. |
 | C-007 | Esta frente | `VITE_WHATSAPP` conectado ao frontend com fallback para o numero atual. |
 | C-008 | Esta frente | Flag deprecated `previewFeatures = ["driverAdapters"]` removida do Prisma schema. |
+| C-009 | Esta frente | Dependabot ativado com agenda semanal, agrupamento minor/patch e majors ignorados. |

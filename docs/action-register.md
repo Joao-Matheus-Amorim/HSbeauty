@@ -17,9 +17,9 @@ Atualizado em: 27/05/2026
 | A-004 | P1 | Admin | Fechar ou atualizar issue #78. | Filtro de data usa inicio/fim do dia e backend tem testes. | Reproduzir fluxo no painel; fechar se resolvido. |
 | A-006 | P2 | Dependencias | Avaliar upgrade major pendente de `express-rate-limit`. | Patch/minor backend e frontend ja aplicados; resta major 8.x. | Planejar PR dedicado com validacao de compatibilidade do middleware. |
 | A-007 | P2 | Seguranca | Monitorar vulnerabilidade moderada indireta do Prisma tooling. | `npm audit` aponta `@hono/node-server` via Prisma. | Nao aplicar downgrade automatico; acompanhar release Prisma. |
-| A-009 | P2 | Qualidade | Smoke minimo e E2E browser real com regressao visual basica ativos no CI, incluindo painel logado mobile-first. | Frontend smoke: `frontend/src/__tests__/smoke/*`; Backend smoke: `backend/test/smoke-routes.test.js`; E2E Playwright: sucesso + erro + visual (`frontend/e2e/visual-regression.spec.js` com snapshots de home, login admin e tabs mobile de agendamentos/servicos/horarios); CI com `npm run test:smoke` e `npm run test:e2e`. | Expandir cobertura para dashboard e estados de erro visuais no painel. |
 | A-010 | P1 | GitHub | Fechar ou atualizar issue #17. | Varredura local nao encontrou emojis decorativos remanescentes. | Fechar issue com evidencia ou reabrir item se houver criterio faltante. |
 | A-011 | P1 | Release | Definir politica de versionamento. | README removido de versao solta; packages ainda usam versoes internas distintas. | Decidir versao de produto e regra para packages privados. |
+| A-012 | P2 | Qualidade | Definir contrato de snapshots versionados por ambiente para reduzir churn sem perder regressão visual. | Não há protocolo de atualização por produto/mudança de UI estruturado; snapshots dependem de execução manual em ambiente local/CI. | Criar política (nomes/caminhos por ambiente), revisar no CI e registrar no roadmap. |
 
 ## Acoes concluidas recentes
 
@@ -48,5 +48,6 @@ Atualizado em: 27/05/2026
 | C-021 | Esta frente | E2E Playwright expandido com cenarios de erro (`login invalido` e `horario indisponivel`). |
 | C-022 | Esta frente | Regressao visual basica Playwright adicionada para home publica e login admin com snapshots versionados. |
 | C-023 | Esta frente | Regressao visual mobile-first do painel logado adicionada para tabs de agendamentos, servicos e horarios. |
+| C-024 | Esta frente | Cobertura de regressao visual de dashboard para estado vazio (mobile + desktop) adicionada com snapshots estáveis no locator de KPIs. |
 
 

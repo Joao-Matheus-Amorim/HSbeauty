@@ -32,13 +32,13 @@ describe('ServiceManager — renderização', () => {
 
 describe('ServiceManager — fallback de dados', () => {
   it('não crasha quando servicos é undefined na resposta', async () => {
-    listarServicosAdmin.mockResolvedValue({}); // sem campo servicos
+    listarServicosAdmin.mockResolvedValue({});
     render(<ServiceManager />);
     expect(await screen.findByText(/nenhum serviço/i)).toBeInTheDocument();
   });
 
-  it('mostra mensagem de erro da API inline (sem alert)', async () => {
-    const alertSpy = vi.spyOn(window, 'alert');
+  it('mostra mensagem de erro da API inline sem alert', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     listarServicosAdmin.mockRejectedValue(new Error('Servidor indisponível'));
 
     render(<ServiceManager />);
@@ -53,11 +53,11 @@ describe('ServiceManager — criação de serviço', () => {
     render(<ServiceManager />);
     await screen.findByText('Unhas');
     fireEvent.click(screen.getByRole('button', { name: /novo serviço/i }));
-    expect(screen.getByText('Novo Serviço')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /novo serviço/i })).toBeInTheDocument();
   });
 
-  it('exibe erro de submit inline dentro do modal (sem alert)', async () => {
-    const alertSpy = vi.spyOn(window, 'alert');
+  it('exibe erro de submit inline dentro do modal sem alert', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     criarServicoAdmin.mockRejectedValue(new Error('Nome já existe'));
 
     render(<ServiceManager />);

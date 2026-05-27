@@ -115,3 +115,6 @@ As rotas do frontend serão configuradas para navegar entre as diferentes seçõ
 4.  Desenvolver os componentes de frontend e integrar com as APIs.
 5.  Realizar testes unitários e de integração.
 6.  Implantar as mudanças no ambiente de produção.
+# Nota de status
+
+Este documento e historico de planejamento. O contrato operacional atual do painel admin esta consolidado em `docs/block-register.md` e `docs/admin-route-consolidation.md`.

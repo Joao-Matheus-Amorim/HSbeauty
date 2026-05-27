@@ -262,3 +262,6 @@ Branches parciais ou experimentais nao devem ser usadas como base:
 - `extract-login-rate-limit-config`, caso exista com helper sem uso real.
 
 Essas branches devem ser apagadas antes de seguir com a refatoracao funcional.
+# Nota de status
+
+Este documento e historico de refatoracao. O estado operacional atual dos blocos backend esta consolidado em `docs/block-register.md`.

@@ -34,6 +34,11 @@ model Agendamento {
   atualizadoEm DateTime @updatedAt
 
   servico     Servico  @relation(fields: [servicoId], references: [id], onDelete: Cascade)
+
+  @@index([data], map: "Agendamento_data_idx")
+  @@index([status], map: "Agendamento_status_idx")
+  @@index([servicoId], map: "Agendamento_servicoId_idx")
+  @@index([status, data], map: "Agendamento_status_data_idx")
 }
 
 model BloqueioHorario {

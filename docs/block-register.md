@@ -178,8 +178,9 @@ Atualizado em: 27/05/2026
   - `RefreshToken`
 - Estado: operacional.
 - Gaps:
-  - sem indices de consulta em `Agendamento.data`, `Agendamento.status`, `Agendamento.servicoId`;
   - sem constraint unica de slot, mitigada parcialmente por lock transacional.
+- Controle:
+  - indices de consulta ativos em `Agendamento.data`, `Agendamento.status`, `Agendamento.servicoId` e composicao `status,data`.
 
 ## CI/CD
 

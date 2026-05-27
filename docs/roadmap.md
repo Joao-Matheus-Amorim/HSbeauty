@@ -25,7 +25,7 @@ Estado: concluida para MVP.
 
 Pendencias futuras:
 
-- [ ] Avaliar indices para consultas por data, status e servico.
+- [x] Avaliar e aplicar indices para consultas por data, status e servico.
 - [ ] Definir ambiente de staging.
 
 ## Fase 3 - Backend

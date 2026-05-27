@@ -92,7 +92,7 @@ Estado: manual/controlado.
 
 Pendencias futuras:
 
-- [ ] Criar checklist de release manual.
+- [x] Criar checklist de release manual.
 - [ ] Definir ambiente staging.
 - [ ] Documentar rollback.
 

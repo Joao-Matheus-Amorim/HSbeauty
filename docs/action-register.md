@@ -19,7 +19,6 @@ Atualizado em: 27/05/2026
 | A-006 | P2 | Dependencias | Avaliar upgrade major pendente de `express-rate-limit`. | Patch/minor backend e frontend ja aplicados; resta major 8.x. | Planejar PR dedicado com validacao de compatibilidade do middleware. |
 | A-007 | P2 | Seguranca | Monitorar vulnerabilidade moderada indireta do Prisma tooling. | `npm audit` aponta `@hono/node-server` via Prisma. | Nao aplicar downgrade automatico; acompanhar release Prisma. |
 | A-009 | P2 | Qualidade | Criar smoke/E2E do fluxo publico e admin. | Nao ha E2E. | Escolher ferramenta e cobrir caminho principal. |
-| A-010 | P2 | Deploy | Criar checklist de deploy manual. | Deploy automatico desativado por decisao. | Documentar preflight, envs, build e rollback. |
 
 ## Acoes concluidas recentes
 
@@ -38,3 +37,4 @@ Atualizado em: 27/05/2026
 | C-011 | `0b817d1` | Dependencias patch/minor do frontend aplicadas direto na main a partir do PR #136. |
 | C-012 | Esta frente | Imagens pesadas removidas do frontend e substituidas por placeholders sem arquivo estatico. |
 | C-013 | Esta frente | Emojis e icones decorativos removidos de UI, scripts e README. |
+| C-014 | Esta frente | Checklist de deploy manual documentado sem alterar politica `deploymentEnabled: false`. |

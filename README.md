@@ -203,6 +203,7 @@ Consulte [`docs/adr/ADR-003-deploy.md`](docs/adr/ADR-003-deploy.md) para a decis
 | [`docs/technical-audit-pmbok.md`](docs/technical-audit-pmbok.md) | Auditoria técnica operacional em formato PMBOK |
 | [`docs/block-register.md`](docs/block-register.md) | Registro dos blocos técnicos e seus contratos |
 | [`docs/action-register.md`](docs/action-register.md) | Registro priorizado de ações técnicas |
+| [`docs/deploy-manual-checklist.md`](docs/deploy-manual-checklist.md) | Checklist operacional de deploy manual |
 | [`docs/decisoes.md`](docs/decisoes.md) | Decisões de produto e contexto |
 | [`docs/adr/`](docs/adr/) | Architecture Decision Records |
 

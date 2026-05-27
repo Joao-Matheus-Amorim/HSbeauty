@@ -197,5 +197,5 @@ Atualizado em: 27/05/2026
 - Estado: manual/controlado.
 - Controle: `git.deploymentEnabled` esta `false`.
 - Gaps:
-  - checklist de release manual ainda nao formalizado.
+  - sem ambiente de staging formalizado.
 

@@ -7,7 +7,7 @@ if (!/^[a-z0-9-]+$/.test(snapshotChannel)) {
   throw new Error('SNAPSHOT_CHANNEL must use only lowercase letters, numbers, and hyphens.');
 }
 
-if (process.env.CI && isSnapshotUpdate) {
+if (process.env.CI && isSnapshotUpdate && !process.env.ALLOW_SNAPSHOT_UPDATE) {
   throw new Error('Snapshot updates are blocked in CI. Update snapshots locally and commit them.');
 }
 

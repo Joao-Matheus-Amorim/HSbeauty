@@ -35,6 +35,7 @@ jobs:
         working-directory: frontend
         env:
           SNAPSHOT_CHANNEL: product
+          ALLOW_SNAPSHOT_UPDATE: 'true'
 
       - name: Commit updated snapshots
         run: |

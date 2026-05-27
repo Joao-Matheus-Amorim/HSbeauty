@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { STATUS, WHATSAPP, SERVICOS_PADRAO, SEMANAS_DISPONIVEIS } from '../constants';
+import { STATUS, WHATSAPP, SERVICOS_PADRAO, SEMANAS_DISPONIVEIS, resolveWhatsApp } from '../constants';
 
 describe('STATUS', () => {
   it('CONCLUIDO não tem acento (deve bater com o banco)', () => {
@@ -23,6 +23,15 @@ describe('STATUS', () => {
 });
 
 describe('WHATSAPP', () => {
+  it('usa o valor configurado por ambiente quando informado', () => {
+    expect(resolveWhatsApp('5511888888888')).toBe('5511888888888');
+  });
+
+  it('usa fallback quando o ambiente nao informa valor', () => {
+    expect(resolveWhatsApp('')).toBe(WHATSAPP);
+    expect(resolveWhatsApp('   ')).toBe(WHATSAPP);
+  });
+
   it('contém apenas dígitos', () => {
     expect(/^\d+$/.test(WHATSAPP)).toBe(true);
   });

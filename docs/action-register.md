@@ -35,3 +35,4 @@ Atualizado em: 27/05/2026
 | C-004 | #132 | Bundle publico reduzido e assets nao usados removidos. |
 | C-005 | Esta frente | README, roadmap e testes HTTP alinhados ao contrato atual. |
 | C-006 | Esta frente | Auditoria PMBOK, registro de blocos e ADR de deploy documentados. |
+| C-007 | Esta frente | `VITE_WHATSAPP` conectado ao frontend com fallback para o numero atual. |

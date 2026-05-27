@@ -1,5 +1,12 @@
 // ─── Contato ──────────────────────────────────────────────────────────────────
-export const WHATSAPP = '5521970976928';
+const DEFAULT_WHATSAPP = '5521970976928';
+
+export function resolveWhatsApp(envValue = import.meta.env.VITE_WHATSAPP) {
+  const configuredValue = String(envValue || '').trim();
+  return configuredValue || DEFAULT_WHATSAPP;
+}
+
+export const WHATSAPP = resolveWhatsApp();
 
 // ─── Janela de agendamento ────────────────────────────────────────────────────
 // Quantas semanas à frente (além da semana atual) o cliente pode agendar

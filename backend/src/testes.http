@@ -77,15 +77,15 @@ DELETE http://localhost:3000/agendamentos/1
 
 
 ### DISPONIBILIDADE E BLOQUEIOS
-GET http://localhost:3000/api/disponibilidade?data=2026-04-20&servicoId=1
+GET http://localhost:3000/disponibilidade?data=2026-04-20&servicoId=1
 
 ###
 
-GET http://localhost:3000/api/bloqueios
+GET http://localhost:3000/bloqueios
 
 ###
 
-POST http://localhost:3000/api/bloqueios
+POST http://localhost:3000/bloqueios
 Content-Type: application/json
 
 {

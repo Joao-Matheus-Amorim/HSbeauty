@@ -179,16 +179,17 @@ cd frontend && npm run dev  # http://localhost:5173
 | Variável | Obrigatório | Descrição |
 |---|---|---|
 | `VITE_API_URL` | ✅ | URL base da API backend |
-| `VITE_WHATSAPP_NUMBER` | — | Número WhatsApp da proprietária (formato: `5521999999999`) |
+| `VITE_WHATSAPP` | — | Número WhatsApp da proprietária (formato: `5521999999999`) |
 
 ---
 
 ## Deploy
 
-O projeto é deployado no **Vercel** como um único projeto monorepo.
+O frontend é publicado no **Vercel** como site estático gerado pelo Vite.
 
 - **Frontend**: build do Vite publicado como site estático
-- **Backend**: funções serverless via `vercel.json`
+- **Backend/API**: URL definida por ambiente via `VITE_API_URL`
+- **Deploy automático Git/Vercel**: desativado por decisão operacional para preservar limite de deploy
 
 Consulte [`docs/adr/ADR-003-deploy.md`](docs/adr/ADR-003-deploy.md) para a decisão de arquitetura de deploy.
 
@@ -199,18 +200,17 @@ Consulte [`docs/adr/ADR-003-deploy.md`](docs/adr/ADR-003-deploy.md) para a decis
 | Documento | Descrição |
 |---|---|
 | [`docs/roadmap.md`](docs/roadmap.md) | Fases, entregas e status atual |
-| [`docs/arquitetura.md`](docs/arquitetura.md) | Visão arquitetural, diagrama C4 e fluxos |
-| [`docs/api.md`](docs/api.md) | Referência completa de todos os endpoints |
+| [`docs/technical-audit-pmbok.md`](docs/technical-audit-pmbok.md) | Auditoria técnica operacional em formato PMBOK |
+| [`docs/block-register.md`](docs/block-register.md) | Registro dos blocos técnicos e seus contratos |
+| [`docs/action-register.md`](docs/action-register.md) | Registro priorizado de ações técnicas |
 | [`docs/decisoes.md`](docs/decisoes.md) | Decisões de produto e contexto |
-| [`docs/dividas-tecnicas.md`](docs/dividas-tecnicas.md) | Backlog de qualidade priorizado |
-| [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) | Fluxo Git, padrão de commits e PR |
 | [`docs/adr/`](docs/adr/) | Architecture Decision Records |
 
 ---
 
 ## Status do projeto
 
-**Versão:** `0.4.0-beta` — Frontend e backend em produção no Vercel.
+**Versão:** `0.4.0-beta` — Frontend operacional, backend/API configurado por ambiente.
 Consulte [`docs/roadmap.md`](docs/roadmap.md) para o status detalhado de cada fase.
 
 ---

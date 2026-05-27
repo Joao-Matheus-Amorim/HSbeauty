@@ -13,8 +13,9 @@ Decisão: usar PostgreSQL.
 Motivo: banco relacional robusto, gratuito e adequado para agendamentos, serviços, clientes e horários.
 
 ## D004 — Estratégia de infraestrutura
-Decisão: usar Docker local para desenvolvimento.
-Motivo: ambiente reproduzível, limpo e fácil de recriar.
+Decisão original: usar Docker local para desenvolvimento.
+Status atual: substituída operacionalmente por Neon/PostgreSQL em nuvem para o banco de desenvolvimento.
+Motivo: simplificar setup local e manter custo baixo durante a fase atual.
 
 ## D005 — Restrições do projeto
 Decisão: manter custo zero na versão inicial.

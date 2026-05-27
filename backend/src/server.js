@@ -12,7 +12,8 @@ import adminRouter, {
 import { createAuthMiddleware } from './auth-middleware.js';
 import { validateAppointmentUpdatePayload } from './appointment-mutation-rules.js';
 import { createAuthRouter } from './auth-routes.js';
-import { calculateAvailability, getDayOccupancy } from './availability-service.js';
+import { getDayOccupancy } from './availability-service.js';
+import { createAvailabilityRouter } from './availability-routes.js';
 import { buildAllowedOrigins, isOriginAllowed } from './cors-config-rules.js';
 import { assertRequiredEnv } from './env-config-rules.js';
 import { createPublicBookingRouter } from './public-booking-routes.js';
@@ -62,6 +63,7 @@ app.get('/', (req, res) => {
 app.use('/auth', createAuthRouter({ prisma, jwtSecret: JWT_SECRET }));
 app.use('/servicos', createPublicServiceRouter({ prisma }));
 app.use('/agendamentos', createPublicBookingRouter({ prisma }));
+app.use('/disponibilidade', createAvailabilityRouter({ prisma }));
 
 app.post('/servicos', authMiddleware, async (req, res) => {
   try {
@@ -253,23 +255,6 @@ setupAdminAgendamentos(prisma, authMiddleware);
 setupAdminServicos(prisma, authMiddleware);
 setupAdminHorarios(prisma, authMiddleware);
 app.use('/admin', adminRouter);
-
-app.get('/disponibilidade', async (req, res) => {
-  try {
-    const { data, servicoId } = req.query;
-    if (!data) return sendError(res, 400, 'Informe a data no formato YYYY-MM-DD');
-    if (!servicoId) return sendError(res, 400, 'Informe o servicoId');
-    const servicoIdNumero = Number(servicoId);
-    if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) return sendError(res, 400, 'servicoId inválido');
-    const servico = await prisma.servico.findUnique({ where: { id: servicoIdNumero } });
-    if (!servico || servico.ativo === false) return sendError(res, 404, 'Serviço não encontrado ou inativo');
-    const disponibilidade = await calculateAvailability({ prisma, dateString: data, servico });
-    res.json({ data, servico: { id: servico.id, nome: servico.nome, duracao: servico.duracao }, ...disponibilidade });
-  } catch (error) {
-    logError('GET /disponibilidade', error, req);
-    return sendError(res, 500, 'Erro ao calcular disponibilidade');
-  }
-});
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);

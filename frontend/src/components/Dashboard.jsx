@@ -147,8 +147,8 @@ export default function Dashboard({ onNavigate }) {
             <TrendingUp className="w-5 h-5 text-[#b5936a]" />
             Serviços Populares
           </h3>
-          <div className="h-[250px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-[250px] w-full min-w-0 min-h-0">
+            <ResponsiveContainer width="100%" height={250}>
               <BarChart data={stats.topServicos} layout="vertical" margin={{ left: 20, right: 30 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f0f0f0" />
                 <XAxis type="number" hide />

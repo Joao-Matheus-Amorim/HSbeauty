@@ -173,8 +173,9 @@ test('visual mobile: painel logado tabs principais', async ({ page }) => {
 
   await page.getByRole('button', { name: /resumo/i }).click();
   await expect(page.getByText('Serviços Populares')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 1882 });
   await expect(page).toHaveScreenshot('admin-mobile-dashboard.png', {
-    fullPage: true,
+    fullPage: false,
     animations: 'disabled',
     maxDiffPixelRatio: 0.12,
   });

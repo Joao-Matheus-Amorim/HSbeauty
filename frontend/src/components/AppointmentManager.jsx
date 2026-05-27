@@ -42,10 +42,10 @@ const STATUS_CONFIG = {
 };
 
 const FILTER_TABS = [
-  { value: STATUS.PENDENTE,   label: 'Confirmar',   helper: 'Novos pedidos' },
+  { value: STATUS.PENDENTE, label: 'Confirmar', helper: 'Novos pedidos' },
   { value: STATUS.CONFIRMADO, label: 'Confirmados', helper: 'Já aprovados' },
-  { value: '',                label: 'Todos',       helper: 'Agenda geral' },
-  { value: STATUS.CANCELADO,  label: 'Cancelados',  helper: 'Histórico' },
+  { value: '', label: 'Todos', helper: 'Agenda geral' },
+  { value: STATUS.CANCELADO, label: 'Cancelados', helper: 'Histórico' },
 ];
 
 function cleanPhone(phone = '') {
@@ -66,11 +66,13 @@ function formatPrice(value) {
 
 function formatDate(value) {
   if (!value) return '--/--';
-  return new Date(value).toLocaleDateString('pt-BR', {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-  }).replace('.', '');
+  return new Date(value)
+    .toLocaleDateString('pt-BR', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+    })
+    .replace('.', '');
 }
 
 function formatFullDate(value) {
@@ -85,11 +87,13 @@ function AppointmentCard({ appointment, onConfirm, onComplete, onCancel }) {
   const telHref = phone ? `tel:+55${phone}` : null;
   const serviceName = appointment.servico?.nome || 'Serviço';
   const servicePrice = formatPrice(appointment.servico?.preco);
-  const primaryAction = appointment.status === STATUS.PENDENTE
-    ? { label: 'Confirmar',  icon: Check,        className: 'confirm', onClick: () => onConfirm(appointment.id) }
-    : appointment.status === STATUS.CONFIRMADO
-      ? { label: 'Concluir', icon: CheckCircle2, className: 'done',    onClick: () => onComplete(appointment.id) }
-      : null;
+
+  const primaryAction =
+    appointment.status === STATUS.PENDENTE
+      ? { label: 'Confirmar', icon: Check, className: 'confirm', onClick: () => onConfirm(appointment.id) }
+      : appointment.status === STATUS.CONFIRMADO
+        ? { label: 'Concluir', icon: CheckCircle2, className: 'done', onClick: () => onComplete(appointment.id) }
+        : null;
   const PrimaryIcon = primaryAction?.icon;
 
   return (
@@ -157,7 +161,11 @@ function AppointmentCard({ appointment, onConfirm, onComplete, onCancel }) {
         )}
 
         {primaryAction && (
-          <button type="button" onClick={primaryAction.onClick} className={clsx('admin-mini-action admin-mini-primary', primaryAction.className)}>
+          <button
+            type="button"
+            onClick={primaryAction.onClick}
+            className={clsx('admin-mini-action admin-mini-primary', primaryAction.className)}
+          >
             <PrimaryIcon className="w-4 h-4" />
             {primaryAction.label}
           </button>
@@ -178,7 +186,6 @@ export default function AppointmentManager() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // Feedback inline (substitui alert/confirm)
   const [actionError, setActionError] = useState(null);
   const [confirmCancelId, setConfirmCancelId] = useState(null);
 
@@ -196,57 +203,51 @@ export default function AppointmentManager() {
   const dataInicioFilter = dataInicio ? `${dataInicio}T00:00:00.000` : '';
   const dataFimFilter = effectiveDataFim ? `${effectiveDataFim}T23:59:59.999` : '';
 
-  // Único mecanismo de carregamento — reutilizado por useEffect e ações
-  const loadAppointments = useCallback(async ({ silent = false } = {}) => {
-    if (!silent) setLoading(true);
-    setError(null);
-    try {
-      const data = await listarAgendamentosAdmin({
-        status,
-        dataInicio: dataInicioFilter,
-        dataFim: dataFimFilter,
-        search,
-        page,
-        limit: 10,
-      });
-      setAppointments(data.agendamentos || []);
-      setPagination(data.paginacao || {});
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [status, dataInicioFilter, dataFimFilter, search, page]);
+  const loadAppointments = useCallback(
+    async ({ silent = false, shouldIgnore = () => false } = {}) => {
+      if (!silent && !shouldIgnore()) setLoading(true);
+      if (!shouldIgnore()) setError(null);
+
+      try {
+        const data = await listarAgendamentosAdmin({
+          status,
+          dataInicio: dataInicioFilter,
+          dataFim: dataFimFilter,
+          search,
+          page,
+          limit: 10,
+        });
+
+        if (shouldIgnore()) return;
+
+        setError(null);
+        setAppointments(data.agendamentos || []);
+        setPagination(data.paginacao || {});
+      } catch (err) {
+        if (shouldIgnore()) return;
+
+        setError(err.message);
+        setAppointments([]);
+        setPagination({});
+      } finally {
+        if (!shouldIgnore()) setLoading(false);
+      }
+    },
+    [status, dataInicioFilter, dataFimFilter, search, page],
+  );
 
   useEffect(() => {
     let ignore = false;
 
-    setLoading(true);
-    listarAgendamentosAdmin({
-      status,
-      dataInicio: dataInicioFilter,
-      dataFim: dataFimFilter,
-      search,
-      page,
-      limit: 10,
-    })
-      .then((data) => {
-        if (ignore) return;
-        setError(null);
-        setAppointments(data.agendamentos || []);
-        setPagination(data.paginacao || {});
-      })
-      .catch((err) => {
-        if (ignore) return;
-        setError(err.message);
-      })
-      .finally(() => {
-        if (ignore) return;
-        setLoading(false);
-      });
+    const timerId = window.setTimeout(() => {
+      loadAppointments({ shouldIgnore: () => ignore });
+    }, 0);
 
-    return () => { ignore = true; };
-  }, [status, dataInicioFilter, dataFimFilter, search, page]);
+    return () => {
+      ignore = true;
+      window.clearTimeout(timerId);
+    };
+  }, [loadAppointments]);
 
   const handleStatusUpdate = async (id, newStatus) => {
     setActionError(null);
@@ -258,7 +259,6 @@ export default function AppointmentManager() {
     }
   };
 
-  // Mostra confirmação inline antes de cancelar
   const handleCancelRequest = (id) => {
     setConfirmCancelId(id);
     setActionError(null);
@@ -275,7 +275,6 @@ export default function AppointmentManager() {
     }
   };
 
-  // Busca agora usa todos os filtros incluindo search
   const filteredAppointments = useMemo(() => appointments, [appointments]);
 
   const title = status === STATUS.PENDENTE ? 'Para confirmar' : 'Agendamentos';
@@ -360,7 +359,6 @@ export default function AppointmentManager() {
         </div>
       </div>
 
-      {/* Feedback de erro em ações (substitui alert) */}
       {actionError && (
         <div className="admin-error-card" role="alert">
           <AlertCircle className="w-5 h-5" />
@@ -369,7 +367,6 @@ export default function AppointmentManager() {
         </div>
       )}
 
-      {/* Confirmação de cancelamento inline (substitui confirm) */}
       {confirmCancelId && (
         <div className="admin-error-card" role="alertdialog" aria-label="Confirmar cancelamento">
           <AlertCircle className="w-5 h-5" />
@@ -393,13 +390,9 @@ export default function AppointmentManager() {
       )}
 
       <section className="admin-appointments-list" aria-label="Lista de agendamentos">
-        {loading && (
-          <div className="admin-loading-card">Carregando agendamentos...</div>
-        )}
+        {loading && <div className="admin-loading-card">Carregando agendamentos...</div>}
 
-        {!loading && filteredAppointments.length === 0 && (
-          <div className="admin-empty-card">{emptyMessage}</div>
-        )}
+        {!loading && filteredAppointments.length === 0 && <div className="admin-empty-card">{emptyMessage}</div>}
 
         {!loading && filteredAppointments.map((appointment) => (
           <AppointmentCard

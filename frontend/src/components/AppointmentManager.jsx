@@ -14,10 +14,13 @@ import {
   UserRound,
   MessageCircle,
   Download,
+  LayoutList,
+  CalendarRange,
 } from 'lucide-react';
 import { listarAgendamentosAdmin, atualizarAgendamentoAdmin, cancelarAgendamentoAdmin, exportarAgendamentosCSV } from '../services/admin';
 import { STATUS } from '../constants';
 import { clsx } from 'clsx';
+import WeekCalendar from './WeekCalendar';
 
 const STATUS_CONFIG = {
   [STATUS.PENDENTE]: {
@@ -184,6 +187,7 @@ function AppointmentCard({ appointment, onConfirm, onComplete, onCancel }) {
 }
 
 export default function AppointmentManager() {
+  const [view, setView] = useState('list');
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -343,6 +347,15 @@ export default function AppointmentManager() {
           </p>
         </div>
         <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setView((v) => (v === 'list' ? 'calendar' : 'list'))}
+            className={clsx('admin-refresh-btn', view === 'calendar' && 'ring-2 ring-rose-400')}
+            aria-label={view === 'list' ? 'Ver calendário semanal' : 'Ver lista'}
+            title={view === 'list' ? 'Calendário' : 'Lista'}
+          >
+            {view === 'list' ? <CalendarRange className="w-5 h-5" /> : <LayoutList className="w-5 h-5" />}
+          </button>
           <button type="button" onClick={handleExport} disabled={exporting} className="admin-refresh-btn" aria-label="Exportar CSV">
             <Download className={clsx('w-5 h-5', exporting && 'opacity-50')} />
           </button>
@@ -352,6 +365,9 @@ export default function AppointmentManager() {
         </div>
       </div>
 
+      {view === 'calendar' && <WeekCalendar />}
+
+      {view === 'list' && <>
       <div className="admin-status-tabs" aria-label="Filtros rápidos de agendamento">
         {FILTER_TABS.map((tab) => (
           <button
@@ -454,6 +470,7 @@ export default function AppointmentManager() {
           </div>
         </div>
       )}
+      </>}
     </div>
   );
 }

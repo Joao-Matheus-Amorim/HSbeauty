@@ -116,3 +116,5 @@ jobs:
       - name: Run frontend E2E
         run: npm run test:e2e
         working-directory: frontend
+        env:
+          SNAPSHOT_CHANNEL: product

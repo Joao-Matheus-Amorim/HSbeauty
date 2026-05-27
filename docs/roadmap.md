@@ -76,10 +76,8 @@ Estado: operacional.
 - [x] Backend executa audit, Prisma generate e testes reais.
 - [x] Script raiz `npm run quality` valida backend e frontend.
 - [x] Dependabot habilitado com cadencia semanal controlada.
-
-Pendencias futuras:
-
-- [ ] Criar quality gate E2E.
+- [x] Quality gate E2E Playwright ativo no CI.
+- [x] Contrato de snapshots visuais versionados por `SNAPSHOT_CHANNEL=product`.
 
 ## Fase 6 - Deploy
 

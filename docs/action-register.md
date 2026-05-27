@@ -19,7 +19,6 @@ Atualizado em: 27/05/2026
 | A-007 | P2 | Seguranca | Monitorar vulnerabilidade moderada indireta do Prisma tooling. | `npm audit` aponta `@hono/node-server` via Prisma. | Nao aplicar downgrade automatico; acompanhar release Prisma. |
 | A-010 | P1 | GitHub | Fechar ou atualizar issue #17. | Varredura local nao encontrou emojis decorativos remanescentes. | Fechar issue com evidencia ou reabrir item se houver criterio faltante. |
 | A-011 | P1 | Release | Definir politica de versionamento. | README removido de versao solta; packages ainda usam versoes internas distintas. | Decidir versao de produto e regra para packages privados. |
-| A-012 | P2 | Qualidade | Definir contrato de snapshots versionados por ambiente para reduzir churn sem perder regressão visual. | Não há protocolo de atualização por produto/mudança de UI estruturado; snapshots dependem de execução manual em ambiente local/CI. | Criar política (nomes/caminhos por ambiente), revisar no CI e registrar no roadmap. |
 
 ## Acoes concluidas recentes
 
@@ -49,5 +48,6 @@ Atualizado em: 27/05/2026
 | C-022 | Esta frente | Regressao visual basica Playwright adicionada para home publica e login admin com snapshots versionados. |
 | C-023 | Esta frente | Regressao visual mobile-first do painel logado adicionada para tabs de agendamentos, servicos e horarios. |
 | C-024 | Esta frente | Cobertura de regressao visual de dashboard para estado vazio (mobile + desktop) adicionada com snapshots estáveis no locator de KPIs. |
+| C-025 | Esta frente | Contrato `SNAPSHOT_CHANNEL=product` definido para snapshots Playwright, com bloqueio de update em CI e documentacao operacional. |
 
 

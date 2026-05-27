@@ -1,10 +1,22 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const snapshotChannel = process.env.SNAPSHOT_CHANNEL ?? 'product';
+const isSnapshotUpdate = process.argv.some((arg) => arg.startsWith('--update-snapshots'));
+
+if (!/^[a-z0-9-]+$/.test(snapshotChannel)) {
+  throw new Error('SNAPSHOT_CHANNEL must use only lowercase letters, numbers, and hyphens.');
+}
+
+if (process.env.CI && isSnapshotUpdate) {
+  throw new Error('Snapshot updates are blocked in CI. Update snapshots locally and commit them.');
+}
+
 export default defineConfig({
   testDir: './e2e',
-  snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}',
+  snapshotPathTemplate: `{testDir}/{testFilePath}-snapshots/{arg}-${snapshotChannel}-{projectName}{ext}`,
   timeout: 30_000,
   fullyParallel: false,
+  forbidOnly: !!process.env.CI,
   workers: 1,
   retries: 0,
   reporter: 'list',

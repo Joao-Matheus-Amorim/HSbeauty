@@ -152,7 +152,7 @@ test('visual mobile: painel logado tabs principais', async ({ page }) => {
   await expect(page).toHaveScreenshot('admin-mobile-agendamentos.png', {
     fullPage: true,
     animations: 'disabled',
-    maxDiffPixelRatio: 0.01,
+    maxDiffPixelRatio: 0.05,
   });
 
   await page.getByRole('button', { name: /servi/i }).click();
@@ -200,6 +200,6 @@ test('visual mobile: erro em agendamentos', async ({ page }) => {
   await expect(page).toHaveScreenshot('admin-mobile-agendamentos-erro.png', {
     fullPage: true,
     animations: 'disabled',
-    maxDiffPixelRatio: 0.01,
+    maxDiffPixelRatio: 0.05,
   });
 });

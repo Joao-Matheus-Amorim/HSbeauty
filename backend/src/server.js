@@ -14,6 +14,7 @@ import { validateAppointmentUpdatePayload } from './appointment-mutation-rules.j
 import { createAuthRouter } from './auth-routes.js';
 import { getDayOccupancy } from './availability-service.js';
 import { createAvailabilityRouter } from './availability-routes.js';
+import { createBlockRouter } from './block-routes.js';
 import { buildAllowedOrigins, isOriginAllowed } from './cors-config-rules.js';
 import { assertRequiredEnv } from './env-config-rules.js';
 import { createPublicBookingRouter } from './public-booking-routes.js';
@@ -64,6 +65,7 @@ app.use('/auth', createAuthRouter({ prisma, jwtSecret: JWT_SECRET }));
 app.use('/servicos', createPublicServiceRouter({ prisma }));
 app.use('/agendamentos', createPublicBookingRouter({ prisma }));
 app.use('/disponibilidade', createAvailabilityRouter({ prisma }));
+app.use('/bloqueios', createBlockRouter({ prisma, authMiddleware }));
 
 app.post('/servicos', authMiddleware, async (req, res) => {
   try {
@@ -205,48 +207,6 @@ app.delete('/agendamentos/:id', authMiddleware, async (req, res) => {
   } catch (error) {
     logError('DELETE /agendamentos/:id', error, req);
     return sendError(res, 500, 'Erro ao cancelar agendamento');
-  }
-});
-
-app.post('/bloqueios', authMiddleware, async (req, res) => {
-  try {
-    const { inicio, fim, dataInicio, dataFim, motivo } = req.body;
-    const rawInicio = dataInicio || inicio;
-    const rawFim = dataFim || fim;
-    if (!rawInicio || !rawFim) return sendError(res, 400, 'Inicio e fim são obrigatórios');
-    const inicioDate = new Date(rawInicio);
-    const fimDate = new Date(rawFim);
-    if (Number.isNaN(inicioDate.getTime()) || Number.isNaN(fimDate.getTime())) return sendError(res, 400, 'Datas inválidas');
-    if (fimDate <= inicioDate) return sendError(res, 400, 'Fim deve ser maior que início');
-    const bloqueio = await prisma.bloqueioHorario.create({ data: { dataInicio: inicioDate, dataFim: fimDate, motivo } });
-    res.status(201).json({ success: true, bloqueio });
-  } catch (error) {
-    logError('POST /bloqueios', error, req);
-    return sendError(res, 500, 'Erro ao criar bloqueio');
-  }
-});
-
-app.get('/bloqueios', authMiddleware, async (req, res) => {
-  try {
-    const bloqueios = await prisma.bloqueioHorario.findMany({ where: { ativo: true }, orderBy: { id: 'asc' } });
-    res.json(bloqueios);
-  } catch (error) {
-    logError('GET /bloqueios', error, req);
-    return sendError(res, 500, 'Erro ao carregar bloqueios');
-  }
-});
-
-app.delete('/bloqueios/:id', authMiddleware, async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
-    const existe = await prisma.bloqueioHorario.findUnique({ where: { id } });
-    if (!existe) return sendError(res, 404, 'Bloqueio não encontrado');
-    const bloqueio = await prisma.bloqueioHorario.update({ where: { id }, data: { ativo: false } });
-    res.json({ mensagem: 'Bloqueio removido', bloqueio });
-  } catch (error) {
-    logError('DELETE /bloqueios/:id', error, req);
-    return sendError(res, 500, 'Erro ao remover bloqueio');
   }
 });
 

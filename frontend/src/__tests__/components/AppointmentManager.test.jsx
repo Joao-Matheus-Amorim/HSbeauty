@@ -51,7 +51,7 @@ describe('AppointmentManager — renderização', () => {
 });
 
 describe('AppointmentManager — status sem acento', () => {
-  it('envia "concluido" (sem acento) ao concluir agendamento confirmado', async () => {
+  it('envia "concluido" sem acento ao concluir agendamento confirmado', async () => {
     listarAgendamentosAdmin.mockResolvedValue({
       agendamentos: [AGENDAMENTO_CONFIRMADO],
       paginacao: { pagina: 1, totalPaginas: 1 },
@@ -70,23 +70,24 @@ describe('AppointmentManager — status sem acento', () => {
   });
 });
 
-describe('AppointmentManager — sem alert() / confirm()', () => {
-  it('não usa window.alert — exibe erro inline', async () => {
+describe('AppointmentManager — erros inline', () => {
+  it('exibe erro inline ao falhar atualização e não chama alert', async () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     atualizarAgendamentoAdmin.mockRejectedValue(new Error('Falha de rede'));
 
     render(<AppointmentManager />);
-    const confirmarBtn = await screen.findByRole('button', { name: /confirmar/i });
-    fireEvent.click(confirmarBtn);
+    await screen.findByText('Ana Lima');
 
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-      expect(alertSpy).not.toHaveBeenCalled();
-    });
+    const confirmarBtns = await screen.findAllByRole('button', { name: /confirmar/i });
+    fireEvent.click(confirmarBtns.at(-1));
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(await screen.findByText(/falha de rede/i)).toBeInTheDocument();
+    expect(alertSpy).not.toHaveBeenCalled();
     alertSpy.mockRestore();
   });
 
-  it('mostra confirmação inline ao cancelar (sem window.confirm)', async () => {
+  it('mostra confirmação inline ao cancelar sem window.confirm', async () => {
     const confirmSpy = vi.spyOn(window, 'confirm').mockImplementation(() => true);
     render(<AppointmentManager />);
     const cancelarBtns = await screen.findAllByRole('button', { name: /cancelar/i });

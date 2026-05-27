@@ -1,6 +1,6 @@
 ﻿# Registro de acoes tecnicas
 
-Atualizado em: 27/05/2026
+Atualizado em: 27/05/2026 (revisao)
 
 ## Legenda
 
@@ -13,11 +13,8 @@ Atualizado em: 27/05/2026
 
 | ID | Prioridade | Bloco | Acao | Evidencia | Proximo passo |
 |---|---|---|---|---|---|
-| A-003 | P1 | Frontend | Fechar ou atualizar issue #80. | `parseJsonResponse` ja existe e tem teste. | Validar criterios da issue e fechar se coberto. |
-| A-004 | P1 | Admin | Fechar ou atualizar issue #78. | Filtro de data usa inicio/fim do dia e backend tem testes. | Reproduzir fluxo no painel; fechar se resolvido. |
 | A-006 | P2 | Dependencias | Avaliar upgrade major pendente de `express-rate-limit`. | Patch/minor backend e frontend ja aplicados; resta major 8.x. | Planejar PR dedicado com validacao de compatibilidade do middleware. |
 | A-007 | P2 | Seguranca | Monitorar vulnerabilidade moderada indireta do Prisma tooling. | `npm audit` aponta `@hono/node-server` via Prisma. | Nao aplicar downgrade automatico; acompanhar release Prisma. |
-| A-010 | P1 | GitHub | Fechar ou atualizar issue #17. | Varredura local nao encontrou emojis decorativos remanescentes. | Fechar issue com evidencia ou reabrir item se houver criterio faltante. |
 | A-011 | P1 | Release | Definir politica de versionamento. | README removido de versao solta; packages ainda usam versoes internas distintas. | Decidir versao de produto e regra para packages privados. |
 
 ## Acoes concluidas recentes
@@ -49,5 +46,6 @@ Atualizado em: 27/05/2026
 | C-023 | Esta frente | Regressao visual mobile-first do painel logado adicionada para tabs de agendamentos, servicos e horarios. |
 | C-024 | Esta frente | Cobertura de regressao visual de dashboard para estado vazio (mobile + desktop) adicionada com snapshots estáveis no locator de KPIs. |
 | C-025 | Esta frente | Contrato `SNAPSHOT_CHANNEL=product` definido para snapshots Playwright, com bloqueio de update em CI e documentacao operacional. |
+| C-026 | GitHub | Issues #17, #78 e #80 confirmadas como ja fechadas; A-003, A-004 e A-010 removidas do registro. |
 
 

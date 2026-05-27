@@ -85,3 +85,7 @@ jobs:
       - name: Run backend tests
         run: npm test
         working-directory: backend
+
+      - name: Smoke backend
+        run: npm run test:smoke
+        working-directory: backend

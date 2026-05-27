@@ -1,198 +1,253 @@
-﻿# Auditoria tecnica operacional - PMBOK
+# Auditoria tecnica operacional - PMBOK
 
 Atualizado em: 27/05/2026
 
+---
+
 ## 1. Sumario executivo
 
-O projeto HSBeauty esta em estado funcional de desenvolvimento avancado. A linha de base atual passa em qualidade local e CI no GitHub. As ultimas frentes reduziram risco operacional em CI, concorrencia de agendamento, configuracao de API e bundle inicial do frontend.
+O projeto HSBeauty esta em estado funcional de MVP operacional. O nucleo de negocio (agendamento, painel admin, auth) esta implementado, testado e com CI confiavel. As proximas frentes sao melhorias planejadas e dividas tecnicas de infraestrutura — nenhuma e bloqueadora para o uso atual.
 
-Resultado da validacao executada:
+Estado dos gates de qualidade:
 
-```text
-npm run quality
-backend tests: 111 passed
-frontend tests: 79 passed
-frontend lint: passed
-frontend build: passed
-frontend audit high: 0 high/critical
-backend audit high: 0 high/critical
+```
+npm run quality (raiz)
+  backend: 117 testes passando
+  frontend: 81 testes passando
+  frontend lint: passou
+  frontend build: passou
+  frontend audit high: 0 vulnerabilidades high/critical
+  backend audit high: 0 vulnerabilidades high/critical
+  E2E Playwright: 6 testes com snapshots visuais (SNAPSHOT_CHANNEL=product)
 ```
 
-O backlog tecnico restante nao bloqueia desenvolvimento, mas deve ser tratado por frentes pequenas, rastreaveis e documentadas.
+---
 
 ## 2. Escopo
 
-Incluido nesta auditoria:
+### Incluido no escopo atual
 
-- Backend Express, Prisma, auth, rotas publicas e admin.
-- Frontend React, rotas, services, bundle, assets e testes.
-- Banco PostgreSQL/Neon via Prisma.
-- CI GitHub Actions.
-- Deploy manual Vercel/frontend e API via URL configurada.
-- Documentacao operacional existente.
-- Dependencias npm e vulnerabilidades conhecidas.
+- Backend Express 5 + Prisma 7 + Neon/PostgreSQL.
+- Frontend React 19 + Vite 8 + Tailwind + Recharts.
+- Auth admin com JWT + refresh token rotativo.
+- Banco de dados com 5 modelos e indices de consulta.
+- CI GitHub Actions com 3 jobs (frontend, backend, E2E).
+- Deploy manual Vercel/frontend.
+- Documentacao operacional completa.
+- Dependencias npm e vulnerabilidades auditadas.
 
-Fora de escopo nesta rodada:
+### Fora do escopo MVP
 
-- Testes contra banco real de producao.
+- Ambiente staging (Fase 9).
+- Notificacoes automaticas ao cliente e admin (Fase 7).
+- Visualizacao de calendario no painel admin (Fase 8).
+- Export de agendamentos (Fase 8).
+- Testes de integracao com banco real (Fase 9).
 - Auditoria de infraestrutura Neon/Vercel por console.
-- Teste visual manual em navegador.
-- Teste de carga.
+- Testes de carga.
 
-## 3. Integracao
+---
 
-Estado de integracao:
+## 3. Estado de integracao
 
-- `main` remoto consolidado ate o commit `d7cced2`.
-- CI verde nos merges recentes.
-- Deploy automatico Vercel permanece desativado por decisao operacional.
-- Fluxo recomendado permanece frente pequena, validacao local, CI verde e registro operacional.
+- Branch `main` e o estado de referencia para CI e deploy.
+- CI verde em todas as frentes ativas.
+- Deploy automatico Vercel permanece desativado (decisao D006).
+- Fluxo recomendado: frente pequena → validacao local → CI verde → merge.
 
-Controle recomendado:
+Controle:
 
-- Uma frente por PR.
-- Nao misturar refactor, ajuste funcional e documentacao sem justificativa.
-- Todo PR deve citar validacao executada.
+- Um objetivo por PR; nao misturar runtime, refactor e documentacao sem justificativa clara.
+- Todo PR deve citar a validacao executada no corpo da descricao.
+
+---
 
 ## 4. Escopo funcional por bloco
 
-| Bloco | Estado | Observacao |
+| Bloco | Estado | Referencia |
 |---|---|---|
-| Agendamento publico | Funcional | Usa disponibilidade, validacao e lock transacional por dia. |
-| Servicos publicos | Funcional | Listagem e detalhe por id. |
-| Painel admin | Funcional | Dashboard, agendamentos, servicos e horarios. |
-| Auth admin | Funcional | Login, refresh token rotativo e logout. |
-| Bloqueios/horarios | Funcional | Rotas autenticadas e painel integrado. |
-| CI | Funcional | Backend agora executa testes reais via `npm test`. |
-| Deploy | Controlado | Vercel Git deploy desativado para preservar limite. |
+| Agendamento publico | Operacional | `public-booking-routes.js`, `availability-service.js` |
+| Servicos publicos | Operacional | `public-service-routes.js` |
+| Disponibilidade | Operacional | `GET /disponibilidade` com calculo de slots |
+| Painel admin — login | Operacional | JWT + refresh rotativo, sessionStorage |
+| Painel admin — dashboard | Operacional | 4 KPIs, chart Recharts, estado vazio coberto |
+| Painel admin — agendamentos | Operacional | Filtros, paginacao, confirmar/cancelar |
+| Painel admin — servicos | Operacional | CRUD completo |
+| Painel admin — horarios | Operacional | CRUD de bloqueios |
+| CI | Operacional | 3 jobs: frontend, backend, E2E com snapshots |
+| Deploy | Controlado | Manual via Vercel, checklist documentado |
+| Notificacoes | Nao iniciado | Ver Fase 7 no roadmap |
+| Calendario visual | Nao iniciado | Ver Fase 8 no roadmap |
+| Export | Nao iniciado | Ver Fase 8 no roadmap |
+
+---
 
 ## 5. Cronograma operacional
 
-Prioridade P0:
+### P0 — Bloqueadores
 
-- Nenhum item aberto identificado como bloqueador imediato.
+Nenhum item identificado como bloqueador operacional atual.
 
-Prioridade P1:
+### P1 — Risco relevante ou divida critica
 
-- Fechar documentacao divergente entre README, roadmap e rotas reais.
-- Fechar ou atualizar issues #17, #78 e #80 com evidencia.
-- Avaliar indices em `Agendamento` para consultas por data, status e servico.
-- Definir politica de versionamento entre produto e packages.
+| ID | Item |
+|---|---|
+| A-011 | Definir politica de versionamento (packages com versoes desalinhadas). |
+| A-020 | Documentar politica de rotacao de `JWT_SECRET` e credenciais de banco. |
 
-Prioridade P2:
+### P2 — Melhorias planejadas
 
-- Criar referencia formal de API.
-- Planejar testes de integracao com banco real/staging.
-- Smoke/E2E do fluxo publico e admin implementado no frontend via `frontend/src/__tests__/smoke` (publico + admin).
+| ID | Fase | Item |
+|---|---|---|
+| A-006 | 9 | Upgrade major `express-rate-limit` para versao 8.x. |
+| A-007 | 9 | Monitorar vulnerabilidade moderada indireta do Prisma tooling. |
+| A-012 | 9 | Provisionar ambiente de staging. |
+| A-013 | 9 | Criar testes de integracao com banco real. |
+| A-014 | 9 | Definir criterio e remover rotas legadas fora de `/admin`. |
+| A-016 | 7 | Notificacao ao admin para novo agendamento. |
+| A-017 | 7 | Confirmacao automatica ao cliente apos agendamento. |
+
+### P3 — Oportunidades futuras
+
+| ID | Fase | Item |
+|---|---|---|
+| A-015 | 9 | Refatorar `server.js` (app factory, organizacao por pastas). |
+| A-018 | 8 | Visualizacao de agenda semanal no painel admin. |
+| A-019 | 8 | Export de agendamentos para CSV. |
+
+---
 
 ## 6. Custos e restricoes
 
-Restricoes conhecidas:
+| Restricao | Detalhe | Impacto |
+|---|---|---|
+| Custo zero/baixo | Neon free tier, Vercel hobby, GitHub Actions free. | Deploy manual obrigatorio; limites de build a monitorar. |
+| Deploy automatico desativado | `git.deploymentEnabled: false` em `vercel.json`. | Requer disciplina de checklist a cada release. |
+| Banco unico (sem staging) | Apenas banco de producao no Neon. | Testes de integracao reais exigem banco isolado (A-012). |
+| Dependencias controladas | Majors ignorados no Dependabot; atualizacoes manuais. | Risco de defasagem acumulada em majors. |
 
-- Manter custo zero/baixo.
-- Evitar deploy automatico por limite de build.
-- Usar Neon/PostgreSQL.
-- Evitar aumento de complexidade operacional prematuro.
-
-Impacto:
-
-- Deploy manual exige disciplina de checklist.
-- Dependencias devem ser atualizadas em lotes pequenos para evitar regressao.
+---
 
 ## 7. Qualidade
 
-Gates atuais:
+### Gates ativos no CI
 
-```text
-npm test --prefix backend
-npm test --prefix frontend
-npm run lint --prefix frontend
-npm run build --prefix frontend
-npm audit --audit-level=high --prefix backend
-npm audit --audit-level=high --prefix frontend
-npx prisma generate --schema=backend/prisma/schema.prisma
+```
+# Job frontend
+npm audit --audit-level=high
+npm run lint
+npm test            # 81 testes Vitest
+npm run build
+
+# Job backend
+npm audit --audit-level=high
+npx prisma generate
+npm test            # 117 testes Node.js native
+
+# Job frontend-e2e
+npx playwright install chromium
+npm run test:e2e    # 6 testes Playwright com SNAPSHOT_CHANNEL=product
 ```
 
-Resultado atual:
+### Cobertura atual
 
-- Backend: 111 testes.
-- Frontend: 79 testes.
-- Build frontend sem aviso de chunk acima de 500 KB.
-- Backend audit possui 3 vulnerabilidades moderadas indiretas ligadas a Prisma dev tooling.
-- Frontend audit sem vulnerabilidades.
+| Camada | Ferramenta | Testes | Estado |
+|---|---|---|---|
+| Backend — regras de negocio | Node.js native test | 117 | Cobrindo booking, auth, admin queries/mutations, cors, env, tokens |
+| Frontend — componentes | Vitest + Testing Library | 81 | Cobrindo agendamento, admin components, services, utils |
+| Frontend — smoke | Vitest | 2 suites | Fluxo publico e admin com mocks |
+| E2E — visual regression | Playwright Chromium | 6 testes | Home publica, login, mobile tabs, dashboard empty (desktop + mobile) |
 
-Gap de qualidade:
+### Gaps de qualidade conhecidos
 
-- Smoke/E2E minimo (publico + admin) esta implementado em `frontend/src/__tests__/smoke` e cobre login admin + agendamento publico.
-- Nao ha teste de integracao com banco real.
-- Nao ha cobertura automatizada de fluxo completo cliente -> agendamento -> painel admin.
+- Sem testes de integracao com banco real (lock transacional, conflito de horario).
+- Sem cobertura de notificacoes (funcionalidade nao implementada).
+- Sem teste de carga ou stress do endpoint de agendamento concorrente.
 
-## 8. Recursos
+---
 
-Recursos tecnicos atuais:
+## 8. Recursos tecnicos
 
-- Node.js 22.
-- React 19.
-- Vite 8.
-- Express 5.
-- Prisma 7.
-- PostgreSQL/Neon.
-- Vercel para frontend estatico.
+| Componente | Versao atual |
+|---|---|
+| Node.js | 22 |
+| React | 19.2.4 |
+| Vite | 8.0.14 |
+| Express | 5.2.1 |
+| Prisma | 7.7.0 |
+| Playwright | 1.54.2 |
+| Vitest | 3.2.4 |
+| PostgreSQL | Neon (gerenciado) |
+| Deploy frontend | Vercel (manual) |
+| CI | GitHub Actions |
 
-Necessidades:
+### Necessidades futuras
 
-- Definir ambiente staging.
-- Definir responsavel por deploy manual.
-- Definir processo de rotacao de `JWT_SECRET` e credenciais de banco.
-- Definir politica de versionamento/release.
+- Provider de mensagens (Twilio, Z-API ou outro) para Fase 7.
+- Banco Neon isolado para staging (Fase 9).
+- Definicao de responsavel por deploy manual e por rotacao de credenciais.
+
+---
 
 ## 9. Comunicacoes
 
-Padrao recomendado:
+Padrao operacional:
 
-- Toda frente deve ter branch, PR, validacao e resumo operacional.
-- Toda decisao operacional deve ir para `docs/decisoes.md` ou `docs/adr/*`.
-- Toda divida deve ir para `docs/action-register.md` ou issue no GitHub.
+- Toda frente: branch, PR, validacao documentada no corpo do PR, merge para `main`.
+- Toda decisao operacional: `docs/decisoes.md` ou `docs/adr/`.
+- Toda divida tecnica: `docs/action-register.md` com ID, prioridade e fase.
+- Toda mudanca de estado de bloco: `docs/block-register.md`.
+- Toda conclusao de fase: `docs/roadmap.md`.
+
+---
 
 ## 10. Riscos
 
 | ID | Risco | Probabilidade | Impacto | Mitigacao |
-|---|---|---:|---:|---|
-| R-001 | API de producao nao configurada no Vercel | Media | Alto | Exigir `VITE_API_URL` em ambiente publicado. |
-| R-002 | Dependencias ficarem defasadas | Media | Medio | Atualizacoes em PRs pequenos e Dependabot controlado. |
-| R-003 | Divergencia documental | Alta | Medio | Atualizar docs por bloco e revisar por PR. |
-| R-004 | Cobertura ponta a ponta no frontend | Media | Medio | Smoke tests implementados em `frontend/src/__tests__/smoke` para fluxo publico e admin. |
-| R-005 | Vulnerabilidade moderada indireta do Prisma tooling | Baixa | Baixo/Medio | Monitorar Prisma; nao aplicar downgrade automatico. |
+|---|---|---|---|---|
+| R-001 | API de producao nao configurada no Vercel | Media | Alto | `VITE_API_URL` obrigatoria; checklist de deploy exige verificacao. |
+| R-002 | Dependencias ficarem defasadas | Media | Medio | Dependabot semanal; majors avaliados manualmente. |
+| R-003 | Divergencia documental | Media | Medio | Docs atualizados por frente; bloco-register como fonte de verdade tecnica. |
+| R-004 | Race condition em agendamento concorrente | Baixa | Alto | Lock transacional ativo; sem constraint unica de slot no schema (mitigado, nao eliminado). |
+| R-005 | Vulnerabilidade moderada indireta via Prisma tooling | Baixa | Medio | Monitorar releases Prisma; nao aplicar downgrade automatico (A-007). |
+| R-006 | Comprometimento de `JWT_SECRET` | Baixa | Alto | Sem politica de rotacao documentada; dependente de acesso manual ao Neon/Vercel (A-020). |
+| R-007 | Limite de build Vercel atingido | Baixa | Medio | Deploy automatico desativado; builds manuais e controlados. |
+| R-008 | Notificacao ausente causa perda de agendamento | Media | Alto | Admin precisa recarregar pagina; risco ate Fase 7 ser implementada (A-016). |
 
-## 11. Aquisicoes
+---
 
-Dependencias externas:
+## 11. Aquisicoes e dependencias externas
 
-- GitHub Actions.
-- Neon.
-- Vercel.
-- npm registry.
-- Possivel backend hospedado fora da Vercel, definido por `VITE_API_URL`.
+| Servico | Uso | Controle |
+|---|---|---|
+| GitHub Actions | CI | Gates definidos em `.github/workflows/ci.yml` |
+| Neon | Banco PostgreSQL gerenciado | `DATABASE_URL` por variavel de ambiente |
+| Vercel | Hosting frontend estatico | Deploy manual; `VITE_API_URL` obrigatoria |
+| npm registry | Dependencias | Dependabot + audit high no CI |
+| Provider mensagens (futuro) | Notificacoes Fase 7 | Decisao pendente (A-017) |
 
-Controle:
-
-- Nao assumir fornecedor de backend no frontend.
-- Documentar URLs por ambiente fora do codigo, via variaveis.
+---
 
 ## 12. Stakeholders
 
-| Stakeholder | Interesse |
-|---|---|
-| Cliente final | Agendar sem friccao e sem erro de horario. |
-| Administradora | Confirmar, cancelar e organizar agenda. |
-| Desenvolvedor | Manter CI confiavel e entregas rastreaveis. |
-| Operacao | Deploy controlado e baixo custo. |
+| Stakeholder | Interesse | Expectativa atual |
+|---|---|---|
+| Cliente final | Agendar sem friccao e sem conflito de horario. | Fluxo publico funcional e disponibilidade correta. |
+| Administradora | Confirmar, cancelar e organizar agenda com visibilidade. | Painel funcional; notificacao de novo agendamento pendente (A-016). |
+| Desenvolvedor | Manter CI confiavel, entregas rastreaveis e dividas documentadas. | Roadmap claro e action register sem itens surpresa. |
+| Operacao | Deploy controlado e custo baixo. | Checklist de deploy respeitado; sem custos imprevistos. |
 
-## 13. Registro de decisoes desta auditoria
+---
 
-- O deploy automatico segue desativado por decisao consciente.
-- Fallback hardcoded de API de producao nao deve voltar.
-- PRs pequenos seguem sendo o mecanismo padrao de controle.
-- Auditoria tecnica sera mantida por bloco, nao como texto solto.
+## 13. Decisoes de referencia
 
-
+| Decisao | Documento | Resumo |
+|---|---|---|
+| D001 | `docs/decisoes.md` | Produto web, nao app nativo. |
+| D002 | `docs/decisoes.md` | Stack React + Node.js. |
+| D003 | `docs/decisoes.md` | PostgreSQL como banco relacional. |
+| D004 | `docs/decisoes.md` | Neon substituiu Docker local. |
+| D005 | `docs/decisoes.md` | Custo zero na versao inicial. |
+| D006 | `docs/decisoes.md` + `docs/adr/ADR-003-deploy.md` | Deploy automatico desativado. |
+| — | `docs/decisoes.md` (pendente) | Provider de mensagens para Fase 7 (A-017). |
+| — | `docs/decisoes.md` (pendente) | Politica de versionamento de produto (A-011). |

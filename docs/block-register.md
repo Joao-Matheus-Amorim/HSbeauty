@@ -1,6 +1,8 @@
-﻿# Registro de blocos tecnicos
+# Registro de blocos tecnicos
 
 Atualizado em: 27/05/2026
+
+---
 
 ## Backend
 
@@ -9,7 +11,7 @@ Atualizado em: 27/05/2026
 - Arquivo principal: `backend/src/server.js`
 - Responsabilidade: configurar Express, CORS, Prisma, auth middleware e montagem de rotas.
 - Estado: operacional.
-- Gaps: sem healthcheck dedicado alem de `GET /`.
+- Divida tecnica: `server.js` ainda concentra bootstrap, config, rate limit, JWT e montagem — ver `docs/BACKEND_REFACTOR_ROADMAP.md` para plano de extracao (A-015).
 
 ### Auth admin
 
@@ -22,10 +24,10 @@ Atualizado em: 27/05/2026
   - `POST /auth/login`
   - `POST /auth/refresh`
   - `POST /auth/logout`
-  - `ALL /auth/register` desativada.
+  - `ALL /auth/register` desativada (410 Gone).
 - Estado: operacional.
-- Controle: refresh token rotativo e serializacao de refresh no frontend.
-- Gaps: sem politica documentada de rotacao de `JWT_SECRET`.
+- Controle: refresh token rotativo e serializacao de refresh no frontend (promise deduplication).
+- Gap: sem politica documentada de rotacao de `JWT_SECRET` (A-020).
 
 ### Servicos publicos
 
@@ -47,8 +49,8 @@ Atualizado em: 27/05/2026
   - `POST /agendamentos`
   - `GET /disponibilidade`
 - Estado: operacional.
-- Controle: lock transacional PostgreSQL por dia de agendamento.
-- Gaps: sem teste E2E concorrente com banco real.
+- Controle: lock transacional PostgreSQL por dia de agendamento (evita corrida).
+- Gap: sem teste de integracao com banco real cobrindo lock em concorrencia (A-013).
 
 ### Admin dashboard
 
@@ -58,7 +60,7 @@ Atualizado em: 27/05/2026
 - Rota:
   - `GET /admin/dashboard`
 - Estado: operacional.
-- Controle: status concluido usa valor canonico `concluido` e aceita leitura de legado `concluÃ­do`.
+- Controle: status `concluido` usa valor canonico e aceita leitura de legado `concluído`.
 
 ### Admin agendamentos
 
@@ -72,8 +74,7 @@ Atualizado em: 27/05/2026
   - `PUT /admin/agendamentos/:id`
   - `DELETE /admin/agendamentos/:id`
 - Estado: operacional.
-- Controle: filtro de data usa `dataInicio` e `dataFim`.
-- Controle: mutacoes de status normalizam `concluÃ­do` legado para `concluido`.
+- Controle: filtro de data recebe `dataInicio` e `dataFim`; frontend monta boundaries `T00:00:00.000` e `T23:59:59.999`.
 
 ### Admin servicos
 
@@ -101,7 +102,6 @@ Atualizado em: 27/05/2026
   - `PUT /admin/horarios/:id`
   - `DELETE /admin/horarios/:id`
 - Estado: operacional.
-- Observacao: `admin-routes.js` ainda concentra horarios; pode ser extraido em frente futura.
 
 ### Rotas legadas protegidas
 
@@ -110,8 +110,10 @@ Atualizado em: 27/05/2026
   - `backend/src/protected-service-routes.js`
   - `backend/src/block-routes.js`
   - `backend/src/legacy-route-deprecation.js`
-- Estado: compatibilidade temporaria.
-- Gaps: definir data/criterio para remocao.
+- Estado: compatibilidade temporaria com headers de depreciacao.
+- Gap: sem criterio ou data definida para remocao (A-014).
+
+---
 
 ## Frontend
 
@@ -121,28 +123,29 @@ Atualizado em: 27/05/2026
   - `frontend/src/main.jsx`
   - `frontend/src/AppRoutes.jsx`
 - Estado: operacional.
-- Controle: admin carregado via lazy import.
+- Controle: painel admin carregado via lazy import (code splitting).
 
 ### Site publico
 
 - Arquivo: `frontend/src/App.jsx`
 - Estado: operacional.
 - Controle: modal de agendamento carregado via lazy import.
-- Controle: imagens pesadas foram removidas do codigo publico; permanecem apenas icones/favicons publicos.
+- Controle: imagens pesadas removidas; apenas icones e favicons publicos permanecem.
 
 ### Constantes publicas
 
 - Arquivo: `frontend/src/constants.js`
 - Estado: operacional.
-- Controle: WhatsApp usa `VITE_WHATSAPP` quando configurado e fallback versionado quando ausente.
+- Controle: WhatsApp usa `VITE_WHATSAPP` quando configurado; fallback versionado quando ausente.
+- Gap: link WhatsApp e gerado manualmente; sem envio automatico ao cliente (A-017).
 
 ### Modal de agendamento
 
 - Arquivos:
   - `frontend/src/components/AgendamentoModal.jsx`
   - `frontend/src/components/AgendamentoModal.css`
-- Estado: operacional.
-- Gaps: sem teste de integracao com banco real; fluxo publico e admin possui smoke em vitest.
+- Estado: operacional. Fluxo 3 passos: selecao de servico/data → slot → confirmacao (nome/telefone).
+- Gap: sem confirmacao automatica ao cliente apos agendamento (A-017).
 
 ### Admin UI
 
@@ -155,52 +158,53 @@ Atualizado em: 27/05/2026
   - `frontend/src/components/ServiceManager.jsx`
   - `frontend/src/components/ScheduleManager.jsx`
 - Estado: operacional.
-- Controle: chamadas admin usam `frontend/src/services/admin.js`.
+- Gap: sem notificacao de novo agendamento em tempo real (A-016).
+- Gap: sem visualizacao de agenda semanal/calendario (A-018).
+- Gap: sem export de agendamentos (A-019).
 
 ### Services API
 
 - Arquivos:
-  - `frontend/src/services/api.js`
-  - `frontend/src/services/auth.js`
-  - `frontend/src/services/agendamentos.js`
-  - `frontend/src/services/admin.js`
+  - `frontend/src/services/api.js` — resolucao de URL + `parseJsonResponse`
+  - `frontend/src/services/auth.js` — login, refresh, logout, sessionStorage
+  - `frontend/src/services/agendamentos.js` — servicos publicos, disponibilidade, criacao
+  - `frontend/src/services/admin.js` — dashboard, agendamentos, servicos, horarios (admin)
 - Estado: operacional.
-- Controle: producao depende de `VITE_API_URL`; localhost usa `http://localhost:3000`.
+- Controle: producao depende de `VITE_API_URL`; sem fallback hardcoded.
+- Controle: `authorizedFetch` faz auto-refresh em 401 com promise deduplication.
 
-## Banco
+---
+
+## Banco de dados
 
 - Arquivo: `backend/prisma/schema.prisma`
-- Modelos:
-  - `Servico`
-  - `Agendamento`
-  - `BloqueioHorario`
-  - `Admin`
-  - `RefreshToken`
+- Modelos: `Servico`, `Agendamento`, `BloqueioHorario`, `Admin`, `RefreshToken`.
 - Estado: operacional.
-- Gaps:
-  - sem constraint unica de slot, mitigada parcialmente por lock transacional.
-- Controle:
-  - indices de consulta ativos em `Agendamento.data`, `Agendamento.status`, `Agendamento.servicoId` e composicao `status,data`.
+- Controle: indices ativos em `Agendamento.data`, `Agendamento.status`, `Agendamento.servicoId` e composicao `status,data`.
+- Gap: sem unique constraint de slot no banco; race condition mitigada por lock transacional, mas sem garantia a nivel de schema (A-013).
+
+---
 
 ## CI/CD
 
 - Arquivo: `.github/workflows/ci.yml`
 - Estado: operacional.
-- Jobs:
-  - frontend lint, test e build;
-  - backend audit high, Prisma generate e testes.
-- Controle: Dependabot roda semanalmente com agrupamento minor/patch e majors ignorados.
-- Gaps:
-  - sem job E2E;
-  - sem cache raiz para monorepo completo.
+- Jobs ativos:
+  - `frontend`: audit high, lint, test (81 casos), build.
+  - `backend`: audit high, Prisma generate, testes (117 casos).
+  - `frontend-e2e`: install Chromium, Playwright test com `SNAPSHOT_CHANNEL=product`.
+- Controle: Dependabot roda semanalmente (segunda, 08:00 BRT) com agrupamento minor/patch; majors ignorados.
+- Controle: `forbidOnly: true` no Playwright config bloqueia `test.only` acidental em CI.
+- Controle: atualizacao de snapshots bloqueada em CI; deve ser feita localmente via `npm run test:e2e:update`.
+- Gap: sem cache raiz para monorepo completo (apenas cache por escopo).
+- Gap: sem testes de integracao com banco real no CI (A-013).
+
+---
 
 ## Deploy
 
 - Arquivo: `vercel.json`
 - Estado: manual/controlado.
-- Controle: `git.deploymentEnabled` esta `false`.
-- Gaps:
-  - sem ambiente de staging formalizado.
-
-
-
+- Controle: `git.deploymentEnabled: false` — commits nao disparam deploy automatico.
+- Controle: deploy intencional via painel Vercel seguindo `docs/deploy-manual-checklist.md`.
+- Gap: sem ambiente de staging formalizado (A-012).

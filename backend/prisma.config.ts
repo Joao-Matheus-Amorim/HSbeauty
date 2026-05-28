@@ -1,7 +1,12 @@
 /// <reference types="node" />
-import 'dotenv/config';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { config } from 'dotenv';
 import { defineConfig } from 'prisma/config';
 import { PrismaNeon } from '@prisma/adapter-neon';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+config({ path: resolve(__dirname, '.env') });
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',
@@ -9,7 +14,7 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-  url: process.env.DATABASE_URL!,
-  adapter: () => new PrismaNeon({ connectionString: process.env.DATABASE_URL! }),
-},
+    url: process.env.DATABASE_URL!,
+    adapter: () => new PrismaNeon({ connectionString: process.env.DATABASE_URL! }),
+  },
 });

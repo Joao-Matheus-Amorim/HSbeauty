@@ -11,7 +11,7 @@ import {
   validatePublicBookingPayload,
 } from './booking-rules.js';
 import { logError, sendError } from './http-response.js';
-import { sendBookingConfirmationEmail } from './email-service.js';
+import { sendAdminBookingNotification, sendBookingConfirmationEmail } from './email-service.js';
 
 export function createPublicBookingRouter({ prisma }) {
   const router = express.Router();
@@ -105,6 +105,16 @@ export function createPublicBookingRouter({ prisma }) {
         data: agendamento.data,
         hora: agendamento.hora,
       }).catch((err) => logError('email/booking-confirmation', err, req));
+
+      sendAdminBookingNotification({
+        nomeCliente: agendamento.nomeCliente,
+        telefone: agendamento.telefone,
+        email: agendamento.email,
+        servico: nomeServico,
+        data: agendamento.data,
+        hora: agendamento.hora,
+        observacoes: agendamento.observacoes,
+      }).catch((err) => logError('email/admin-notification', err, req));
     } catch (error) {
       logError('POST /agendamentos', error, req);
       return sendError(res, 500, 'Erro ao criar agendamento');

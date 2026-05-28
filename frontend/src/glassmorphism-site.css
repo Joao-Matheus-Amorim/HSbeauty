@@ -289,6 +289,14 @@ body {
 .service-card-media {
   display: grid;
   place-items: center;
+  overflow: hidden;
+}
+
+.service-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 
 .service-card-media span {

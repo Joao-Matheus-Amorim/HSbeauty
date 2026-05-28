@@ -16,6 +16,7 @@ import {
   atualizarServicoAdmin
 } from '../services/admin';
 import { clsx } from 'clsx';
+import ImageUpload from './ImageUpload';
 
 export default function ServiceManager() {
   const [services, setServices] = useState([]);
@@ -30,6 +31,7 @@ export default function ServiceManager() {
     preco: '',
     duracao: '',
     categoria: '',
+    imagemUrl: '',
     ativo: true,
   });
 
@@ -101,6 +103,7 @@ export default function ServiceManager() {
       preco: service.preco.toString(),
       duracao: service.duracao.toString(),
       categoria: service.categoria || '',
+      imagemUrl: service.imagemUrl || '',
       ativo: service.ativo,
     });
     setIsModalOpen(true);
@@ -119,7 +122,7 @@ export default function ServiceManager() {
   const resetForm = () => {
     setEditingService(null);
     setActionError(null);
-    setFormData({ nome: '', descricao: '', preco: '', duracao: '', categoria: '', ativo: true });
+    setFormData({ nome: '', descricao: '', preco: '', duracao: '', categoria: '', imagemUrl: '', ativo: true });
   };
 
   return (
@@ -291,6 +294,14 @@ export default function ServiceManager() {
                   placeholder="Detalhes sobre o serviço..."
                   value={formData.descricao}
                   onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Imagem</label>
+                <ImageUpload
+                  value={formData.imagemUrl}
+                  onChange={(url) => setFormData({ ...formData, imagemUrl: url })}
                 />
               </div>
 

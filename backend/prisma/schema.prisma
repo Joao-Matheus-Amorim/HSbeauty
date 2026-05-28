@@ -13,6 +13,7 @@ model Servico {
   preco        Float
   duracao      Int            // Duração em minutos
   categoria    String?
+  imagemUrl    String?
   ativo        Boolean        @default(true)
   criadoEm     DateTime       @default(now())
   atualizadoEm DateTime       @updatedAt

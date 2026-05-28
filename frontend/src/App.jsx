@@ -139,7 +139,11 @@ function App() {
 								aria-label={`Reservar ${service.nome}`}
 							>
 								<div className="service-card-media" aria-hidden="true">
-									<span>{serviceVisualLabel(service.nome)}</span>
+									{service.imagemUrl ? (
+										<img src={service.imagemUrl} alt={service.nome} loading="lazy" />
+									) : (
+										<span>{serviceVisualLabel(service.nome)}</span>
+									)}
 								</div>
 								<div className="service-card-body">
 									<h4>{service.nome}</h4>

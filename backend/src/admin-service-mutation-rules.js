@@ -81,7 +81,7 @@ export function validateAdminServiceCreatePayload(payload = {}) {
   if (!duracaoResult.valid) return duracaoResult;
   data.duracao = duracaoResult.value;
 
-  for (const field of ['descricao', 'categoria']) {
+  for (const field of ['descricao', 'categoria', 'imagemUrl']) {
     const error = validateOptionalText(data, payload, field);
     if (error) return error;
   }
@@ -108,7 +108,7 @@ export function validateAdminServiceUpdatePayload(payload = {}) {
   if (!duracaoResult.valid) return duracaoResult;
   if (duracaoResult.value !== undefined) data.duracao = duracaoResult.value;
 
-  for (const field of ['descricao', 'categoria']) {
+  for (const field of ['descricao', 'categoria', 'imagemUrl']) {
     const error = validateOptionalText(data, payload, field);
     if (error) return error;
   }

@@ -4,11 +4,12 @@ import AgendamentoModal from '../../components/AgendamentoModal';
 
 vi.mock('../../services/agendamentos', () => ({
   listarServicos: vi.fn(),
+  listarCombos: vi.fn(),
   buscarDisponibilidade: vi.fn(),
   criarAgendamento: vi.fn(),
 }));
 
-import { listarServicos, buscarDisponibilidade, criarAgendamento } from '../../services/agendamentos';
+import { listarServicos, listarCombos, buscarDisponibilidade, criarAgendamento } from '../../services/agendamentos';
 
 const SERVICO_MOCK = { id: 1, nome: 'Cílios', preco: 140, duracao: 90, ativo: true };
 const SLOT_MOCK = { horario: '09:00', inicio: '2026-05-27T09:00:00.000Z', fim: '2026-05-27T10:30:00.000Z' };
@@ -16,6 +17,7 @@ const SLOT_MOCK = { horario: '09:00', inicio: '2026-05-27T09:00:00.000Z', fim: '
 beforeEach(() => {
   vi.clearAllMocks();
   listarServicos.mockResolvedValue([SERVICO_MOCK]);
+  listarCombos.mockResolvedValue([]);
   buscarDisponibilidade.mockResolvedValue({ slotsDisponiveis: [SLOT_MOCK] });
   criarAgendamento.mockResolvedValue({
     id: 1,

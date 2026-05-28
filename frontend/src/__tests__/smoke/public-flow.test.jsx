@@ -5,6 +5,7 @@ import AppRoutes from '../../AppRoutes';
 
 vi.mock('../../services/agendamentos', () => ({
   listarServicos: vi.fn(),
+  listarCombos: vi.fn(),
   buscarDisponibilidade: vi.fn(),
   criarAgendamento: vi.fn(),
 }));
@@ -21,12 +22,13 @@ vi.mock('../../utils/date-utils', async () => {
   };
 });
 
-import { listarServicos, buscarDisponibilidade, criarAgendamento } from '../../services/agendamentos';
+import { listarServicos, listarCombos, buscarDisponibilidade, criarAgendamento } from '../../services/agendamentos';
 
 describe('Smoke publico', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    listarCombos.mockResolvedValue([]);
     listarServicos.mockResolvedValue([
       { id: 1, nome: 'Unhas', duracao: 60, preco: 60 },
       { id: 2, nome: 'Cilios', duracao: 30, preco: 50 },

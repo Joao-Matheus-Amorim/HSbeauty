@@ -1,32 +1,36 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { listarServicos, listarCombos, getSiteConfig } from './services/agendamentos'
 import { WHATSAPP, SERVICOS_PADRAO } from './constants'
+import CategoryCarousel from './components/CategoryCarousel'
+import CategoryDrawer from './components/CategoryDrawer'
 
 const AgendamentoModal = lazy(() => import('./components/AgendamentoModal'))
 
 const fallbackServices = SERVICOS_PADRAO
 
-const serviceNameOrder = ['unhas', 'cilios', 'sobrancelhas', 'depilacao']
-
 const removeAccents = (value) =>
 	String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 
-const normalizeServiceName = (name) => {
-	const normalized = removeAccents(name || '')
-	if (normalized.includes('unha') || normalized.includes('manicure')) return 'unhas'
-	if (normalized.includes('cilio')) return 'cilios'
-	if (normalized.includes('sobrancelha')) return 'sobrancelhas'
-	if (normalized.includes('depila')) return 'depilacao'
-	return normalized
+function inferCategoria(servico) {
+	const raw = String(servico.categoria || '').trim()
+	if (raw) return raw
+	const n = removeAccents(servico.nome || '')
+	if (n.includes('unha') || n.includes('manicure')) return 'Unhas'
+	if (n.includes('cilio')) return 'C\u00edlios'
+	if (n.includes('sobrancelha')) return 'Sobrancelhas'
+	if (n.includes('depila')) return 'Depila\u00e7\u00e3o'
+	if (n.includes('labio') || n.includes('labial') || n.includes('spa')) return 'Spa Labial'
+	return 'Outros'
 }
 
-const serviceVisualLabel = (name) => {
-	const normalized = normalizeServiceName(name)
-	if (normalized === 'unhas') return 'UN'
-	if (normalized === 'cilios') return 'CL'
-	if (normalized === 'sobrancelhas') return 'SB'
-	if (normalized === 'depilacao') return 'DP'
-	return 'HS'
+function buildCategorias(servicos) {
+	const grupos = new Map()
+	servicos.forEach((s) => {
+		const nome = inferCategoria(s)
+		if (!grupos.has(nome)) grupos.set(nome, { nome, servicos: [] })
+		grupos.get(nome).servicos.push(s)
+	})
+	return Array.from(grupos.values()).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
 }
 
 function App() {
@@ -35,20 +39,16 @@ function App() {
 	const [siteConfig, setSiteConfig] = useState({ bannerUrl: null, logoUrl: null })
 	const [modalAberto, setModalAberto] = useState(false)
 	const [servicoModal, setServicoModal] = useState(null)
+	const [categoriaAberta, setCategoriaAberta] = useState(null)
 
 	useEffect(() => {
 		let mounted = true
 		async function loadServices() {
 			try {
 				const apiServices = await listarServicos({ ativo: true })
-				if (!Array.isArray(apiServices) || !apiServices.length) return
-				const wantedServices = apiServices
-					.filter((item) => serviceNameOrder.includes(normalizeServiceName(item.nome)))
-					.sort((a, b) => serviceNameOrder.indexOf(normalizeServiceName(a.nome)) - serviceNameOrder.indexOf(normalizeServiceName(b.nome)))
-				const fallbackByType = new Map(fallbackServices.map((item) => [normalizeServiceName(item.nome), item]))
-				const apiByType = new Map(wantedServices.map((item) => [normalizeServiceName(item.nome), item]))
-				const mergedServices = serviceNameOrder.map((type) => apiByType.get(type) || fallbackByType.get(type)).filter(Boolean)
-				if (mounted && mergedServices.length) setServices(mergedServices)
+				if (mounted && Array.isArray(apiServices) && apiServices.length) {
+					setServices(apiServices)
+				}
 			} catch {
 				if (mounted) setServices(fallbackServices)
 			}
@@ -59,12 +59,7 @@ function App() {
 		return () => { mounted = false }
 	}, [])
 
-	const orderedServices = useMemo(
-		() => services
-			.filter((item) => serviceNameOrder.includes(normalizeServiceName(item.nome)))
-			.sort((a, b) => serviceNameOrder.indexOf(normalizeServiceName(a.nome)) - serviceNameOrder.indexOf(normalizeServiceName(b.nome))),
-		[services]
-	)
+	const categorias = useMemo(() => buildCategorias(services), [services])
 
 	function abrirModal(servico = null) {
 		setServicoModal(servico)
@@ -79,10 +74,9 @@ function App() {
 		abrirModal(servico)
 	}
 
-	function handleCardKeyDown(event, service) {
-		if (event.key === 'Enter' || event.key === ' ') {
-			reservar(service, event)
-		}
+	function handleSelecionarServicoDaCategoria(servico) {
+		setCategoriaAberta(null)
+		abrirModal(servico)
 	}
 
 	return (
@@ -94,6 +88,14 @@ function App() {
 						onClose={() => setModalAberto(false)}
 					/>
 				</Suspense>
+			)}
+
+			{categoriaAberta && (
+				<CategoryDrawer
+					categoria={categoriaAberta}
+					onClose={() => setCategoriaAberta(null)}
+					onSelectServico={handleSelecionarServicoDaCategoria}
+				/>
 			)}
 
 			<section className="phone-frame" aria-label="Landing page HSBeauty">
@@ -133,39 +135,12 @@ function App() {
 				<section className="services-section" id="services">
 					<h3>Nossos Serviços</h3>
 					<p className="services-caption">
-						Escolha um serviço abaixo para reservar.
+						Deslize as categorias e toque para ver os serviços.
 					</p>
-					<div className="services-grid">
-						{orderedServices.map((service) => (
-							<article
-								className="service-card service-card-button"
-								key={service.id || service.nome}
-								onClick={(event) => reservar(service, event)}
-								onKeyDown={(event) => handleCardKeyDown(event, service)}
-								role="button"
-								tabIndex={0}
-								aria-label={`Reservar ${service.nome}`}
-							>
-								<div className="service-card-media" aria-hidden="true">
-									{service.imagemUrl ? (
-										<img src={service.imagemUrl} alt={service.nome} loading="lazy" />
-									) : (
-										<span>{serviceVisualLabel(service.nome)}</span>
-									)}
-								</div>
-								<div className="service-card-body">
-									<h4>{service.nome}</h4>
-									<button
-										type="button"
-										className="service-action"
-										onClick={(event) => reservar(service, event)}
-									>
-										Reservar
-									</button>
-								</div>
-							</article>
-						))}
-					</div>
+					<CategoryCarousel
+						categorias={categorias}
+						onSelect={(cat) => setCategoriaAberta(cat)}
+					/>
 				</section>
 
 				{combos.length > 0 && (

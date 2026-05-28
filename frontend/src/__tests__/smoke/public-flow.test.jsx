@@ -62,8 +62,8 @@ describe('Smoke publico', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: /agendar/i }));
-    fireEvent.click(await screen.findByRole('button', { name: /reservar unhas/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /categoria unhas/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^unhas/i }));
     fireEvent.click(await screen.findByRole('button', { name: /27\/05/i }));
     fireEvent.click(await screen.findByRole('button', { name: /ver/i }));
     fireEvent.click(await screen.findByRole('button', { name: '09:00' }));

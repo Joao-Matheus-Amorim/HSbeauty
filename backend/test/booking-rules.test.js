@@ -126,6 +126,8 @@ test('addMinutes returns a new date with the expected offset', () => {
   assert.notEqual(result, date);
 });
 
+const NOW_BEFORE = new Date('2026-05-25T08:00:00.000Z');
+
 test('validatePublicBookingPayload returns normalized data for valid payloads', () => {
   const result = validatePublicBookingPayload({
     nomeCliente: '  Maria  ',
@@ -133,7 +135,7 @@ test('validatePublicBookingPayload returns normalized data for valid payloads', 
     data: '2026-05-25T09:00:00.000Z',
     servicoId: '3',
     observacoes: '  Sem alergias  ',
-  });
+  }, { now: NOW_BEFORE });
 
   assert.equal(result.valid, true);
   assert.equal(result.data.nomeCliente, 'Maria');
@@ -151,7 +153,7 @@ test('validatePublicBookingPayload rejects when both servicoId and comboId provi
       data: '2026-05-25T09:00:00.000Z',
       servicoId: 1,
       comboId: 2,
-    }).valid,
+    }, { now: NOW_BEFORE }).valid,
     false,
   );
 });
@@ -162,7 +164,7 @@ test('validatePublicBookingPayload accepts comboId and returns comboIdNumero', (
     telefone: '(11) 98765-4321',
     data: '2026-05-25T09:00:00.000Z',
     comboId: '3',
-  });
+  }, { now: NOW_BEFORE });
   assert.equal(result.valid, true);
   assert.equal(result.data.comboIdNumero, 3);
   assert.equal(result.data.servicoIdNumero, undefined);
@@ -177,7 +179,7 @@ test('validatePublicBookingPayload rejects invalid public booking payloads', () 
       telefone: '123',
       data: '2026-05-25T09:00:00.000Z',
       servicoId: 1,
-    }),
+    }, { now: NOW_BEFORE }),
     {
       valid: false,
       status: 400,
@@ -191,7 +193,7 @@ test('validatePublicBookingPayload rejects invalid public booking payloads', () 
       telefone: '(11) 98765-4321',
       data: '2026-05-25T09:15:00.000Z',
       servicoId: 1,
-    }),
+    }, { now: NOW_BEFORE }),
     {
       valid: false,
       status: 400,
@@ -206,9 +208,24 @@ test('validatePublicBookingPayload rejects invalid public booking payloads', () 
       data: '2026-05-25T09:00:00.000Z',
       servicoId: 1,
       email: 'nao-e-email',
-    }),
+    }, { now: NOW_BEFORE }),
     { valid: false, status: 400, message: 'Email inválido' },
   );
+});
+
+test('validatePublicBookingPayload rejects past datetimes', () => {
+  const result = validatePublicBookingPayload({
+    nomeCliente: 'Maria',
+    telefone: '(11) 98765-4321',
+    data: '2026-05-25T09:00:00.000Z',
+    servicoId: 1,
+  }, { now: new Date('2026-05-25T10:00:00.000Z') });
+
+  assert.deepEqual(result, {
+    valid: false,
+    status: 400,
+    message: 'Não é possível agendar para um horário no passado',
+  });
 });
 
 test('validatePublicBookingPayload accepts optional email and passes it through', () => {
@@ -217,7 +234,7 @@ test('validatePublicBookingPayload accepts optional email and passes it through'
     telefone: '(11) 98765-4321',
     data: '2026-05-25T09:00:00.000Z',
     servicoId: 1,
-  });
+  }, { now: NOW_BEFORE });
   assert.equal(semEmail.valid, true);
   assert.equal(semEmail.data.email, undefined);
 
@@ -227,7 +244,7 @@ test('validatePublicBookingPayload accepts optional email and passes it through'
     data: '2026-05-25T09:00:00.000Z',
     servicoId: 1,
     email: ' maria@example.com ',
-  });
+  }, { now: NOW_BEFORE });
   assert.equal(comEmail.valid, true);
   assert.equal(comEmail.data.email, 'maria@example.com');
 });

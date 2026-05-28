@@ -149,7 +149,7 @@ export function hasConflict(startA, endA, items) {
   return items.some((item) => overlaps(startA, endA, item.inicio, item.fim));
 }
 
-export function validatePublicBookingPayload(payload) {
+export function validatePublicBookingPayload(payload, { now = new Date() } = {}) {
   const { nomeCliente, telefone, data, servicoId, comboId, observacoes, email } = payload || {};
 
   if (!nomeCliente || typeof nomeCliente !== 'string' || !nomeCliente.trim()) {
@@ -208,6 +208,10 @@ export function validatePublicBookingPayload(payload) {
 
   if (!isSlotStepAligned(dataAgendamento)) {
     return { valid: false, status: 400, message: 'Horário deve estar alinhado ao intervalo de 30 minutos' };
+  }
+
+  if (dataAgendamento.getTime() <= now.getTime()) {
+    return { valid: false, status: 400, message: 'Não é possível agendar para um horário no passado' };
   }
 
   if (servicoId) {

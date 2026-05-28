@@ -12,7 +12,7 @@ import {
   SLOT_STEP_MINUTES,
 } from './booking-rules.js';
 
-export function buildAvailableSlots(baseDay, servico, ocupados) {
+export function buildAvailableSlots(baseDay, servico, ocupados, now = null) {
   const inicioExpediente = buildDateTime(baseDay, BUSINESS_OPEN_HOUR, 0);
   const fimExpediente = buildDateTime(baseDay, BUSINESS_CLOSE_HOUR, 0);
   const slotsDisponiveis = [];
@@ -24,6 +24,7 @@ export function buildAvailableSlots(baseDay, servico, ocupados) {
   ) {
     const inicioSlot = new Date(cursor);
     const fimSlot = addMinutes(inicioSlot, servico.duracao);
+    if (now && inicioSlot <= now) continue;
     if (!hasConflict(inicioSlot, fimSlot, ocupados)) {
       slotsDisponiveis.push({
         horario: getHoraFromDate(inicioSlot),
@@ -94,7 +95,7 @@ export async function calculateAvailability({ prisma, dateString, servico, refer
   }
 
   const { ocupados } = await getDayOccupancy({ prisma, dateString });
-  const slotsDisponiveis = buildAvailableSlots(baseDay, servico, ocupados);
+  const slotsDisponiveis = buildAvailableSlots(baseDay, servico, ocupados, referenceDate);
 
   return {
     expediente: { inicio: '09:00', fim: '18:00' },

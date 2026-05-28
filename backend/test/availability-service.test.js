@@ -117,8 +117,8 @@ test('calculateAvailability returns available slots for dates inside the current
     referenceDate: new Date('2026-05-25T12:00:00'),
   });
 
-  assert.equal(availability.total, 17);
-  assert.equal(availability.slotsDisponiveis[0].horario, '09:00');
+  assert.equal(availability.total, 10);
+  assert.equal(availability.slotsDisponiveis[0].horario, '12:30');
   assert.equal(availability.slotsDisponiveis.at(-1).horario, '17:00');
   assert.deepEqual(availability.semanaAtual, { inicio: '2026-05-25', fim: '2026-05-31' });
 });

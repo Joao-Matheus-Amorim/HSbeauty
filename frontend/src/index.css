@@ -199,6 +199,14 @@ button {
   padding-top: 0;
 }
 
+.hero-banner-img {
+  display: block;
+  width: 100%;
+  height: clamp(220px, 38vh, 360px);
+  object-fit: cover;
+  border-radius: 0 0 26px 26px;
+}
+
 .hero-banner-placeholder {
   min-height: 260px;
   display: grid;
@@ -537,6 +545,14 @@ button {
   height: 56px;
   border-radius: 50%;
   border: 2px solid rgba(205, 157, 70, 0.5);
+  overflow: hidden;
+}
+
+.bottom-note-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .bottom-note-avatar {

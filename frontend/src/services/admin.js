@@ -68,6 +68,21 @@ export async function desativarServicoAdmin(id) {
   return handleAuthResponse(response);
 }
 
+// ─── Configurações do site ────────────────────────────────────────────────────
+
+export async function getSiteConfigAdmin() {
+  const response = await authorizedFetch(`${API_URL}/admin/config`);
+  return handleAuthResponse(response);
+}
+
+export async function updateSiteConfigAdmin(dados) {
+  const response = await authorizedFetch(`${API_URL}/admin/config`, {
+    method: 'PUT',
+    body: JSON.stringify(dados),
+  });
+  return handleAuthResponse(response);
+}
+
 // ─── Combos ───────────────────────────────────────────────────────────────────
 
 export async function listarCombosAdmin(params = {}) {

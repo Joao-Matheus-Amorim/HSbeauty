@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
-import { listarServicos, listarCombos } from './services/agendamentos'
+import { listarServicos, listarCombos, getSiteConfig } from './services/agendamentos'
 import { WHATSAPP, SERVICOS_PADRAO } from './constants'
 
 const AgendamentoModal = lazy(() => import('./components/AgendamentoModal'))
@@ -32,6 +32,7 @@ const serviceVisualLabel = (name) => {
 function App() {
 	const [services, setServices] = useState(fallbackServices)
 	const [combos, setCombos] = useState([])
+	const [siteConfig, setSiteConfig] = useState({ bannerUrl: null, logoUrl: null })
 	const [modalAberto, setModalAberto] = useState(false)
 	const [servicoModal, setServicoModal] = useState(null)
 
@@ -54,6 +55,7 @@ function App() {
 		}
 		loadServices()
 		listarCombos().then((lista) => { if (mounted && Array.isArray(lista)) setCombos(lista.filter((c) => c.ativo)) }).catch(() => {})
+		getSiteConfig().then((config) => { if (mounted && config) setSiteConfig(config) }).catch(() => {})
 		return () => { mounted = false }
 	}, [])
 
@@ -104,9 +106,15 @@ function App() {
 							Agendar ›
 						</button>
 					</div>
-					<div className="hero-banner-art hero-banner-placeholder" aria-hidden="true">
-						<span>HSBeauty</span>
-					</div>
+					{siteConfig.bannerUrl ? (
+						<div className="hero-banner-art" aria-hidden="true">
+							<img src={siteConfig.bannerUrl} alt="HSBeauty" className="hero-banner-img" />
+						</div>
+					) : (
+						<div className="hero-banner-art hero-banner-placeholder" aria-hidden="true">
+							<span>HSBeauty</span>
+						</div>
+					)}
 				</section>
 
 				<div className="hero-dots" aria-hidden="true">
@@ -219,7 +227,9 @@ function App() {
 				</section>
 
 				<footer className="bottom-note">
-					<div className="bottom-note-avatar" aria-hidden="true">HS</div>
+					<div className="bottom-note-avatar" aria-hidden="true">
+						{siteConfig.logoUrl ? <img src={siteConfig.logoUrl} alt="HSBeauty" /> : 'HS'}
+					</div>
 					<p>HSBeauty Studio - atendimento para clientes</p>
 				</footer>
 			</section>

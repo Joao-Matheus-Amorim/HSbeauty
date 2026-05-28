@@ -17,6 +17,12 @@ export async function listarCombos() {
   return response.json();
 }
 
+export async function getSiteConfig() {
+  const response = await fetch(`${API_URL}/config`);
+  if (!response.ok) throw new Error('Erro ao carregar configuração');
+  return response.json();
+}
+
 export async function buscarDisponibilidade(data, servicoId, comboId) {
   const params = new URLSearchParams({ data });
   if (servicoId) params.set('servicoId', String(servicoId));

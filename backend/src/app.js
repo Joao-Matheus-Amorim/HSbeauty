@@ -14,6 +14,7 @@ import { createPublicBookingRouter } from './public-booking-routes.js';
 import { createPublicServiceRouter } from './public-service-routes.js';
 import { createPublicComboRouter } from './public-combo-routes.js';
 import { createAdminComboRouter } from './admin-combo-routes.js';
+import { createPublicConfigRouter, createAdminConfigRouter } from './site-config-routes.js';
 
 const { PrismaClient } = pkg;
 
@@ -46,11 +47,13 @@ export function createApp() {
   app.use('/combos', createPublicComboRouter({ prisma }));
   app.use('/agendamentos', createPublicBookingRouter({ prisma }));
   app.use('/disponibilidade', createAvailabilityRouter({ prisma }));
+  app.use('/config', createPublicConfigRouter({ prisma }));
 
   app.use('/admin', createAdminDashboardRouter({ prisma, authMiddleware }));
   app.use('/admin', createAdminAppointmentRouter({ prisma, authMiddleware }));
   app.use('/admin', createAdminServiceRouter({ prisma, authMiddleware }));
   app.use('/admin', createAdminComboRouter({ prisma, authMiddleware }));
+  app.use('/admin', createAdminConfigRouter({ prisma, authMiddleware }));
   setupAdminHorarios(prisma, authMiddleware);
   app.use('/admin', adminRouter);
 

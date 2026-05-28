@@ -82,6 +82,13 @@ model BloqueioHorario {
   atualizadoEm DateTime @updatedAt
 }
 
+model SiteConfig {
+  id           Int      @id @default(1)
+  bannerUrl    String?
+  logoUrl      String?
+  atualizadoEm DateTime @updatedAt
+}
+
 model Admin {
   id           Int            @id @default(autoincrement())
   email        String         @unique

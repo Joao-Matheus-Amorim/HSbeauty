@@ -50,6 +50,35 @@ function formatBookingDate(data) {
   });
 }
 
+async function sendViaBrevo({ to, subject, html }) {
+  const apiKey = process.env.BREVO_API_KEY;
+  const fromEmail = process.env.BREVO_FROM_EMAIL;
+  const fromName = process.env.BREVO_FROM_NAME || 'HSBeauty Studio';
+  if (!apiKey || !fromEmail) return null;
+
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': apiKey,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      sender: { email: fromEmail, name: fromName },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(`Brevo ${response.status}: ${errText}`);
+  }
+
+  return { sent: true, provider: 'brevo' };
+}
+
 async function sendViaGmail({ to, subject, html }) {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
@@ -81,6 +110,9 @@ async function sendViaResend({ to, subject, html }) {
 }
 
 async function sendEmail(payload) {
+  const brevoResult = await sendViaBrevo(payload);
+  if (brevoResult) return brevoResult;
+
   const gmailResult = await sendViaGmail(payload);
   if (gmailResult) return gmailResult;
 

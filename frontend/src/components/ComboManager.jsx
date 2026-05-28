@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { listarCombosAdmin, criarComboAdmin, atualizarComboAdmin, desativarComboAdmin } from '../services/admin';
 import { listarServicosAdmin } from '../services/admin';
 
@@ -143,25 +143,30 @@ export default function ComboManager() {
   const [loading, setLoading] = useState(true);
   const [editando, setEditando] = useState(null); // null | 'novo' | combo object
   const [erro, setErro] = useState('');
-
-  async function carregar() {
+  const carregar = useCallback(() => {
     setLoading(true);
     setErro('');
-    try {
-      const [{ combos: lista }, { servicos: svcs }] = await Promise.all([
-        listarCombosAdmin(),
-        listarServicosAdmin({ limit: 200 }),
-      ]);
-      setCombos(lista || []);
-      setServicos(svcs || []);
-    } catch (err) {
-      setErro(err.message || 'Erro ao carregar');
-    } finally {
-      setLoading(false);
-    }
-  }
+    Promise.all([listarCombosAdmin(), listarServicosAdmin({ limit: 200 })])
+      .then(([{ combos: lista }, { servicos: svcs }]) => {
+        setCombos(lista || []);
+        setServicos(svcs || []);
+      })
+      .catch((err) => setErro(err.message || 'Erro ao carregar'))
+      .finally(() => setLoading(false));
+  }, []);
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => {
+    let ignore = false;
+    Promise.all([listarCombosAdmin(), listarServicosAdmin({ limit: 200 })])
+      .then(([{ combos: lista }, { servicos: svcs }]) => {
+        if (ignore) return;
+        setCombos(lista || []);
+        setServicos(svcs || []);
+      })
+      .catch((err) => { if (!ignore) setErro(err.message || 'Erro ao carregar'); })
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
+  }, [carregar]);
 
   async function handleDesativar(id) {
     if (!window.confirm('Desativar este combo?')) return;

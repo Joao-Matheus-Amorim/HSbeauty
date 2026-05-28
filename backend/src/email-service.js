@@ -56,8 +56,14 @@ async function sendViaGmail({ to, subject, html }) {
   if (!user || !pass) return null;
 
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    requireTLS: true,
     auth: { user, pass },
+    connectionTimeout: 20000,
+    greetingTimeout: 20000,
+    socketTimeout: 30000,
   });
 
   await transporter.sendMail({ from: `HSBeauty Studio <${user}>`, to, subject, html });

@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
-import { listarServicos } from './services/agendamentos'
+import { listarServicos, listarCombos } from './services/agendamentos'
 import { WHATSAPP, SERVICOS_PADRAO } from './constants'
 
 const AgendamentoModal = lazy(() => import('./components/AgendamentoModal'))
@@ -31,6 +31,7 @@ const serviceVisualLabel = (name) => {
 
 function App() {
 	const [services, setServices] = useState(fallbackServices)
+	const [combos, setCombos] = useState([])
 	const [modalAberto, setModalAberto] = useState(false)
 	const [servicoModal, setServicoModal] = useState(null)
 
@@ -52,6 +53,7 @@ function App() {
 			}
 		}
 		loadServices()
+		listarCombos().then((lista) => { if (mounted && Array.isArray(lista)) setCombos(lista.filter((c) => c.ativo)) }).catch(() => {})
 		return () => { mounted = false }
 	}, [])
 
@@ -153,6 +155,45 @@ function App() {
 						))}
 					</div>
 				</section>
+
+				{combos.length > 0 && (
+					<section className="services-section" id="combos">
+						<h3>Combos</h3>
+						<p className="services-caption">Pacotes com serviços combinados.</p>
+						<div className="services-grid">
+							{combos.map((combo) => {
+								const duracaoTotal = combo.itens?.reduce((s, i) => s + i.servico.duracao, 0) || 0
+								const horas = Math.floor(duracaoTotal / 60)
+								const mins = duracaoTotal % 60
+								const duracaoLabel = horas > 0 ? `${horas}h${mins > 0 ? `${mins}min` : ''}` : `${mins}min`
+								return (
+									<article
+										className="service-card service-card-button"
+										key={combo.id}
+										onClick={(event) => reservar(null, event)}
+										onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') reservar(null, event) }}
+										role="button"
+										tabIndex={0}
+										aria-label={`Reservar ${combo.nome}`}
+									>
+										<div className="service-card-media" aria-hidden="true">
+											<span>CB</span>
+										</div>
+										<div className="service-card-body">
+											<h4>{combo.nome}</h4>
+											<p style={{ fontSize: '0.78rem', color: '#9a7060', margin: '2px 0 4px' }}>
+												{`R$ ${Number(combo.preco).toFixed(2).replace('.', ',')} · ${duracaoLabel}`}
+											</p>
+											<button type="button" className="service-action" onClick={(event) => reservar(null, event)}>
+												Reservar
+											</button>
+										</div>
+									</article>
+								)
+							})}
+						</div>
+					</section>
+				)}
 
 				<section className="results-section glass-panel">
 					<h3>Galeria de Resultados</h3>

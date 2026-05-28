@@ -27,7 +27,7 @@ export function createAdminDashboardRouter({ prisma, authMiddleware }) {
             lte: fimMes,
           },
         },
-        include: { servico: true },
+        include: { servico: true, combo: true },
       });
 
       // Buscar agendamentos de hoje
@@ -41,7 +41,7 @@ export function createAdminDashboardRouter({ prisma, authMiddleware }) {
             lt: fimHoje,
           },
         },
-        include: { servico: true },
+        include: { servico: true, combo: true },
       });
 
       // Total de serviços

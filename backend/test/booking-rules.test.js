@@ -143,6 +143,31 @@ test('validatePublicBookingPayload returns normalized data for valid payloads', 
   assert.equal(result.data.dataAgendamento instanceof Date, true);
 });
 
+test('validatePublicBookingPayload rejects when both servicoId and comboId provided', () => {
+  assert.deepEqual(
+    validatePublicBookingPayload({
+      nomeCliente: 'Maria',
+      telefone: '(11) 98765-4321',
+      data: '2026-05-25T09:00:00.000Z',
+      servicoId: 1,
+      comboId: 2,
+    }).valid,
+    false,
+  );
+});
+
+test('validatePublicBookingPayload accepts comboId and returns comboIdNumero', () => {
+  const result = validatePublicBookingPayload({
+    nomeCliente: 'Maria',
+    telefone: '(11) 98765-4321',
+    data: '2026-05-25T09:00:00.000Z',
+    comboId: '3',
+  });
+  assert.equal(result.valid, true);
+  assert.equal(result.data.comboIdNumero, 3);
+  assert.equal(result.data.servicoIdNumero, undefined);
+});
+
 test('validatePublicBookingPayload rejects invalid public booking payloads', () => {
   assert.deepEqual(validatePublicBookingPayload({}).valid, false);
 

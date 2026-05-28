@@ -150,7 +150,7 @@ export function hasConflict(startA, endA, items) {
 }
 
 export function validatePublicBookingPayload(payload) {
-  const { nomeCliente, telefone, data, servicoId, observacoes, email } = payload || {};
+  const { nomeCliente, telefone, data, servicoId, comboId, observacoes, email } = payload || {};
 
   if (!nomeCliente || typeof nomeCliente !== 'string' || !nomeCliente.trim()) {
     return { valid: false, status: 400, message: 'Nome do cliente é obrigatório' };
@@ -166,6 +166,14 @@ export function validatePublicBookingPayload(payload) {
 
   if (!data) {
     return { valid: false, status: 400, message: 'Data é obrigatória' };
+  }
+
+  if (!servicoId && !comboId) {
+    return { valid: false, status: 400, message: 'Informe servicoId ou comboId' };
+  }
+
+  if (servicoId && comboId) {
+    return { valid: false, status: 400, message: 'Informe apenas servicoId ou comboId, não ambos' };
   }
 
   if (observacoes !== undefined && observacoes !== null) {
@@ -202,10 +210,28 @@ export function validatePublicBookingPayload(payload) {
     return { valid: false, status: 400, message: 'Horário deve estar alinhado ao intervalo de 30 minutos' };
   }
 
-  const servicoIdNumero = Number(servicoId);
+  if (servicoId) {
+    const servicoIdNumero = Number(servicoId);
+    if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) {
+      return { valid: false, status: 400, message: 'Serviço inválido' };
+    }
+    return {
+      valid: true,
+      data: {
+        nomeCliente: nomeCliente.trim(),
+        telefone: telefone.trim(),
+        dataAgendamento,
+        servicoIdNumero,
+        comboIdNumero: undefined,
+        observacoes: observacoes ? observacoes.trim() : undefined,
+        email: email && typeof email === 'string' ? email.trim() : undefined,
+      },
+    };
+  }
 
-  if (!Number.isInteger(servicoIdNumero) || servicoIdNumero <= 0) {
-    return { valid: false, status: 400, message: 'Serviço inválido' };
+  const comboIdNumero = Number(comboId);
+  if (!Number.isInteger(comboIdNumero) || comboIdNumero <= 0) {
+    return { valid: false, status: 400, message: 'Combo inválido' };
   }
 
   return {
@@ -214,7 +240,8 @@ export function validatePublicBookingPayload(payload) {
       nomeCliente: nomeCliente.trim(),
       telefone: telefone.trim(),
       dataAgendamento,
-      servicoIdNumero,
+      servicoIdNumero: undefined,
+      comboIdNumero,
       observacoes: observacoes ? observacoes.trim() : undefined,
       email: email && typeof email === 'string' ? email.trim() : undefined,
     },

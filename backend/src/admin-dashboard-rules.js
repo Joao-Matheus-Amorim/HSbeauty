@@ -19,7 +19,7 @@ export function calculateRevenue(agendamentos = []) {
       const status = normalizeBookingStatus(agendamento.status);
       return status === BOOKING_STATUS.CONCLUIDO || status === BOOKING_STATUS.CONFIRMADO;
     })
-    .reduce((total, agendamento) => total + (agendamento.servico?.preco || 0), 0);
+    .reduce((total, agendamento) => total + (agendamento.servico?.preco ?? agendamento.combo?.preco ?? 0), 0);
 
   return parseFloat(receita.toFixed(2));
 }

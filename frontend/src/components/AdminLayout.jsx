@@ -4,6 +4,7 @@ import {
   Calendar,
   Clock,
   Scissors,
+  Package,
   LogOut,
   Menu,
 } from 'lucide-react';
@@ -19,6 +20,7 @@ export default function AdminLayout({ children, activeTab, onTabChange, admin, o
     { id: 'agendamentos', label: 'Agenda', desktopLabel: 'Agendamentos', icon: Calendar },
     { id: 'horarios', label: 'Horários', desktopLabel: 'Horários', icon: Clock },
     { id: 'servicos', label: 'Serviços', desktopLabel: 'Serviços', icon: Scissors },
+    { id: 'combos', label: 'Combos', desktopLabel: 'Combos', icon: Package },
     { id: 'dashboard', label: 'Resumo', desktopLabel: 'Resumo', icon: LayoutDashboard },
   ];
 

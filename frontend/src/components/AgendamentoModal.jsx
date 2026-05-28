@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { listarServicos, buscarDisponibilidade, criarAgendamento } from '../services/agendamentos';
+import { listarServicos, listarCombos, buscarDisponibilidade, criarAgendamento } from '../services/agendamentos';
 import { WHATSAPP, SERVICOS_PADRAO, SEMANAS_DISPONIVEIS } from '../constants';
 import { formatDuracao, getAvailableDays } from '../utils/date-utils';
 import './AgendamentoModal.css';
@@ -9,18 +9,29 @@ function formatDateTime(value) {
   return new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
-function buildWhatsAppLink(agendamento) {
-  const servico = agendamento?.servico?.nome || 'serviço';
+function buildWhatsAppLink(agendamento, nomeItem) {
+  const item = nomeItem || agendamento?.servico?.nome || agendamento?.combo?.nome || 'serviço';
   const dataHora = agendamento?.data ? formatDateTime(agendamento.data) : '';
   const nomeCliente = agendamento?.nomeCliente || '';
-  const mensagem = `Olá! Acabei de agendar: ${servico} em ${dataHora}. Meu nome é ${nomeCliente}.`;
+  const mensagem = `Olá! Acabei de agendar: ${item} em ${dataHora}. Meu nome é ${nomeCliente}.`;
   return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensagem)}`;
 }
 
+function formatPreco(valor) {
+  return `A partir de R$ ${Number(valor).toFixed(2).replace('.', ',')}`;
+}
+
+function formatPrecoFixo(valor) {
+  return `R$ ${Number(valor).toFixed(2).replace('.', ',')}`;
+}
+
 export default function AgendamentoModal({ servicoInicial, onClose }) {
+  const [tipo, setTipo] = useState('servico'); // 'servico' | 'combo'
   const [step, setStep] = useState(1);
   const [servicos, setServicos] = useState(SERVICOS_PADRAO);
+  const [combos, setCombos] = useState([]);
   const [servicoId, setServicoId] = useState(servicoInicial?.id || '');
+  const [comboId, setComboId] = useState('');
   const [data, setData] = useState('');
   const [slots, setSlots] = useState([]);
   const [slotSelecionado, setSlotSelecionado] = useState(null);
@@ -30,6 +41,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
   const [agendado, setAgendado] = useState(null);
+  const [nomeItemAgendado, setNomeItemAgendado] = useState('');
 
   const janela = useMemo(() => getAvailableDays(SEMANAS_DISPONIVEIS), []);
 
@@ -45,9 +57,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
+    return () => { document.body.style.overflow = originalOverflow; };
   }, []);
 
   useEffect(() => {
@@ -57,16 +67,31 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
         if (!mounted) return;
         setServicos(Array.isArray(lista) && lista.length > 0 ? lista : SERVICOS_PADRAO);
       })
-      .catch(() => {
-        if (mounted) setServicos(SERVICOS_PADRAO);
-      });
-    return () => {
-      mounted = false;
-    };
+      .catch(() => { if (mounted) setServicos(SERVICOS_PADRAO); });
+    listarCombos()
+      .then((lista) => { if (mounted && Array.isArray(lista)) setCombos(lista); })
+      .catch(() => {});
+    return () => { mounted = false; };
   }, []);
+
+  function selecionarTipo(novoTipo) {
+    setTipo(novoTipo);
+    setServicoId('');
+    setComboId('');
+    setSlots([]);
+    setSlotSelecionado(null);
+    setErro('');
+  }
 
   function selecionarServico(id) {
     setServicoId(id);
+    setSlots([]);
+    setSlotSelecionado(null);
+    setErro('');
+  }
+
+  function selecionarCombo(id) {
+    setComboId(id);
     setSlots([]);
     setSlotSelecionado(null);
     setErro('');
@@ -80,14 +105,17 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   }
 
   async function buscarSlots() {
-    if (!servicoId || !data) return;
+    const idAtivo = tipo === 'servico' ? servicoId : comboId;
+    if (!idAtivo || !data) return;
 
     setLoading(true);
     setErro('');
     setSlots([]);
     setSlotSelecionado(null);
     try {
-      const res = await buscarDisponibilidade(data, servicoId);
+      const res = tipo === 'servico'
+        ? await buscarDisponibilidade(data, servicoId)
+        : await buscarDisponibilidade(data, null, comboId);
       setSlots(res.slotsDisponiveis || []);
       setStep(2);
     } catch (e) {
@@ -98,25 +126,28 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   }
 
   async function confirmarAgendamento() {
-    if (!slotSelecionado) {
-      setErro('Selecione um horário');
-      return;
-    }
-    if (!nome.trim() || !telefone.trim()) {
-      setErro('Preencha nome e telefone');
-      return;
-    }
+    if (!slotSelecionado) { setErro('Selecione um horário'); return; }
+    if (!nome.trim() || !telefone.trim()) { setErro('Preencha nome e telefone'); return; }
 
     setLoading(true);
     setErro('');
     try {
-      const resultado = await criarAgendamento({
+      const payload = {
         nomeCliente: nome.trim(),
         telefone: telefone.trim(),
         data: slotSelecionado.inicio,
-        servicoId: Number(servicoId),
+        ...(tipo === 'servico' ? { servicoId: Number(servicoId) } : { comboId: Number(comboId) }),
         ...(emailCliente.trim() ? { email: emailCliente.trim() } : {}),
-      });
+      };
+      const resultado = await criarAgendamento(payload);
+      const nomeItem =
+        resultado?.servico?.nome ||
+        resultado?.combo?.nome ||
+        (tipo === 'servico'
+          ? servicos.find((s) => String(s.id) === String(servicoId))?.nome
+          : combos.find((c) => String(c.id) === String(comboId))?.nome) ||
+        '';
+      setNomeItemAgendado(nomeItem);
       setAgendado(resultado);
       setStep(4);
     } catch (e) {
@@ -127,7 +158,14 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   }
 
   const servicoSelecionado = servicos.find((s) => String(s.id) === String(servicoId));
-  const duracaoLabel = servicoSelecionado ? formatDuracao(servicoSelecionado.duracao) : '';
+  const comboSelecionado = combos.find((c) => String(c.id) === String(comboId));
+  const itemSelecionado = tipo === 'servico' ? servicoSelecionado : comboSelecionado;
+  const duracaoLabel = itemSelecionado
+    ? tipo === 'servico'
+      ? formatDuracao(itemSelecionado.duracao)
+      : formatDuracao(itemSelecionado.itens?.reduce((s, i) => s + i.servico.duracao, 0) || 0)
+    : '';
+  const idAtivo = tipo === 'servico' ? servicoId : comboId;
 
   const modal = (
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -141,22 +179,75 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
               <h2 className="modal-title">Escolha seu horário</h2>
             </div>
 
-            <div className="modal-label">
-              Serviço
-              <div className="service-choice-grid">
-                {servicos.map((s) => (
-                  <button
-                    type="button"
-                    key={s.id}
-                    className={`service-choice-btn${String(servicoId) === String(s.id) ? ' selected' : ''}`}
-                    onClick={() => selecionarServico(s.id)}
-                  >
-                    <span>{s.nome}</span>
-                    <strong>R$ {Number(s.preco).toFixed(2).replace('.', ',')}</strong>
-                  </button>
-                ))}
-              </div>
+            {/* Tipo: Serviço ou Combo */}
+            <div className="modal-tipo-toggle">
+              <button
+                type="button"
+                className={`tipo-btn${tipo === 'servico' ? ' selected' : ''}`}
+                onClick={() => selecionarTipo('servico')}
+              >
+                Serviço
+              </button>
+              {combos.length > 0 && (
+                <button
+                  type="button"
+                  className={`tipo-btn${tipo === 'combo' ? ' selected' : ''}`}
+                  onClick={() => selecionarTipo('combo')}
+                >
+                  Combo
+                </button>
+              )}
             </div>
+
+            {tipo === 'servico' && (
+              <div className="modal-label">
+                Serviço
+                <div className="service-choice-grid">
+                  {servicos.map((s) => (
+                    <button
+                      type="button"
+                      key={s.id}
+                      className={`service-choice-btn${String(servicoId) === String(s.id) ? ' selected' : ''}`}
+                      onClick={() => selecionarServico(s.id)}
+                    >
+                      <span>{s.nome}</span>
+                      <strong>{formatPreco(s.preco)}</strong>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {tipo === 'combo' && (
+              <div className="modal-label">
+                Combo
+                <div className="service-choice-grid">
+                  {combos.map((c) => {
+                    const duracaoTotal = c.itens?.reduce((s, i) => s + i.servico.duracao, 0) || 0;
+                    return (
+                      <button
+                        type="button"
+                        key={c.id}
+                        className={`service-choice-btn combo-choice-btn${String(comboId) === String(c.id) ? ' selected' : ''}`}
+                        onClick={() => selecionarCombo(c.id)}
+                      >
+                        <span>{c.nome}</span>
+                        {c.descricao && <em className="combo-desc">{c.descricao}</em>}
+                        <ul className="combo-servicos-list">
+                          {c.itens?.map((item) => (
+                            <li key={item.id}>{item.servico.nome}</li>
+                          ))}
+                        </ul>
+                        <div className="combo-footer">
+                          <strong>{formatPrecoFixo(c.preco)}</strong>
+                          {duracaoTotal > 0 && <span>{formatDuracao(duracaoTotal)}</span>}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="modal-label">
               Dia
@@ -182,7 +273,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
             {erro && <p className="modal-erro">{erro}</p>}
 
-            <button className="modal-btn primary" onClick={buscarSlots} disabled={!servicoId || !data || loading}>
+            <button className="modal-btn primary" onClick={buscarSlots} disabled={!idAtivo || !data || loading}>
               {loading ? 'Buscando...' : 'Ver horários'}
             </button>
           </div>
@@ -193,7 +284,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             <button className="modal-back" onClick={() => setStep(1)}>← Voltar</button>
             <h2 className="modal-title">Escolha o horário</h2>
             <p className="modal-sub">
-              {servicoSelecionado?.nome}
+              {itemSelecionado?.nome}
               {duracaoLabel ? ` · ${duracaoLabel}` : ''}
               {data ? ` · ${new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}` : ''}
             </p>
@@ -228,7 +319,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             <button className="modal-back" onClick={() => setStep(2)}>← Voltar</button>
             <h2 className="modal-title">Seus dados</h2>
             <p className="modal-sub">
-              {servicoSelecionado?.nome}
+              {itemSelecionado?.nome}
               {slotSelecionado?.horario ? ` · ${slotSelecionado.horario}` : ''}
               {duracaoLabel ? ` · ${duracaoLabel}` : ''}
               {data ? ` · ${new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}` : ''}
@@ -265,12 +356,19 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
               Olá, <strong>{agendado.nomeCliente}</strong>! Seu agendamento foi realizado com sucesso.
             </p>
             <div className="confirmacao-box">
-              <p><strong>Serviço:</strong> {agendado.servico?.nome}</p>
+              <p><strong>{agendado.combo ? 'Combo' : 'Serviço'}:</strong> {nomeItemAgendado}</p>
+              {agendado.combo && agendado.combo.itens && (
+                <ul style={{ margin: '4px 0 8px 16px', fontSize: '0.9em', color: '#555' }}>
+                  {agendado.combo.itens.map((item) => (
+                    <li key={item.id}>{item.servico.nome}</li>
+                  ))}
+                </ul>
+              )}
               {agendado.servico?.duracao && <p><strong>Duração:</strong> {formatDuracao(agendado.servico.duracao)}</p>}
               <p><strong>Data/Hora:</strong> {formatDateTime(agendado.data)}</p>
               <p><strong>Status:</strong> {agendado.status}</p>
             </div>
-            <a className="modal-btn whatsapp" href={buildWhatsAppLink(agendado)} target="_blank" rel="noreferrer">
+            <a className="modal-btn whatsapp" href={buildWhatsAppLink(agendado, nomeItemAgendado)} target="_blank" rel="noreferrer">
               Confirmar pelo WhatsApp
             </a>
             <button className="modal-btn secondary" onClick={onClose}>Fechar</button>

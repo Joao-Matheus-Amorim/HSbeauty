@@ -4,6 +4,7 @@ import AdminLayout from '../components/AdminLayout';
 import Dashboard from '../components/Dashboard';
 import AppointmentManager from '../components/AppointmentManager';
 import ServiceManager from '../components/ServiceManager';
+import ComboManager from '../components/ComboManager';
 import ScheduleManager from '../components/ScheduleManager';
 import { getAccessToken, getAdminFromSession, logoutAdmin } from '../services/auth';
 import { listarAgendamentosAdmin } from '../services/admin';
@@ -68,6 +69,7 @@ export default function Admin() {
       {tab === 'agendamentos' && <AppointmentManager />}
       {tab === 'horarios' && <ScheduleManager />}
       {tab === 'servicos' && <ServiceManager />}
+      {tab === 'combos' && <ComboManager />}
     </AdminLayout>
   );
 }

@@ -42,7 +42,10 @@ export async function getDayOccupancy({ prisma, dateString }) {
     prisma.agendamento.findMany({
       // Exclui cancelados do calculo de conflitos
       where: { data: { gte: dayStart, lte: dayEnd }, status: { not: 'cancelado' } },
-      include: { servico: true },
+      include: {
+        servico: { select: { duracao: true } },
+        combo: { include: { itens: { include: { servico: { select: { duracao: true } } } } } },
+      },
       orderBy: { id: 'asc' },
     }),
     prisma.bloqueioHorario.findMany({
@@ -56,8 +59,11 @@ export async function getDayOccupancy({ prisma, dateString }) {
 
   const ocupados = [
     ...agendamentos.map((a) => {
+      const duracao =
+        a.servico?.duracao ??
+        (a.combo?.itens?.reduce((sum, item) => sum + item.servico.duracao, 0) ?? 60);
       const inicio = new Date(a.data);
-      const fim = addMinutes(inicio, a.servico.duracao);
+      const fim = addMinutes(inicio, duracao);
       return { inicio, fim, tipo: 'agendamento', id: a.id };
     }),
     ...bloqueios.map((b) => ({

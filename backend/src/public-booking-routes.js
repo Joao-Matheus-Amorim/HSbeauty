@@ -21,7 +21,8 @@ export function createPublicBookingRouter({ prisma }) {
       const validation = validatePublicBookingPayload(req.body);
       if (!validation.valid) return sendError(res, validation.status, validation.message);
 
-      const { nomeCliente, telefone, dataAgendamento, servicoIdNumero, observacoes, email } = validation.data;
+      const { nomeCliente, telefone, dataAgendamento, servicoIdNumero, comboIdNumero, observacoes, email } =
+        validation.data;
 
       if (!isDateInCurrentWeek(dataAgendamento)) return sendError(res, 400, 'Agendamentos disponíveis apenas para a semana atual');
 
@@ -31,19 +32,42 @@ export function createPublicBookingRouter({ prisma }) {
 
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
-        const servico = await tx.servico.findUnique({ where: { id: servicoIdNumero } });
-        if (!servico || servico.ativo === false) {
-          return { erro: { status: 404, message: 'Serviço não encontrado ou inativo' } };
+        let duracaoMinutos;
+        let nomeServico;
+
+        if (servicoIdNumero) {
+          const servico = await tx.servico.findUnique({ where: { id: servicoIdNumero } });
+          if (!servico || servico.ativo === false) {
+            return { erro: { status: 404, message: 'Serviço não encontrado ou inativo' } };
+          }
+          duracaoMinutos = servico.duracao;
+          nomeServico = servico.nome;
+        } else {
+          const combo = await tx.combo.findUnique({
+            where: { id: comboIdNumero },
+            include: { itens: { include: { servico: { select: { duracao: true, nome: true } } } } },
+          });
+          if (!combo || combo.ativo === false) {
+            return { erro: { status: 404, message: 'Combo não encontrado ou inativo' } };
+          }
+          duracaoMinutos = combo.itens.reduce((sum, item) => sum + item.servico.duracao, 0);
+          nomeServico = combo.nome;
         }
 
         const inicioSlot = new Date(dataAgendamento);
-        const fimSlot = addMinutes(inicioSlot, servico.duracao);
+        const fimSlot = addMinutes(inicioSlot, duracaoMinutos);
         if (!isWithinBusinessHours(inicioSlot, fimSlot)) {
           return { erro: { status: 400, message: 'Horário fora do expediente (09:00–18:00)' } };
         }
 
-        const disponibilidade = await calculateAvailability({ prisma: tx, dateString: dataString, servico });
-        const slotDisponivel = disponibilidade.slotsDisponiveis.some((slot) => new Date(slot.inicio).getTime() === inicioSlot.getTime());
+        const disponibilidade = await calculateAvailability({
+          prisma: tx,
+          dateString: dataString,
+          servico: { duracao: duracaoMinutos },
+        });
+        const slotDisponivel = disponibilidade.slotsDisponiveis.some(
+          (slot) => new Date(slot.inicio).getTime() === inicioSlot.getTime(),
+        );
         if (!slotDisponivel) {
           return { erro: { status: 409, message: 'Horário indisponível' } };
         }
@@ -54,26 +78,30 @@ export function createPublicBookingRouter({ prisma }) {
             telefone,
             data: dataAgendamento,
             hora: getHoraFromDate(dataAgendamento),
-            servicoId: servicoIdNumero,
+            ...(servicoIdNumero ? { servicoId: servicoIdNumero } : {}),
+            ...(comboIdNumero ? { comboId: comboIdNumero } : {}),
             status: PUBLIC_BOOKING_INITIAL_STATUS,
             ...(observacoes ? { observacoes } : {}),
             ...(email ? { email } : {}),
           },
-          include: { servico: true },
+          include: {
+            servico: true,
+            combo: { include: { itens: { include: { servico: true } } } },
+          },
         });
 
-        return { agendamento };
+        return { agendamento, nomeServico };
       });
 
       if (result.erro) return sendError(res, result.erro.status, result.erro.message);
 
-      const { agendamento } = result;
+      const { agendamento, nomeServico } = result;
       res.status(201).json(agendamento);
 
       sendBookingConfirmationEmail({
         nomeCliente: agendamento.nomeCliente,
         email: agendamento.email,
-        servico: agendamento.servico?.nome || 'Serviço',
+        servico: nomeServico,
         data: agendamento.data,
         hora: agendamento.hora,
       }).catch((err) => logError('email/booking-confirmation', err, req));

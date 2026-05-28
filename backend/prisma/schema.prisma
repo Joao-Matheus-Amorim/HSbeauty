@@ -18,22 +18,50 @@ model Servico {
   atualizadoEm DateTime       @updatedAt
 
   agendamentos Agendamento[]
+  comboItens   ComboItem[]
+}
+
+model Combo {
+  id           Int           @id @default(autoincrement())
+  nome         String        @unique
+  descricao    String?
+  preco        Float
+  ativo        Boolean       @default(true)
+  criadoEm     DateTime      @default(now())
+  atualizadoEm DateTime      @updatedAt
+
+  itens        ComboItem[]
+  agendamentos Agendamento[]
+}
+
+model ComboItem {
+  id        Int     @id @default(autoincrement())
+  comboId   Int
+  servicoId Int
+  ordem     Int     @default(0)
+
+  combo     Combo   @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  servico   Servico @relation(fields: [servicoId], references: [id])
+
+  @@unique([comboId, servicoId])
 }
 
 model Agendamento {
-  id          Int      @id @default(autoincrement())
-  nomeCliente String
-  telefone    String
-  email       String?
-  data        DateTime
-  hora        String   // Formato HH:mm
-  servicoId   Int
-  status      String   @default("pendente") // pendente, confirmado, cancelado, concluido
-  observacoes String?
-  criadoEm    DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  nomeCliente  String
+  telefone     String
+  email        String?
+  data         DateTime
+  hora         String   // Formato HH:mm
+  servicoId    Int?
+  comboId      Int?
+  status       String   @default("pendente") // pendente, confirmado, cancelado, concluido
+  observacoes  String?
+  criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
-  servico     Servico  @relation(fields: [servicoId], references: [id], onDelete: Cascade)
+  servico      Servico? @relation(fields: [servicoId], references: [id], onDelete: SetNull)
+  combo        Combo?   @relation(fields: [comboId], references: [id], onDelete: SetNull)
 
   @@index([data], map: "Agendamento_data_idx")
   @@index([status], map: "Agendamento_status_idx")

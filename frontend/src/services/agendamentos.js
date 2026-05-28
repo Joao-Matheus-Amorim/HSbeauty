@@ -11,8 +11,16 @@ export async function listarServicos({ ativo } = {}) {
   return response.json();
 }
 
-export async function buscarDisponibilidade(data, servicoId) {
-  const params = new URLSearchParams({ data, servicoId: String(servicoId) });
+export async function listarCombos() {
+  const response = await fetch(`${API_URL}/combos`);
+  if (!response.ok) throw new Error('Erro ao carregar combos');
+  return response.json();
+}
+
+export async function buscarDisponibilidade(data, servicoId, comboId) {
+  const params = new URLSearchParams({ data });
+  if (servicoId) params.set('servicoId', String(servicoId));
+  if (comboId) params.set('comboId', String(comboId));
   const response = await fetch(`${API_URL}/disponibilidade?${params}`);
   if (!response.ok) throw new Error('Erro ao buscar disponibilidade');
   return response.json();

@@ -68,6 +68,37 @@ export async function desativarServicoAdmin(id) {
   return handleAuthResponse(response);
 }
 
+// ─── Combos ───────────────────────────────────────────────────────────────────
+
+export async function listarCombosAdmin(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  const response = await authorizedFetch(`${API_URL}/admin/combos?${query}`);
+  return handleAuthResponse(response);
+}
+
+export async function criarComboAdmin(dados) {
+  const response = await authorizedFetch(`${API_URL}/admin/combos`, {
+    method: 'POST',
+    body: JSON.stringify(dados),
+  });
+  return handleAuthResponse(response);
+}
+
+export async function atualizarComboAdmin(id, dados) {
+  const response = await authorizedFetch(`${API_URL}/admin/combos/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(dados),
+  });
+  return handleAuthResponse(response);
+}
+
+export async function desativarComboAdmin(id) {
+  const response = await authorizedFetch(`${API_URL}/admin/combos/${id}`, {
+    method: 'DELETE',
+  });
+  return handleAuthResponse(response);
+}
+
 // ─── Horários (Bloqueios) ─────────────────────────────────────────────────────
 
 export async function listarHorariosAdmin(params = {}) {

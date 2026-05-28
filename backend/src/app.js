@@ -12,6 +12,8 @@ import { createAvailabilityRouter } from './availability-routes.js';
 import { buildAllowedOrigins, isOriginAllowed } from './cors-config-rules.js';
 import { createPublicBookingRouter } from './public-booking-routes.js';
 import { createPublicServiceRouter } from './public-service-routes.js';
+import { createPublicComboRouter } from './public-combo-routes.js';
+import { createAdminComboRouter } from './admin-combo-routes.js';
 
 const { PrismaClient } = pkg;
 
@@ -40,12 +42,14 @@ export function createApp() {
 
   app.use('/auth', createAuthRouter({ prisma, jwtSecret: JWT_SECRET }));
   app.use('/servicos', createPublicServiceRouter({ prisma }));
+  app.use('/combos', createPublicComboRouter({ prisma }));
   app.use('/agendamentos', createPublicBookingRouter({ prisma }));
   app.use('/disponibilidade', createAvailabilityRouter({ prisma }));
 
   app.use('/admin', createAdminDashboardRouter({ prisma, authMiddleware }));
   app.use('/admin', createAdminAppointmentRouter({ prisma, authMiddleware }));
   app.use('/admin', createAdminServiceRouter({ prisma, authMiddleware }));
+  app.use('/admin', createAdminComboRouter({ prisma, authMiddleware }));
   setupAdminHorarios(prisma, authMiddleware);
   app.use('/admin', adminRouter);
 

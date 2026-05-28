@@ -8,25 +8,11 @@ const AgendamentoModal = lazy(() => import('./components/AgendamentoModal'))
 
 const fallbackServices = SERVICOS_PADRAO
 
-const removeAccents = (value) =>
-	String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-
-function inferCategoria(servico) {
-	const raw = String(servico.categoria || '').trim()
-	if (raw) return raw
-	const n = removeAccents(servico.nome || '')
-	if (n.includes('unha') || n.includes('manicure')) return 'Unhas'
-	if (n.includes('cilio')) return 'C\u00edlios'
-	if (n.includes('sobrancelha')) return 'Sobrancelhas'
-	if (n.includes('depila')) return 'Depila\u00e7\u00e3o'
-	if (n.includes('labio') || n.includes('labial') || n.includes('spa')) return 'Spa Labial'
-	return 'Outros'
-}
-
 function buildCategorias(servicos) {
 	const grupos = new Map()
 	servicos.forEach((s) => {
-		const nome = inferCategoria(s)
+		const nome = String(s.categoria || '').trim()
+		if (!nome) return
 		if (!grupos.has(nome)) grupos.set(nome, { nome, servicos: [] })
 		grupos.get(nome).servicos.push(s)
 	})

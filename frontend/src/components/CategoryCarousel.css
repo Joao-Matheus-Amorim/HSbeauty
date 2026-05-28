@@ -10,7 +10,7 @@
   perspective: 1100px;
   perspective-origin: 50% 55%;
   overflow: hidden;
-  padding: 14px 0 6px;
+  padding: 14px 0 18px;
 }
 
 .cat-carousel-viewport::before,
@@ -43,7 +43,7 @@
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  padding: 36px 0 52px;
+  padding: 36px 0 150px;
   transform-style: preserve-3d;
   scrollbar-width: none;
 }

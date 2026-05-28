@@ -14,10 +14,10 @@ export const SEMANAS_DISPONIVEIS = 3;
 
 // ─── Serviços padrão (fallback quando a API não responde) ─────────────────────
 export const SERVICOS_PADRAO = [
-  { id: 1, nome: 'Unhas',        preco: 35,  duracao: 150, ativo: true },
-  { id: 2, nome: 'Cílios',       preco: 140, duracao: 150, ativo: true },
-  { id: 3, nome: 'Sobrancelhas', preco: 70,  duracao: 150, ativo: true },
-  { id: 4, nome: 'Depilação',    preco: 50,  duracao: 150, ativo: true },
+  { id: 1, nome: 'Unhas',        categoria: 'Unhas',        preco: 35,  duracao: 150, ativo: true },
+  { id: 2, nome: 'Cílios',       categoria: 'Cílios',       preco: 140, duracao: 150, ativo: true },
+  { id: 3, nome: 'Sobrancelhas', categoria: 'Sobrancelhas', preco: 70,  duracao: 150, ativo: true },
+  { id: 4, nome: 'Depilação',    categoria: 'Depilação',    preco: 50,  duracao: 150, ativo: true },
 ];
 
 // ─── Status de agendamento ────────────────────────────────────────────────────

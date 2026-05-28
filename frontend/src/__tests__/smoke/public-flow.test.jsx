@@ -32,10 +32,10 @@ describe('Smoke publico', () => {
     listarCombos.mockResolvedValue([]);
     getSiteConfig.mockResolvedValue({ bannerUrl: null, logoUrl: null });
     listarServicos.mockResolvedValue([
-      { id: 1, nome: 'Unhas', duracao: 60, preco: 60 },
-      { id: 2, nome: 'Cilios', duracao: 30, preco: 50 },
-      { id: 3, nome: 'Sobrancelhas', duracao: 40, preco: 45 },
-      { id: 4, nome: 'Depilacao', duracao: 20, preco: 35 },
+      { id: 1, nome: 'Unhas', categoria: 'Unhas', duracao: 60, preco: 60 },
+      { id: 2, nome: 'Cilios', categoria: 'Cílios', duracao: 30, preco: 50 },
+      { id: 3, nome: 'Sobrancelhas', categoria: 'Sobrancelhas', duracao: 40, preco: 45 },
+      { id: 4, nome: 'Depilacao', categoria: 'Depilação', duracao: 20, preco: 35 },
     ]);
 
     buscarDisponibilidade.mockResolvedValue({

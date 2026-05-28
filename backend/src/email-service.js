@@ -1,3 +1,4 @@
+import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 
 function buildBookingConfirmationHtml({ nomeCliente, servico, dataFormatada, hora }) {
@@ -28,16 +29,34 @@ function formatBookingDate(data) {
   });
 }
 
-export async function sendBookingConfirmationEmail({ nomeCliente, email, servico, data, hora }) {
+async function sendViaGmail({ to, subject, html }) {
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!user || !pass) return null;
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user, pass },
+  });
+
+  await transporter.sendMail({ from: `HSBeauty Studio <${user}>`, to, subject, html });
+  return { sent: true, provider: 'gmail' };
+}
+
+async function sendViaResend({ to, subject, html }) {
   const apiKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.RESEND_FROM_EMAIL;
-
-  if (!apiKey || !fromEmail) return { sent: false, reason: 'missing_config' };
-  if (!email) return { sent: false, reason: 'missing_email' };
+  if (!apiKey || !fromEmail) return null;
 
   const resend = new Resend(apiKey);
-  await resend.emails.send({
-    from: fromEmail,
+  await resend.emails.send({ from: fromEmail, to, subject, html });
+  return { sent: true, provider: 'resend' };
+}
+
+export async function sendBookingConfirmationEmail({ nomeCliente, email, servico, data, hora }) {
+  if (!email) return { sent: false, reason: 'missing_email' };
+
+  const payload = {
     to: email,
     subject: `Agendamento recebido — ${servico}`,
     html: buildBookingConfirmationHtml({
@@ -46,7 +65,13 @@ export async function sendBookingConfirmationEmail({ nomeCliente, email, servico
       dataFormatada: formatBookingDate(data),
       hora,
     }),
-  });
+  };
 
-  return { sent: true };
+  const gmailResult = await sendViaGmail(payload);
+  if (gmailResult) return gmailResult;
+
+  const resendResult = await sendViaResend(payload);
+  if (resendResult) return resendResult;
+
+  return { sent: false, reason: 'missing_config' };
 }

@@ -4,6 +4,22 @@ import bcrypt from 'bcryptjs';
 import express from 'express';
 import { createAuthRouter } from '../src/auth-routes.js';
 import { createPublicBookingRouter } from '../src/public-booking-routes.js';
+import { getWeekBounds } from '../src/booking-rules.js';
+
+function futureSlotInCurrentWeek(preferredHour = 10) {
+  const now = new Date();
+  const { end } = getWeekBounds(now);
+  for (let day = 0; day < 7; day += 1) {
+    const candidate = new Date(now);
+    candidate.setDate(now.getDate() + day);
+    candidate.setHours(preferredHour, 0, 0, 0);
+    if (candidate > now && candidate <= end) return candidate;
+  }
+  const fallback = new Date(now);
+  fallback.setMinutes(0, 0, 0);
+  fallback.setHours(fallback.getHours() + 2);
+  return fallback;
+}
 
 function createPrismaMock(options = {}) {
   const refreshStore = new Map();
@@ -175,8 +191,7 @@ test('smoke: public booking creates appointment', async () => {
   app.use(express.json());
   app.use('/agendamentos', createPublicBookingRouter({ prisma }));
 
-  const bookingDate = new Date();
-  bookingDate.setHours(10, 0, 0, 0);
+  const bookingDate = futureSlotInCurrentWeek(10);
 
   await withServer(app, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/agendamentos`, {
@@ -204,8 +219,7 @@ test('smoke: public booking fails with invalid payload', async () => {
   app.use(express.json());
   app.use('/agendamentos', createPublicBookingRouter({ prisma }));
 
-  const bookingDate = new Date();
-  bookingDate.setHours(10, 0, 0, 0);
+  const bookingDate = futureSlotInCurrentWeek(10);
 
   await withServer(app, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/agendamentos`, {
@@ -224,8 +238,7 @@ test('smoke: public booking fails with invalid payload', async () => {
 });
 
 test('smoke: public booking fails with unavailable slot', async () => {
-  const bookingDate = new Date();
-  bookingDate.setHours(10, 0, 0, 0);
+  const bookingDate = futureSlotInCurrentWeek(10);
 
   const { prisma } = createPrismaMock({ busySlotIso: bookingDate.toISOString() });
   const app = express();

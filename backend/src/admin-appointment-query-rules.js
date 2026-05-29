@@ -12,9 +12,22 @@ function parseDate(value, fieldName) {
   return { valid: true, value: date };
 }
 
+const BUSCA_MAX = 80;
+
 export function buildAdminAppointmentQuery(query = {}) {
-  const { status, dataInicio, dataFim, servicoId, page = 1, limit = 20 } = query;
+  const { status, dataInicio, dataFim, servicoId, search, busca, page = 1, limit = 20 } = query;
   const where = {};
+
+  const termo = search ?? busca;
+  if (termo !== undefined && termo !== null && String(termo).trim() !== '') {
+    const q = String(termo).trim().slice(0, BUSCA_MAX);
+    const apenasDigitos = q.replace(/\D/g, '');
+    where.OR = [
+      { nomeCliente: { contains: q, mode: 'insensitive' } },
+      { email: { contains: q, mode: 'insensitive' } },
+      ...(apenasDigitos ? [{ telefone: { contains: apenasDigitos } }] : []),
+    ];
+  }
 
   if (status) {
     const normalizedStatus = normalizeBookingStatus(status);

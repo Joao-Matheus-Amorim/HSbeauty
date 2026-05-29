@@ -12,6 +12,28 @@ test('buildAdminAppointmentQuery returns default pagination and empty filter', (
   });
 });
 
+test('buildAdminAppointmentQuery aceita busca por nome via search', () => {
+  const result = buildAdminAppointmentQuery({ search: '  maria  ' });
+  assert.equal(result.valid, true);
+  assert.deepEqual(result.where.OR, [
+    { nomeCliente: { contains: 'maria', mode: 'insensitive' } },
+    { email: { contains: 'maria', mode: 'insensitive' } },
+  ]);
+});
+
+test('buildAdminAppointmentQuery aceita busca via busca (compat) e por digitos no telefone', () => {
+  const result = buildAdminAppointmentQuery({ busca: '21987654321' });
+  assert.equal(result.valid, true);
+  const haveTel = result.where.OR.some((c) => c.telefone?.contains === '21987654321');
+  assert.ok(haveTel, 'deveria filtrar pelo telefone quando termo tem digitos');
+});
+
+test('buildAdminAppointmentQuery trunca busca em 80 chars', () => {
+  const longo = 'A'.repeat(120);
+  const result = buildAdminAppointmentQuery({ search: longo });
+  assert.equal(result.where.OR[0].nomeCliente.contains.length, 80);
+});
+
 test('buildAdminAppointmentQuery builds valid filters', () => {
   const result = buildAdminAppointmentQuery({
     status: 'confirmado',

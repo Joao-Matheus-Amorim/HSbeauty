@@ -63,7 +63,6 @@ export default function ImageUpload({ value, onChange, disabled }) {
         <input
           type="file"
           accept="image/*"
-          capture="environment"
           onChange={handleFile}
           disabled={disabled || uploading}
           className="hidden"

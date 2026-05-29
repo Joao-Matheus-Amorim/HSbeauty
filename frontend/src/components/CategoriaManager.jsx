@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Edit2, X, AlertCircle, Eye, EyeOff, FolderTree } from 'lucide-react';
 import {
   listarCategoriasAdmin,
@@ -19,7 +19,7 @@ export default function CategoriaManager() {
   const [editing, setEditing] = useState(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
 
-  const loadCategorias = useCallback(async () => {
+  async function loadCategorias() {
     setLoading(true);
     setError(null);
     try {
@@ -30,11 +30,16 @@ export default function CategoriaManager() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }
 
   useEffect(() => {
-    loadCategorias();
-  }, [loadCategorias]);
+    let ignore = false;
+    listarCategoriasAdmin()
+      .then((data) => { if (!ignore) { setCategorias(data.categorias || []); setError(null); } })
+      .catch((err) => { if (!ignore) setError(err.message); })
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
+  }, []);
 
   function resetForm() {
     setEditing(null);

@@ -136,9 +136,9 @@ function App() {
 				<section className="meta-row glass-panel">
 					<span>5.0 (150+)</span>
 					<span>Piabeta / Mage</span>
-					<a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer">
-						Chamar no WhatsApp
-					</a>
+					<button type="button" className="meta-row-cta" onClick={(event) => reservar(null, event)}>
+						Agendar agora
+					</button>
 				</section>
 
 				<section className="services-section" id="services">
@@ -199,14 +199,13 @@ function App() {
 						<div className="gallery-placeholder" aria-hidden="true"><span>Resultado B</span></div>
 					</div>
 					<div className="cta-stack">
-						<a className="cta-button cta-primary" href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer">
-							<span>Agendar no WhatsApp</span>
-							<small>Atendimento rápido e direto</small>
-						</a>
-						<button className="cta-button cta-secondary" type="button" onClick={(event) => reservar(null, event)}>
-							<span>Reservar</span>
-							<small>Escolha serviço, dia e horário</small>
+						<button className="cta-button cta-primary" type="button" onClick={(event) => reservar(null, event)}>
+							<span>Agendar agora</span>
+							<small>Escolha serviço, dia e horário em 1 minuto</small>
 						</button>
+						<a className="cta-help" href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer">
+							Tem alguma dúvida? Fala com a gente no WhatsApp
+						</a>
 					</div>
 				</section>
 

@@ -50,22 +50,34 @@ function App() {
 
 	useEffect(() => {
 		let mounted = true
-		async function loadServices() {
-			try {
-				const apiServices = await listarServicos({ ativo: true })
-				if (mounted && Array.isArray(apiServices) && apiServices.length) {
-					setServices(apiServices)
-				}
-			} catch {
-				if (mounted) setServices(fallbackServices)
+
+		Promise.allSettled([
+			listarServicos({ ativo: true }),
+			listarCategorias(),
+			listarCombos(),
+			getSiteConfig(),
+		]).then(([servResult, catResult, comboResult, configResult]) => {
+			if (!mounted) return
+
+			if (servResult.status === 'fulfilled' && Array.isArray(servResult.value) && servResult.value.length) {
+				setServices(servResult.value)
+			} else if (servResult.status === 'rejected') {
+				setServices(fallbackServices)
 			}
-		}
-		loadServices()
-		listarCategorias().then((lista) => {
-			if (mounted && Array.isArray(lista) && lista.length) setCategoriasApi(lista)
-		}).catch(() => {})
-		listarCombos().then((lista) => { if (mounted && Array.isArray(lista)) setCombos(lista.filter((c) => c.ativo)) }).catch(() => {})
-		getSiteConfig().then((config) => { if (mounted && config) setSiteConfig(config) }).catch(() => {})
+
+			if (catResult.status === 'fulfilled' && Array.isArray(catResult.value) && catResult.value.length) {
+				setCategoriasApi(catResult.value)
+			}
+
+			if (comboResult.status === 'fulfilled' && Array.isArray(comboResult.value)) {
+				setCombos(comboResult.value.filter((c) => c.ativo))
+			}
+
+			if (configResult.status === 'fulfilled' && configResult.value) {
+				setSiteConfig(configResult.value)
+			}
+		})
+
 		return () => { mounted = false }
 	}, [])
 

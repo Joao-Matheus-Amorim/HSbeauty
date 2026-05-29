@@ -1,49 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { listarServicos, listarCombos, buscarDisponibilidade, criarAgendamento } from '../services/agendamentos';
+import { listarServicos, listarCombos, criarAgendamento } from '../services/agendamentos';
 import { WHATSAPP, SERVICOS_PADRAO, SEMANAS_DISPONIVEIS } from '../constants';
 import { formatDuracao, getAvailableDays } from '../utils/date-utils';
+import {
+  formatTelefone,
+  isValidTelefone,
+  isValidEmail,
+  formatDateTime,
+  formatPreco,
+  formatPrecoFixo,
+  buildWhatsAppLink as buildWhatsAppLinkRaw,
+} from '../utils/booking-format';
+import { useDisponibilidadeCache } from '../hooks/useDisponibilidadeCache';
 import './AgendamentoModal.css';
 
-function formatDateTime(value) {
-  return new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-}
-
-function buildWhatsAppLink(agendamento, nomeItem) {
-  const item = nomeItem || agendamento?.servico?.nome || agendamento?.combo?.nome || 'serviço';
-  const dataHora = agendamento?.data ? formatDateTime(agendamento.data) : '';
-  const nomeCliente = agendamento?.nomeCliente || '';
-  const mensagem = `Olá! Acabei de agendar: ${item} em ${dataHora}. Meu nome é ${nomeCliente}.`;
-  return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensagem)}`;
-}
-
-function formatPreco(valor) {
-  return `A partir de R$ ${Number(valor).toFixed(2).replace('.', ',')}`;
-}
-
-function formatPrecoFixo(valor) {
-  return `R$ ${Number(valor).toFixed(2).replace('.', ',')}`;
-}
-
-function formatTelefone(value) {
-  const digits = String(value || '').replace(/\D/g, '').slice(0, 11);
-  if (!digits) return '';
-  if (digits.length <= 2) return `(${digits}`;
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}
-
-function isValidTelefone(value) {
-  const digits = String(value || '').replace(/\D/g, '');
-  return digits.length === 10 || digits.length === 11;
-}
-
-function isValidEmail(value) {
-  const v = String(value || '').trim();
-  if (!v) return true;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-}
+const buildWhatsAppLink = (agendamento, nomeItem) => buildWhatsAppLinkRaw(WHATSAPP, agendamento, nomeItem);
 
 export default function AgendamentoModal({ servicoInicial, categoriaInicial, onClose }) {
   const [tipo, setTipo] = useState('servico'); // 'servico' | 'combo'
@@ -53,10 +25,8 @@ export default function AgendamentoModal({ servicoInicial, categoriaInicial, onC
   const [servicoId, setServicoId] = useState(servicoInicial?.id || '');
   const [comboId, setComboId] = useState('');
   const [data, setData] = useState('');
-  const [availability, setAvailability] = useState({});
   const [slotSelecionado, setSlotSelecionado] = useState(null);
   const [showMoreDates, setShowMoreDates] = useState(false);
-  const fetchTokenRef = useRef(0);
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [emailCliente, setEmailCliente] = useState('');
@@ -76,6 +46,25 @@ export default function AgendamentoModal({ servicoInicial, categoriaInicial, onC
     });
   }, [servicos, categoriaInicial]);
 
+  const semanas = useMemo(() => {
+    const grupos = [];
+    janela.days.forEach((dia) => {
+      if (!grupos[dia.weekIndex]) grupos[dia.weekIndex] = { label: dia.weekLabel || `Semana ${dia.weekIndex + 1}`, dias: [] };
+      grupos[dia.weekIndex].dias.push(dia);
+    });
+    return grupos.filter(Boolean);
+  }, [janela]);
+
+  const semanaAtual = useMemo(() => semanas[0]?.dias || [], [semanas]);
+  const semanasFuturas = useMemo(() => semanas.slice(1), [semanas]);
+  const idAtivoEffect = tipo === 'servico' ? servicoId : comboId;
+
+  const {
+    availability,
+    prefetchDay: fetchDisponibilidadeDia,
+    reset: resetAvailability,
+  } = useDisponibilidadeCache({ tipo, idAtivo: idAtivoEffect, semanaAtual });
+
   const slotsDoDia = useMemo(
     () => (data ? (availability[data]?.slots || []) : []),
     [data, availability]
@@ -91,81 +80,6 @@ export default function AgendamentoModal({ servicoInicial, categoriaInicial, onC
     });
     return { manha, tarde };
   }, [slotsDoDia]);
-
-  const semanas = useMemo(() => {
-    const grupos = [];
-    janela.days.forEach((dia) => {
-      if (!grupos[dia.weekIndex]) grupos[dia.weekIndex] = { label: dia.weekLabel || `Semana ${dia.weekIndex + 1}`, dias: [] };
-      grupos[dia.weekIndex].dias.push(dia);
-    });
-    return grupos.filter(Boolean);
-  }, [janela]);
-
-  const semanaAtual = useMemo(() => semanas[0]?.dias || [], [semanas]);
-  const semanasFuturas = useMemo(() => semanas.slice(1), [semanas]);
-  const idAtivoEffect = tipo === 'servico' ? servicoId : comboId;
-
-  useEffect(() => {
-    if (!idAtivoEffect || !semanaAtual.length) return;
-    fetchTokenRef.current += 1;
-    const token = fetchTokenRef.current;
-
-    Promise.resolve().then(() => {
-      if (token !== fetchTokenRef.current) return;
-      setAvailability((prev) => {
-        const inicial = {};
-        semanaAtual.forEach((dia) => {
-          inicial[dia.value] = prev[dia.value] || { status: 'loading', slots: [] };
-        });
-        return inicial;
-      });
-
-      semanaAtual.forEach(async (dia) => {
-        try {
-          const res = tipo === 'servico'
-            ? await buscarDisponibilidade(dia.value, idAtivoEffect)
-            : await buscarDisponibilidade(dia.value, null, idAtivoEffect);
-          if (token !== fetchTokenRef.current) return;
-          setAvailability((prev) => ({
-            ...prev,
-            [dia.value]: { status: 'ready', slots: res.slotsDisponiveis || [] },
-          }));
-        } catch {
-          if (token !== fetchTokenRef.current) return;
-          setAvailability((prev) => ({
-            ...prev,
-            [dia.value]: { status: 'error', slots: [] },
-          }));
-        }
-      });
-    });
-  }, [idAtivoEffect, tipo, semanaAtual]);
-
-  function fetchDisponibilidadeDia(dia) {
-    if (!idAtivoEffect) return;
-    const cached = availability[dia.value];
-    if (cached && cached.status !== 'error') return;
-    const token = fetchTokenRef.current;
-    setAvailability((prev) => ({ ...prev, [dia.value]: { status: 'loading', slots: [] } }));
-    (async () => {
-      try {
-        const res = tipo === 'servico'
-          ? await buscarDisponibilidade(dia.value, idAtivoEffect)
-          : await buscarDisponibilidade(dia.value, null, idAtivoEffect);
-        if (token !== fetchTokenRef.current) return;
-        setAvailability((prev) => ({
-          ...prev,
-          [dia.value]: { status: 'ready', slots: res.slotsDisponiveis || [] },
-        }));
-      } catch (err) {
-        if (token !== fetchTokenRef.current) return;
-        setAvailability((prev) => ({
-          ...prev,
-          [dia.value]: { status: 'error', slots: [], message: err?.message || 'Erro de conexão' },
-        }));
-      }
-    })();
-  }
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -191,21 +105,21 @@ export default function AgendamentoModal({ servicoInicial, categoriaInicial, onC
     setTipo(novoTipo);
     setServicoId('');
     setComboId('');
-    setAvailability({});
+    resetAvailability();
     setSlotSelecionado(null);
     setErro('');
   }
 
   function selecionarServico(id) {
     setServicoId(id);
-    setAvailability({});
+    resetAvailability();
     setSlotSelecionado(null);
     setErro('');
   }
 
   function selecionarCombo(id) {
     setComboId(id);
-    setAvailability({});
+    resetAvailability();
     setSlotSelecionado(null);
     setErro('');
   }

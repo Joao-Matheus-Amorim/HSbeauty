@@ -143,12 +143,12 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
     setErro('');
     setSlots([]);
     setSlotSelecionado(null);
+    setStep(2);
     try {
       const res = tipo === 'servico'
         ? await buscarDisponibilidade(data, servicoId)
         : await buscarDisponibilidade(data, null, comboId);
       setSlots(res.slotsDisponiveis || []);
-      setStep(2);
     } catch (e) {
       setErro(e.message || 'Erro ao buscar disponibilidade');
     } finally {
@@ -329,7 +329,13 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
               {data ? ` · ${new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}` : ''}
             </p>
 
-            {slots.length === 0 ? (
+            {loading ? (
+              <div className="slots-grid" aria-busy="true" aria-label="Carregando horários">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <span key={i} className="slot-skeleton" aria-hidden="true" />
+                ))}
+              </div>
+            ) : slots.length === 0 ? (
               <div className="modal-vazio-box">
                 <p className="modal-vazio">Não há horários disponíveis neste dia.</p>
                 <button type="button" className="modal-btn secondary" onClick={() => setStep(1)}>

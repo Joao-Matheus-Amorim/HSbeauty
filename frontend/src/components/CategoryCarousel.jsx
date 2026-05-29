@@ -81,11 +81,39 @@ export default function CategoryCarousel({ categorias, onSelect }) {
     }
   }, []);
 
+  function handleKeyDown(event, idx) {
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      const next = Math.min(categorias.length - 1, idx + 1);
+      scrollToIndex(next);
+      cardsRef.current[next]?.focus();
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      const prev = Math.max(0, idx - 1);
+      scrollToIndex(prev);
+      cardsRef.current[prev]?.focus();
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      scrollToIndex(0);
+      cardsRef.current[0]?.focus();
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      const last = categorias.length - 1;
+      scrollToIndex(last);
+      cardsRef.current[last]?.focus();
+    }
+  }
+
   if (!categorias.length) return null;
 
   return (
     <div className="cat-carousel">
-      <div className="cat-carousel-viewport">
+      <div
+        className="cat-carousel-viewport"
+        role="region"
+        aria-roledescription="carrossel"
+        aria-label="Categorias de serviços"
+      >
         <div className="cat-carousel-track" ref={trackRef}>
           <div className="cat-carousel-spacer" aria-hidden="true" />
           {categorias.map((cat, idx) => (
@@ -98,7 +126,10 @@ export default function CategoryCarousel({ categorias, onSelect }) {
                 scrollToIndex(idx);
                 onSelect(cat);
               }}
-              aria-label={`Categoria ${cat.nome} — ${cat.servicos.length} ${cat.servicos.length === 1 ? 'serviço' : 'serviços'}`}
+              onKeyDown={(e) => handleKeyDown(e, idx)}
+              aria-label={`Categoria ${cat.nome} — ${cat.servicos.length} ${cat.servicos.length === 1 ? 'serviço' : 'serviços'}. Setas para navegar, Enter para abrir.`}
+              aria-current={idx === activeIndex ? 'true' : undefined}
+              aria-roledescription="slide"
             >
               <div className="cat-card-face">
                 <span className="cat-card-glyph" aria-hidden="true">{categoryInitials(cat.nome)}</span>

@@ -191,10 +191,18 @@ Atualizado em: 27/05/2026
 ## Banco de dados
 
 - Arquivo: `backend/prisma/schema.prisma`
-- Modelos: `Servico`, `Agendamento`, `BloqueioHorario`, `Admin`, `RefreshToken`.
+- Modelos:
+  - `Servico` (com `categoriaId` FK e `imagemUrl`).
+  - `Categoria` (`nome unique`, `imagemUrl`, `ordem`, `ativo`).
+  - `Combo` + `ComboItem` (pacote de servicos, unique em `comboId+servicoId`).
+  - `Agendamento` (com `servicoId` OU `comboId`).
+  - `BloqueioHorario`.
+  - `SiteConfig` (singleton id=1, com `bannerUrl` e `logoUrl`).
+  - `Admin`, `RefreshToken`.
 - Estado: operacional.
-- Controle: indices ativos em `Agendamento.data`, `Agendamento.status`, `Agendamento.servicoId` e composicao `status,data`.
-- Gap: sem unique constraint de slot no banco; race condition mitigada por lock transacional, mas sem garantia a nivel de schema (A-013).
+- Controle: indices ativos em `Agendamento.data`, `Agendamento.status`, `Agendamento.servicoId`, composicao `status,data` e `Servico.categoriaId`.
+- Controle: unique parcial `Agendamento_data_ativo_uniq ON Agendamento(data) WHERE status <> 'cancelado'` impede slot duplicado mesmo fora do advisory lock (substitui A-013).
+- Controle: todas as migrations sao idempotentes (`IF NOT EXISTS`, blocos `DO $$ ... $$`) para tolerar drift entre prod e dev.
 
 ---
 

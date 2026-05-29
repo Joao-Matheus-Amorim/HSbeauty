@@ -21,28 +21,15 @@ Motivo: simplificar setup local e manter custo baixo durante a fase atual.
 Decisão: manter custo zero na versão inicial.
 Motivo: requisito de negócio definido desde o início.
 
-## D006 — Deploy Vercel manual por padrão
-Decisão: desativar deployments automáticos da Vercel via integração Git.
-Motivo: preservar minutos de build, evitar deploys desnecessários a cada commit/merge e reduzir risco de consumir limites da conta durante desenvolvimento iterativo.
+## D006 — Deploy Vercel manual por padrão (REVOGADA)
 
-Implementação:
-- `vercel.json` define `git.deploymentEnabled` como `false`.
-- Commits e merges no GitHub não devem disparar deploy automático.
-- O build do frontend continua preservado no projeto por `installCommand`, `buildCommand`, `outputDirectory` e `framework`.
+> **Status: revogada em 2026-05-29 pela D010.** O `vercel.json` está com `deploymentEnabled: true` e cada push em `main` publica automaticamente. Render também faz auto-deploy com `prisma migrate deploy` no boot. Veja D010 e `docs/adr/ADR-003-deploy.md` para a política em vigor.
 
-Política operacional:
-- Validar alterações localmente e/ou por CI antes de publicar.
-- Fazer deploy na Vercel apenas de forma intencional, quando houver uma versão candidata para produção.
-- Não reativar deploy automático sem nova decisão documentada.
+Decisão original: desativar deployments automáticos da Vercel via integração Git.
 
-Como publicar manualmente quando necessário:
-```bash
-cd frontend
-npm install
-npm run build
-```
+Motivo original: preservar minutos de build e reduzir risco de consumir limites da conta durante desenvolvimento iterativo.
 
-Depois, publicar pela Vercel CLI ou painel da Vercel de forma manual e consciente.
+Por que foi revogada: o volume de pushes em `main` ficou baixo o suficiente para não impactar limites, e a fricção do checklist manual estava atrasando entregas operacionais. CI + cobertura de testes deu confiança suficiente para liberar automação.
 
 ## D007 — Politica de versionamento (A-011)
 
@@ -120,3 +107,45 @@ Motivo: plano gratuito de 3.000 emails/mes e 100/dia e suficiente para o volume 
 2. Verificar dominio no painel Resend → Domains.
 3. Gerar API Key em Resend → API Keys.
 4. Configurar `RESEND_API_KEY` e `RESEND_FROM_EMAIL` como variaveis de ambiente no provedor de backend.
+
+## D010 — Auto-deploy frontend e backend a partir de main (2026-05-29)
+
+Decisao: ativar auto-deploy em ambas as plataformas a partir da branch `main`. Revoga D006.
+
+Implementacao:
+- `vercel.json`: `git.deploymentEnabled: true`. Push em `main` publica producao. Branches diferentes geram Preview Deployments.
+- Render (backend): auto-deploy ligado. `npm start` foi alterado para `prisma migrate deploy && node src/server.js`, aplicando migrations pendentes antes de subir.
+- Migrations sao idempotentes (uso de `IF NOT EXISTS` e blocos `DO $$ ... $$`) para tolerar drift em ambientes onde foram aplicadas manualmente.
+
+Como pausar publicacoes em incidente:
+- Vercel: editar `vercel.json` para `deploymentEnabled: false` e fazer push.
+- Render: pausar o servico no painel.
+
+Detalhes operacionais em `docs/adr/ADR-003-deploy.md`.
+
+## D011 — Provider de email: Brevo (revisao de D009) (2026-05-29)
+
+Decisao: trocar **Resend** por **Brevo** como provider primario de email transacional, com Gmail SMTP e Resend como fallbacks em cadeia.
+
+Motivo: Render Free Tier bloqueia trafego SMTP em algumas portas, o que impedia o Gmail/SMTP de funcionar de forma confiavel. Brevo oferece API HTTP nativa (POST `/v3/smtp/email`) que passa pelo Render sem problema, plano gratuito de 300 emails/dia (suficiente para o volume atual) e SDK nao obrigatorio (basta `fetch`).
+
+Cadeia de fallback (definida em `backend/src/email-service.js`):
+
+1. `BREVO_API_KEY` + `BREVO_FROM_EMAIL` → primeira tentativa.
+2. `GMAIL_USER` + `GMAIL_APP_PASSWORD` → fallback para ambientes sem bloqueio SMTP.
+3. `RESEND_API_KEY` + `RESEND_FROM_EMAIL` → fallback final.
+
+Cada provider tem timeout de 15s para nao travar a request do agendamento.
+
+### Variaveis em producao (Render)
+
+| Variavel | Obrigatoria? | Descricao |
+|---|---|---|
+| `BREVO_API_KEY` | Sim (provider primario) | Chave gerada em Brevo → SMTP & API |
+| `BREVO_FROM_EMAIL` | Sim | Endereco remetente verificado no Brevo |
+| `BREVO_FROM_NAME` | Nao | Nome de exibicao (default: `HSBeauty Studio`) |
+| `ADMIN_NOTIFICATION_EMAIL` | Sim | Email do admin que recebe notificacao de novo agendamento |
+| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Opcional | Fallback SMTP |
+| `RESEND_API_KEY` / `RESEND_FROM_EMAIL` | Opcional | Fallback secundario |
+
+D009 fica em registro historico — Resend continua suportado como fallback mas nao e mais o primario.

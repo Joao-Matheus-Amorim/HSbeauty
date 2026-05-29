@@ -25,17 +25,22 @@ Clientes agendam serviços pelo navegador sem instalar nada — basta um link.
 A proprietária gerencia agendamentos, serviços e bloqueios de horário via painel administrativo protegido por JWT.
 
 **Funcionalidades do cliente:**
-- Ver serviços disponíveis com preço e duração
-- Escolher data, horário e serviço
-- Confirmar agendamento informando nome, telefone e email (opcional)
+- Carrossel 3D glassmorph espelhado de **categorias** (Unhas, Cílios, Sobrancelhas, Depilação, Spa Labial — totalmente configurável pelo admin)
+- Drawer com sub-serviços de cada categoria (nome, descrição, preço, duração)
+- Combos (pacotes de serviços) listados em seção própria
+- Escolher dia (semana atual no calendário; semanas seguintes em sub-modal "+ Mais datas") e horário inline na mesma tela
+- Disponibilidade pré-buscada em paralelo: dias sem vaga aparecem riscados com badge "cheio"
+- Máscara automática de telefone, validação de email e telefone por campo
 - Receber email de confirmação automático após agendamento (quando email informado)
 
 **Funcionalidades do painel admin:**
-- Dashboard com KPIs da semana (total, pendentes, confirmados, receita)
-- Listagem e gerenciamento de agendamentos com filtros e busca
-- Badge numérico no nav com contagem de agendamentos pendentes (atualizado a cada 30s)
-- Export de agendamentos para CSV com filtros ativos
-- CRUD completo de serviços (nome, preço, ativo/inativo)
+- Dashboard com KPIs do mês (total, status, receita, top serviços, total hoje)
+- Listagem e gerenciamento de agendamentos com filtros, busca, export CSV
+- Badge numérico no nav com contagem de pendentes (atualizado a cada 30s)
+- CRUD de **Categorias** (nome, imagem, ordem, ativo) — categoria é obrigatória para serviço aparecer no site público
+- CRUD de **Serviços** com seleção de categoria via dropdown dinâmico e botão "+ Adicionar" inline
+- CRUD de **Combos** com itens
+- CRUD de **Site Config** (banner e logo via Cloudinary)
 - Bloqueio de horários (férias, folga, manutenção)
 - Visualização de agenda semanal (WeekCalendar) com toggle lista/calendário
 
@@ -163,12 +168,22 @@ cd frontend && npm run dev  # http://localhost:5173
 
 | Variável | Obrigatório | Descrição |
 |---|---|---|
-| `DATABASE_URL` | Sim | Connection string do PostgreSQL (Neon) |
+| `DATABASE_URL` | Sim | Connection string do PostgreSQL (Neon, sa-east-1 oficial) |
 | `JWT_SECRET` | Sim | Segredo para assinar os tokens JWT (≥32 chars) |
 | `FRONTEND_URL` | Sim | Origem(s) permitida(s) no CORS. Múltiplas separadas por vírgula |
 | `PORT` | — | Porta do servidor (padrão: `3000`) |
-| `RESEND_API_KEY` | — | Chave de API do Resend para envio de email de confirmação |
-| `RESEND_FROM_EMAIL` | — | Endereço remetente verificado no Resend (ex: `agendamentos@seudominio.com`) |
+| `TZ` | — | Timezone do servidor (padrão setado pelo `server.js`: `America/Sao_Paulo`) |
+
+#### Email transacional (D011 — Brevo é o provider primário; Gmail e Resend são fallbacks em cadeia)
+
+| Variável | Obrigatório | Descrição |
+|---|---|---|
+| `BREVO_API_KEY` | Sim (provider primário) | Chave API gerada em Brevo → SMTP & API |
+| `BREVO_FROM_EMAIL` | Sim | Remetente verificado no Brevo |
+| `BREVO_FROM_NAME` | — | Nome de exibição (default: `HSBeauty Studio`) |
+| `ADMIN_NOTIFICATION_EMAIL` | Sim | Email do admin que recebe cada novo agendamento |
+| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | — | Fallback SMTP (Render Free bloqueia SMTP, então geralmente fica vazio) |
+| `RESEND_API_KEY` / `RESEND_FROM_EMAIL` | — | Fallback secundário |
 
 ### Frontend (`frontend/.env`)
 
@@ -176,6 +191,8 @@ cd frontend && npm run dev  # http://localhost:5173
 |---|---|---|
 | `VITE_API_URL` | Sim | URL base da API backend |
 | `VITE_WHATSAPP` | — | Número WhatsApp da proprietária (formato: `5521999999999`) |
+| `VITE_CLOUDINARY_CLOUD_NAME` | Sim no admin | Cloud name do Cloudinary para upload de imagens (categoria, serviço, banner, logo) |
+| `VITE_CLOUDINARY_UPLOAD_PRESET` | Sim no admin | Upload preset não autenticado configurado no Cloudinary |
 
 ---
 

@@ -1,6 +1,6 @@
 # Registro de acoes tecnicas
 
-Atualizado em: 27/05/2026
+Atualizado em: 29/05/2026
 
 ## Legenda
 
@@ -20,7 +20,7 @@ Atualizado em: 27/05/2026
 | ~~A-013~~ | ~~P2~~ | ~~9~~ | ~~Criar testes de integracao com banco real.~~ | Concluido em C-032. | — |
 | ~~A-014~~ | ~~P2~~ | ~~9~~ | ~~Remover rotas legadas fora de `/admin`.~~ | Concluido em C-029. | — |
 | ~~A-015~~ | ~~P3~~ | ~~9~~ | ~~Refatorar `server.js` conforme BACKEND_REFACTOR_ROADMAP.~~ | Concluido em C-033. | — |
-| A-016 | P2 | 7 | Implementar notificacao ao admin para novo agendamento. | Frontend nao notifica; admin descobre apenas ao recarregar a pagina. | Decidir mecanismo (polling, WebSocket ou webhook) e registrar em `docs/decisoes.md`. |
+| ~~A-016~~ | ~~P2~~ | ~~7~~ | ~~Implementar notificacao ao admin para novo agendamento.~~ | Concluido em C-027 (polling 30s + badge) e reforcado em C-036 (notificacao por email transacional do admin). | — |
 | ~~A-017~~ | ~~P2~~ | ~~7~~ | ~~Substituir link WhatsApp por confirmacao real ao cliente.~~ | Concluido em C-035. | — |
 | ~~A-018~~ | ~~P3~~ | ~~8~~ | ~~Criar visualizacao de agenda semanal no painel admin.~~ | Concluido em C-034. | — |
 | ~~A-019~~ | ~~P3~~ | ~~8~~ | ~~Adicionar export de agendamentos para CSV.~~ | Concluido em C-028. | — |
@@ -65,3 +65,15 @@ Atualizado em: 27/05/2026
 | C-033 | Esta frente | `server.js` virou bootstrap puro; `app.js` criado como composition root com `createApp()` (A-015). |
 | C-034 | Esta frente | `WeekCalendar` criado sem dependencias externas; toggle lista/calendario adicionado ao `AppointmentManager` (A-018). |
 | C-035 | Esta frente | Email de confirmacao via Resend: `email-service.js`, campo email opcional no formulario publico, fire-and-forget pos-transacao, decisao D009 documentada (A-017). |
+| C-036 | 2026-05-28 | Adicionada notificacao por email para o admin a cada novo agendamento (`sendAdminBookingNotification`); fecha A-016 do lado de notificacao real. |
+| C-037 | 2026-05-28 | Brevo HTTP virou provider primario; Gmail/Resend ficam como fallback. Render Free bloqueia SMTP. (D011 documentado). |
+| C-038 | 2026-05-29 | Categoria virou entidade propria (modelo Prisma com `nome unique`, `imagemUrl`, `ordem`); `Servico.categoriaId` FK; CRUD admin + public listing. Substitui o campo string livre. |
+| C-039 | 2026-05-29 | Migrations idempotentes via `IF NOT EXISTS` e blocos `DO $$ ... $$`. `prisma migrate deploy` no `npm start` aplica pendentes no boot. |
+| C-040 | 2026-05-29 | XSS no email-service mitigado: escape HTML em todas interpolacoes; antes payload no nome/observacao chegava bruto na caixa do admin (G1). |
+| C-041 | 2026-05-29 | Endurecimento de seguranca da API: helmet-like headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy), CORS callback(null,false), error handler global, 404 catch-all, validate URL no PUT /admin/config, auth middleware guard contra Bearer vazio. |
+| C-042 | 2026-05-29 | `admin-routes.js` virou factory `createAdminScheduleRouter` — antes router module-level vazava handlers entre instancias em testes. |
+| C-043 | 2026-05-29 | Listagens admin trocam `include:true` por `select` minimo; payload de `/admin/agendamentos` ~70% menor. Dashboard puxa apenas campos necessarios + count para agendamentos do dia. |
+| C-044 | 2026-05-29 | `process.env.TZ = 'America/Sao_Paulo'` setado em server.js antes do app — corrige getDay()/setHours() rodando UTC no Render (sexta 23h BRT antes era sabado UTC). |
+| C-045 | 2026-05-29 | Migration `20260529150000_agendamento_slot_unique` cria unique parcial em `Agendamento(data) WHERE status <> 'cancelado'`. Fecha gap historico de A-013 (restava reforco a nivel de DB). |
+| C-046 | 2026-05-29 | Refator: helpers de formato (`utils/booking-format.js`) e hook `useDisponibilidadeCache.js` extraidos do AgendamentoModal; App.jsx unifica fetches publicos com `Promise.allSettled`. |
+| C-047 | 2026-05-29 | Cobertura nova: `url-rules`, `email-service-escape` (anti-XSS), `booking-format`. Backend 135 + frontend 92. |

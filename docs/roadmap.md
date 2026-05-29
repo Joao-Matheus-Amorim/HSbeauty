@@ -24,9 +24,13 @@ Estado: concluida para MVP.
 - [x] Modelar `BloqueioHorario`.
 - [x] Modelar `Admin`.
 - [x] Modelar `RefreshToken`.
-- [x] Criar migrations Prisma.
+- [x] Modelar `Combo` e `ComboItem` (pacotes de servicos com unique em `comboId+servicoId`).
+- [x] Modelar `SiteConfig` (singleton id=1, com `bannerUrl`, `logoUrl`).
+- [x] Modelar `Categoria` (`nome unique`, `imagemUrl`, `ordem`); `Servico.categoriaId` FK (`onDelete: SetNull`). Substitui o campo `categoria` string livre.
+- [x] Criar migrations Prisma (todas idempotentes via `IF NOT EXISTS`).
 - [x] Criar seed inicial de servicos.
 - [x] Avaliar e aplicar indices para consultas por data, status e servico.
+- [x] Unique parcial em `Agendamento(data) WHERE status <> 'cancelado'` para impedir slot duplicado mesmo fora do advisory lock.
 
 Pendencias futuras:
 
@@ -96,13 +100,14 @@ Pendencias futuras:
 
 ## Fase 6 - Deploy
 
-Estado: manual/controlado.
+Estado: automatico em `main` (revisado em 2026-05-29 pela D010).
 
-- [x] Vercel configurado para build estatico do frontend.
-- [x] Deploy automatico por Git desativado por decisao operacional (D006).
-- [x] Frontend exige `VITE_API_URL` em ambiente publicado.
-- [x] Banco em Neon/PostgreSQL.
-- [x] Checklist de deploy manual documentado com preflight, publicacao, smoke check e rollback.
+- [x] Vercel: build estatico do frontend; `git.deploymentEnabled: true`. Push em `main` publica producao; branches geram Preview.
+- [x] Render: backend hospedado; `npm start` aplica `prisma migrate deploy` antes de subir o servidor.
+- [x] Frontend exige `VITE_API_URL` em ambiente publicado; admin tambem usa `VITE_CLOUDINARY_CLOUD_NAME` / `VITE_CLOUDINARY_UPLOAD_PRESET` para upload de imagens.
+- [x] Banco em Neon/PostgreSQL (sa-east-1 oficial).
+- [x] Migrations idempotentes (`CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, blocos `DO $$ ... $$`) para tolerar drift.
+- [x] Checklist de pausa emergencial em `docs/adr/ADR-003-deploy.md` (`deploymentEnabled: false` no Vercel / pausar Render).
 
 Pendencias futuras:
 

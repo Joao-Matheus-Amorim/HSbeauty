@@ -181,13 +181,11 @@ cd frontend && npm run dev  # http://localhost:5173
 
 ## Deploy
 
-O frontend é publicado no **Vercel** como site estático gerado pelo Vite.
+- **Frontend** publicado no **Vercel** (`hsbeauty.vercel.app`) — auto-deploy ativo a cada push em `main`.
+- **Backend** hospedado no **Render** — auto-deploy ativo; `npm start` roda `prisma migrate deploy` antes de subir o servidor.
+- Branches diferentes de `main` geram Preview Deployments na Vercel; produção só muda quando `main` muda.
 
-- **Frontend**: build do Vite publicado como site estático
-- **Backend/API**: URL definida por ambiente via `VITE_API_URL`
-- **Deploy automático Git/Vercel**: desativado por decisão operacional para preservar limite de deploy
-
-Consulte [`docs/adr/ADR-003-deploy.md`](docs/adr/ADR-003-deploy.md) para a decisão de arquitetura de deploy.
+Consulte [`docs/adr/ADR-003-deploy.md`](docs/adr/ADR-003-deploy.md) para a decisão atualizada e o procedimento de pausar publicações em caso de incidente.
 
 ---
 

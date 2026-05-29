@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { listarServicos, listarCombos, buscarDisponibilidade, criarAgendamento } from '../services/agendamentos';
 import { WHATSAPP, SERVICOS_PADRAO, SEMANAS_DISPONIVEIS } from '../constants';
@@ -53,8 +53,10 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [servicoId, setServicoId] = useState(servicoInicial?.id || '');
   const [comboId, setComboId] = useState('');
   const [data, setData] = useState('');
-  const [slots, setSlots] = useState([]);
+  const [availability, setAvailability] = useState({});
   const [slotSelecionado, setSlotSelecionado] = useState(null);
+  const [showMoreDates, setShowMoreDates] = useState(false);
+  const fetchTokenRef = useRef(0);
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [emailCliente, setEmailCliente] = useState('');
@@ -66,15 +68,21 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
   const janela = useMemo(() => getAvailableDays(SEMANAS_DISPONIVEIS), []);
 
+  const slotsDoDia = useMemo(
+    () => (data ? (availability[data]?.slots || []) : []),
+    [data, availability]
+  );
+  const statusDoDia = data ? availability[data]?.status : undefined;
+
   const slotsPorTurno = useMemo(() => {
     const manha = [];
     const tarde = [];
-    slots.forEach((slot) => {
+    slotsDoDia.forEach((slot) => {
       const hora = Number(String(slot.horario || '').slice(0, 2));
       if (hora < 12) manha.push(slot); else tarde.push(slot);
     });
     return { manha, tarde };
-  }, [slots]);
+  }, [slotsDoDia]);
 
   const semanas = useMemo(() => {
     const grupos = [];
@@ -84,6 +92,72 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
     });
     return grupos.filter(Boolean);
   }, [janela]);
+
+  const semanaAtual = useMemo(() => semanas[0]?.dias || [], [semanas]);
+  const semanasFuturas = useMemo(() => semanas.slice(1), [semanas]);
+  const idAtivoEffect = tipo === 'servico' ? servicoId : comboId;
+
+  useEffect(() => {
+    if (!idAtivoEffect || !semanaAtual.length) return;
+    fetchTokenRef.current += 1;
+    const token = fetchTokenRef.current;
+
+    Promise.resolve().then(() => {
+      if (token !== fetchTokenRef.current) return;
+      setAvailability((prev) => {
+        const inicial = {};
+        semanaAtual.forEach((dia) => {
+          inicial[dia.value] = prev[dia.value] || { status: 'loading', slots: [] };
+        });
+        return inicial;
+      });
+
+      semanaAtual.forEach(async (dia) => {
+        try {
+          const res = tipo === 'servico'
+            ? await buscarDisponibilidade(dia.value, idAtivoEffect)
+            : await buscarDisponibilidade(dia.value, null, idAtivoEffect);
+          if (token !== fetchTokenRef.current) return;
+          setAvailability((prev) => ({
+            ...prev,
+            [dia.value]: { status: 'ready', slots: res.slotsDisponiveis || [] },
+          }));
+        } catch {
+          if (token !== fetchTokenRef.current) return;
+          setAvailability((prev) => ({
+            ...prev,
+            [dia.value]: { status: 'error', slots: [] },
+          }));
+        }
+      });
+    });
+  }, [idAtivoEffect, tipo, semanaAtual]);
+
+  function fetchDisponibilidadeDia(dia) {
+    if (!idAtivoEffect) return;
+    const cached = availability[dia.value];
+    if (cached && cached.status !== 'error') return;
+    const token = fetchTokenRef.current;
+    setAvailability((prev) => ({ ...prev, [dia.value]: { status: 'loading', slots: [] } }));
+    (async () => {
+      try {
+        const res = tipo === 'servico'
+          ? await buscarDisponibilidade(dia.value, idAtivoEffect)
+          : await buscarDisponibilidade(dia.value, null, idAtivoEffect);
+        if (token !== fetchTokenRef.current) return;
+        setAvailability((prev) => ({
+          ...prev,
+          [dia.value]: { status: 'ready', slots: res.slotsDisponiveis || [] },
+        }));
+      } catch {
+        if (token !== fetchTokenRef.current) return;
+        setAvailability((prev) => ({
+          ...prev,
+          [dia.value]: { status: 'error', slots: [] },
+        }));
+      }
+    })();
+  }
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -109,51 +183,30 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
     setTipo(novoTipo);
     setServicoId('');
     setComboId('');
-    setSlots([]);
+    setAvailability({});
     setSlotSelecionado(null);
     setErro('');
   }
 
   function selecionarServico(id) {
     setServicoId(id);
-    setSlots([]);
+    setAvailability({});
     setSlotSelecionado(null);
     setErro('');
   }
 
   function selecionarCombo(id) {
     setComboId(id);
-    setSlots([]);
+    setAvailability({});
     setSlotSelecionado(null);
     setErro('');
   }
 
   function selecionarData(value) {
     setData(value);
-    setSlots([]);
     setSlotSelecionado(null);
     setErro('');
-  }
-
-  async function buscarSlots() {
-    const idAtivo = tipo === 'servico' ? servicoId : comboId;
-    if (!idAtivo || !data) return;
-
-    setLoading(true);
-    setErro('');
-    setSlots([]);
-    setSlotSelecionado(null);
-    setStep(2);
-    try {
-      const res = tipo === 'servico'
-        ? await buscarDisponibilidade(data, servicoId)
-        : await buscarDisponibilidade(data, null, comboId);
-      setSlots(res.slotsDisponiveis || []);
-    } catch (e) {
-      setErro(e.message || 'Erro ao buscar disponibilidade');
-    } finally {
-      setLoading(false);
-    }
+    setShowMoreDates(false);
   }
 
   function validarCampos() {
@@ -289,9 +342,128 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
               </div>
             )}
 
-            <div className="modal-label">
-              Dia
-              {semanas.map((semana, idx) => (
+            {idAtivo && (
+              <div className="modal-label">
+                Dia desta semana
+                <div className="week-days-grid">
+                  {semanaAtual.map((dia) => {
+                    const status = availability[dia.value]?.status;
+                    const slotsCount = availability[dia.value]?.slots?.length ?? null;
+                    const semVagas = status === 'ready' && slotsCount === 0;
+                    return (
+                      <button
+                        type="button"
+                        key={dia.value}
+                        className={`week-day-btn${data === dia.value ? ' selected' : ''}${semVagas ? ' is-cheio' : ''}`}
+                        onClick={() => selecionarData(dia.value)}
+                        disabled={semVagas}
+                        aria-label={`${dia.weekday} ${dia.dayMonth}${semVagas ? ' — sem vagas' : ''}`}
+                      >
+                        <span>{dia.weekday}</span>
+                        <strong>{dia.dayMonth}</strong>
+                        {semVagas && <span className="week-day-badge">cheio</span>}
+                        {status === 'ready' && slotsCount > 0 && slotsCount <= 2 && (
+                          <span className="week-day-badge week-day-badge--last">últimas</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                {semanasFuturas.length > 0 && (
+                  <button
+                    type="button"
+                    className="more-dates-btn"
+                    onClick={() => setShowMoreDates(true)}
+                  >
+                    + Mais datas
+                  </button>
+                )}
+              </div>
+            )}
+
+            {data && (
+              <div className="modal-label">
+                Horários — {new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
+                {statusDoDia === 'loading' ? (
+                  <div className="slots-grid" aria-busy="true" aria-label="Carregando horários">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <span key={i} className="slot-skeleton" aria-hidden="true" />
+                    ))}
+                  </div>
+                ) : statusDoDia === 'error' ? (
+                  <div className="modal-vazio-box">
+                    <p className="modal-vazio">Erro ao buscar horários.</p>
+                    <button
+                      type="button"
+                      className="modal-btn secondary"
+                      onClick={() => fetchDisponibilidadeDia({ value: data })}
+                    >
+                      Tentar novamente
+                    </button>
+                  </div>
+                ) : slotsDoDia.length === 0 ? (
+                  <p className="modal-vazio">Não há horários disponíveis neste dia. Escolha outro.</p>
+                ) : (
+                  <div className="slots-turnos">
+                    {slotsPorTurno.manha.length > 0 && (
+                      <div className="slots-turno">
+                        <span className="slots-turno-label">Manhã</span>
+                        <div className="slots-grid">
+                          {slotsPorTurno.manha.map((slot) => (
+                            <button
+                              type="button"
+                              key={slot.inicio}
+                              className={`slot-btn${slotSelecionado?.inicio === slot.inicio ? ' selected' : ''}`}
+                              onClick={() => setSlotSelecionado(slot)}
+                            >
+                              {slot.horario}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {slotsPorTurno.tarde.length > 0 && (
+                      <div className="slots-turno">
+                        <span className="slots-turno-label">Tarde</span>
+                        <div className="slots-grid">
+                          {slotsPorTurno.tarde.map((slot) => (
+                            <button
+                              type="button"
+                              key={slot.inicio}
+                              className={`slot-btn${slotSelecionado?.inicio === slot.inicio ? ' selected' : ''}`}
+                              onClick={() => setSlotSelecionado(slot)}
+                            >
+                              {slot.horario}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {erro && <p className="modal-erro">{erro}</p>}
+
+            <button
+              className="modal-btn primary"
+              onClick={() => setStep(3)}
+              disabled={!slotSelecionado}
+            >
+              Continuar
+            </button>
+          </div>
+        )}
+
+        {showMoreDates && (
+          <div className="more-dates-sheet" role="dialog" aria-modal="true" aria-label="Mais datas">
+            <div className="more-dates-sheet-inner">
+              <header className="more-dates-header">
+                <h3>Mais datas</h3>
+                <button type="button" className="more-dates-close" onClick={() => setShowMoreDates(false)} aria-label="Fechar">X</button>
+              </header>
+              {semanasFuturas.map((semana, idx) => (
                 <div key={idx} className="week-group">
                   <span className="week-group-label">{semana.label}</span>
                   <div className="week-days-grid">
@@ -300,7 +472,10 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
                         type="button"
                         key={dia.value}
                         className={`week-day-btn${data === dia.value ? ' selected' : ''}`}
-                        onClick={() => selecionarData(dia.value)}
+                        onClick={() => {
+                          selecionarData(dia.value);
+                          fetchDisponibilidadeDia(dia);
+                        }}
                       >
                         <span>{dia.weekday}</span>
                         <strong>{dia.dayMonth}</strong>
@@ -310,88 +485,12 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
                 </div>
               ))}
             </div>
-
-            {erro && <p className="modal-erro">{erro}</p>}
-
-            <button className="modal-btn primary" onClick={buscarSlots} disabled={!idAtivo || !data || loading}>
-              {loading ? 'Buscando...' : 'Ver horários'}
-            </button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="modal-step">
-            <button className="modal-back" onClick={() => setStep(1)}>← Voltar</button>
-            <h2 className="modal-title">Escolha o horário</h2>
-            <p className="modal-sub">
-              {itemSelecionado?.nome}
-              {duracaoLabel ? ` · ${duracaoLabel}` : ''}
-              {data ? ` · ${new Date(`${data}T12:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}` : ''}
-            </p>
-
-            {loading ? (
-              <div className="slots-grid" aria-busy="true" aria-label="Carregando horários">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <span key={i} className="slot-skeleton" aria-hidden="true" />
-                ))}
-              </div>
-            ) : slots.length === 0 ? (
-              <div className="modal-vazio-box">
-                <p className="modal-vazio">Não há horários disponíveis neste dia.</p>
-                <button type="button" className="modal-btn secondary" onClick={() => setStep(1)}>
-                  Escolher outro dia
-                </button>
-              </div>
-            ) : (
-              <div className="slots-turnos">
-                {slotsPorTurno.manha.length > 0 && (
-                  <div className="slots-turno">
-                    <span className="slots-turno-label">Manhã</span>
-                    <div className="slots-grid">
-                      {slotsPorTurno.manha.map((slot) => (
-                        <button
-                          type="button"
-                          key={slot.inicio}
-                          className={`slot-btn${slotSelecionado?.inicio === slot.inicio ? ' selected' : ''}`}
-                          onClick={() => setSlotSelecionado(slot)}
-                        >
-                          {slot.horario}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {slotsPorTurno.tarde.length > 0 && (
-                  <div className="slots-turno">
-                    <span className="slots-turno-label">Tarde</span>
-                    <div className="slots-grid">
-                      {slotsPorTurno.tarde.map((slot) => (
-                        <button
-                          type="button"
-                          key={slot.inicio}
-                          className={`slot-btn${slotSelecionado?.inicio === slot.inicio ? ' selected' : ''}`}
-                          onClick={() => setSlotSelecionado(slot)}
-                        >
-                          {slot.horario}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {erro && <p className="modal-erro">{erro}</p>}
-
-            <button className="modal-btn primary" onClick={() => setStep(3)} disabled={!slotSelecionado}>
-              Continuar
-            </button>
           </div>
         )}
 
         {step === 3 && (
           <div className="modal-step">
-            <button className="modal-back" onClick={() => setStep(2)}>← Voltar</button>
+            <button className="modal-back" onClick={() => setStep(1)}>← Voltar</button>
             <h2 className="modal-title">Seus dados</h2>
             <p className="modal-sub">
               {itemSelecionado?.nome}

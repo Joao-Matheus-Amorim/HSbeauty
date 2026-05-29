@@ -44,12 +44,20 @@ describe('AgendamentoModal — renderização inicial', () => {
     expect(await screen.findByRole('button', { name: /cílios/i })).toBeInTheDocument();
   });
 
-  it('exibe mais de uma semana na lista de dias', async () => {
-    render(<AgendamentoModal onClose={() => {}} />);
+  it('mostra apenas semana atual por default e abre mais datas no sub-modal', async () => {
+    render(<AgendamentoModal servicoInicial={SERVICO_MOCK} onClose={() => {}} />);
     await waitFor(() => expect(listarServicos).toHaveBeenCalled());
 
-    const weekDayButtons = screen.getAllByRole('button', { name: /seg|ter|qua|qui|sex|sáb|dom/i });
-    expect(weekDayButtons.length).toBeGreaterThan(7);
+    // Antes do clique: somente dias da semana atual visiveis
+    const inicialDias = screen.getAllByRole('button', { name: /\d{2}\/\d{2}/ });
+    expect(inicialDias.length).toBeLessThanOrEqual(7);
+
+    // Abrir mais datas
+    fireEvent.click(await screen.findByRole('button', { name: /mais datas/i }));
+    await waitFor(() => {
+      const todos = screen.getAllByRole('button', { name: /\d{2}\/\d{2}/ });
+      expect(todos.length).toBeGreaterThan(7);
+    });
   });
 });
 
@@ -61,7 +69,9 @@ describe('AgendamentoModal — duração dinâmica', () => {
     const dayButtons = screen.getAllByRole('button', { name: /\d{2}\/\d{2}/ });
     fireEvent.click(dayButtons[0]);
 
-    fireEvent.click(screen.getByText('Ver horários'));
+    fireEvent.click(await screen.findByRole('button', { name: '09:00' }));
+    fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
+
     expect(await screen.findByText(/1h30min/i)).toBeInTheDocument();
     expect(screen.queryByText('2h30')).not.toBeInTheDocument();
   });

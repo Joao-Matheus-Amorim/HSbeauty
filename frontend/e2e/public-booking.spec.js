@@ -45,7 +45,6 @@ test('publico: conclui fluxo minimo de agendamento', async ({ page }) => {
   await page.getByRole('button', { name: /agendar/i }).click();
   await page.locator('.service-choice-btn').first().click();
   await page.locator('.week-day-btn').first().click();
-  await page.locator('.modal-step .modal-btn.primary').click();
   await page.getByRole('button', { name: '09:00' }).click();
   await page.getByRole('button', { name: /continuar/i }).click();
   await page.getByPlaceholder('Maria da Silva').fill('Maria');
@@ -93,7 +92,6 @@ test('publico: horario indisponivel exibe erro', async ({ page }) => {
   await page.getByRole('button', { name: /agendar/i }).click();
   await page.locator('.service-choice-btn').first().click();
   await page.locator('.week-day-btn').first().click();
-  await page.locator('.modal-step .modal-btn.primary').click();
   await page.getByRole('button', { name: '09:00' }).click();
   await page.getByRole('button', { name: /continuar/i }).click();
   await page.getByPlaceholder('Maria da Silva').fill('Maria');

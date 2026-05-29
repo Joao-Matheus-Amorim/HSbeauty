@@ -45,6 +45,7 @@ function App() {
 	const [siteConfig, setSiteConfig] = useState({ bannerUrl: null, logoUrl: null })
 	const [modalAberto, setModalAberto] = useState(false)
 	const [servicoModal, setServicoModal] = useState(null)
+	const [categoriaModal, setCategoriaModal] = useState(null)
 	const [categoriaAberta, setCategoriaAberta] = useState(null)
 
 	useEffect(() => {
@@ -70,8 +71,9 @@ function App() {
 
 	const categorias = useMemo(() => buildCategorias(services, categoriasApi), [services, categoriasApi])
 
-	function abrirModal(servico = null) {
+	function abrirModal(servico = null, categoria = null) {
 		setServicoModal(servico)
+		setCategoriaModal(categoria)
 		setModalAberto(true)
 	}
 
@@ -80,12 +82,13 @@ function App() {
 			event.preventDefault()
 			event.stopPropagation()
 		}
-		abrirModal(servico)
+		abrirModal(servico, null)
 	}
 
 	function handleSelecionarServicoDaCategoria(servico) {
+		const cat = categoriaAberta
 		setCategoriaAberta(null)
-		abrirModal(servico)
+		abrirModal(servico, cat)
 	}
 
 	return (
@@ -94,7 +97,8 @@ function App() {
 				<Suspense fallback={null}>
 					<AgendamentoModal
 						servicoInicial={servicoModal}
-						onClose={() => setModalAberto(false)}
+						categoriaInicial={categoriaModal}
+						onClose={() => { setModalAberto(false); setCategoriaModal(null); }}
 					/>
 				</Suspense>
 			)}

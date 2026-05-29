@@ -45,7 +45,7 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 }
 
-export default function AgendamentoModal({ servicoInicial, onClose }) {
+export default function AgendamentoModal({ servicoInicial, categoriaInicial, onClose }) {
   const [tipo, setTipo] = useState('servico'); // 'servico' | 'combo'
   const [step, setStep] = useState(1);
   const [servicos, setServicos] = useState(SERVICOS_PADRAO);
@@ -67,6 +67,14 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [nomeItemAgendado, setNomeItemAgendado] = useState('');
 
   const janela = useMemo(() => getAvailableDays(SEMANAS_DISPONIVEIS), []);
+
+  const servicosVisiveis = useMemo(() => {
+    if (!categoriaInicial?.id) return servicos;
+    return servicos.filter((s) => {
+      const catId = s.categoria?.id ?? s.categoriaId;
+      return String(catId) === String(categoriaInicial.id);
+    });
+  }, [servicos, categoriaInicial]);
 
   const slotsDoDia = useMemo(
     () => (data ? (availability[data]?.slots || []) : []),
@@ -149,11 +157,11 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
           ...prev,
           [dia.value]: { status: 'ready', slots: res.slotsDisponiveis || [] },
         }));
-      } catch {
+      } catch (err) {
         if (token !== fetchTokenRef.current) return;
         setAvailability((prev) => ({
           ...prev,
-          [dia.value]: { status: 'error', slots: [] },
+          [dia.value]: { status: 'error', slots: [], message: err?.message || 'Erro de conexão' },
         }));
       }
     })();
@@ -294,9 +302,9 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
             {tipo === 'servico' && (
               <div className="modal-label">
-                Serviço
+                {categoriaInicial?.nome ? `Serviço de ${categoriaInicial.nome}` : 'Serviço'}
                 <div className="service-choice-grid">
-                  {servicos.map((s) => (
+                  {servicosVisiveis.map((s) => (
                     <button
                       type="button"
                       key={s.id}
@@ -392,7 +400,10 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
                   </div>
                 ) : statusDoDia === 'error' ? (
                   <div className="modal-vazio-box">
-                    <p className="modal-vazio">Erro ao buscar horários.</p>
+                    <p className="modal-vazio">
+                      Erro ao buscar horários
+                      {availability[data]?.message ? `: ${availability[data].message}` : '.'}
+                    </p>
                     <button
                       type="button"
                       className="modal-btn secondary"

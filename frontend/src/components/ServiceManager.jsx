@@ -277,14 +277,20 @@ export default function ServiceManager() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Categoria</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
+                  Categoria <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
+                  required
                   className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#b5936a]"
-                  placeholder="Ex: Unhas, Cílios..."
+                  placeholder="Ex: Unhas, Cílios, Spa Labial..."
                   value={formData.categoria}
                   onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
                 />
+                <p className="text-xs text-gray-500 ml-1">
+                  Define em qual aba do carrossel o serviço aparece. Serviços sem categoria não são exibidos no site público.
+                </p>
               </div>
 
               <div className="space-y-1">

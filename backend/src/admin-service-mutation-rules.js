@@ -56,6 +56,23 @@ function validateDuracao(value, { required = false } = {}) {
   return { valid: true, value: duracaoNumero };
 }
 
+function validateCategoria(value, { required = false } = {}) {
+  if (value === undefined) {
+    if (required) return { valid: false, status: 400, message: 'Categoria é obrigatória' };
+    return { valid: true, value: undefined };
+  }
+
+  if (value === null || value === '') {
+    return { valid: false, status: 400, message: 'Categoria é obrigatória' };
+  }
+
+  if (typeof value !== 'string' || !value.trim()) {
+    return { valid: false, status: 400, message: 'Categoria é obrigatória' };
+  }
+
+  return { valid: true, value: value.trim() };
+}
+
 function validateAtivo(value) {
   if (value === undefined) return { valid: true, value: undefined };
 
@@ -81,7 +98,11 @@ export function validateAdminServiceCreatePayload(payload = {}) {
   if (!duracaoResult.valid) return duracaoResult;
   data.duracao = duracaoResult.value;
 
-  for (const field of ['descricao', 'categoria', 'imagemUrl']) {
+  const categoriaResult = validateCategoria(payload.categoria, { required: true });
+  if (!categoriaResult.valid) return categoriaResult;
+  data.categoria = categoriaResult.value;
+
+  for (const field of ['descricao', 'imagemUrl']) {
     const error = validateOptionalText(data, payload, field);
     if (error) return error;
   }
@@ -108,7 +129,11 @@ export function validateAdminServiceUpdatePayload(payload = {}) {
   if (!duracaoResult.valid) return duracaoResult;
   if (duracaoResult.value !== undefined) data.duracao = duracaoResult.value;
 
-  for (const field of ['descricao', 'categoria', 'imagemUrl']) {
+  const categoriaResult = validateCategoria(payload.categoria);
+  if (!categoriaResult.valid) return categoriaResult;
+  if (categoriaResult.value !== undefined) data.categoria = categoriaResult.value;
+
+  for (const field of ['descricao', 'imagemUrl']) {
     const error = validateOptionalText(data, payload, field);
     if (error) return error;
   }

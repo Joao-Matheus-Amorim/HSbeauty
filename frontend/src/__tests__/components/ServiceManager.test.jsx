@@ -67,6 +67,7 @@ describe('ServiceManager — criação de serviço', () => {
     fireEvent.change(screen.getByPlaceholderText(/Ex: Unhas em Gel/i), { target: { value: 'Pedicure' } });
     fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '40' } });
     fireEvent.change(screen.getByPlaceholderText('60'), { target: { value: '45' } });
+    fireEvent.change(screen.getByPlaceholderText(/Ex: Unhas, C[ií]lios/i), { target: { value: 'Unhas' } });
 
     fireEvent.click(screen.getByRole('button', { name: /criar serviço/i }));
 

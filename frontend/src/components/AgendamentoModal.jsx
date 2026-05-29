@@ -66,6 +66,16 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
   const janela = useMemo(() => getAvailableDays(SEMANAS_DISPONIVEIS), []);
 
+  const slotsPorTurno = useMemo(() => {
+    const manha = [];
+    const tarde = [];
+    slots.forEach((slot) => {
+      const hora = Number(String(slot.horario || '').slice(0, 2));
+      if (hora < 12) manha.push(slot); else tarde.push(slot);
+    });
+    return { manha, tarde };
+  }, [slots]);
+
   const semanas = useMemo(() => {
     const grupos = [];
     janela.days.forEach((dia) => {
@@ -320,19 +330,48 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
             </p>
 
             {slots.length === 0 ? (
-              <p className="modal-vazio">Nenhum horário disponível neste dia. Tente outro dia.</p>
+              <div className="modal-vazio-box">
+                <p className="modal-vazio">Não há horários disponíveis neste dia.</p>
+                <button type="button" className="modal-btn secondary" onClick={() => setStep(1)}>
+                  Escolher outro dia
+                </button>
+              </div>
             ) : (
-              <div className="slots-grid">
-                {slots.map((slot) => (
-                  <button
-                    type="button"
-                    key={slot.inicio}
-                    className={`slot-btn${slotSelecionado?.inicio === slot.inicio ? ' selected' : ''}`}
-                    onClick={() => setSlotSelecionado(slot)}
-                  >
-                    {slot.horario}
-                  </button>
-                ))}
+              <div className="slots-turnos">
+                {slotsPorTurno.manha.length > 0 && (
+                  <div className="slots-turno">
+                    <span className="slots-turno-label">Manhã</span>
+                    <div className="slots-grid">
+                      {slotsPorTurno.manha.map((slot) => (
+                        <button
+                          type="button"
+                          key={slot.inicio}
+                          className={`slot-btn${slotSelecionado?.inicio === slot.inicio ? ' selected' : ''}`}
+                          onClick={() => setSlotSelecionado(slot)}
+                        >
+                          {slot.horario}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {slotsPorTurno.tarde.length > 0 && (
+                  <div className="slots-turno">
+                    <span className="slots-turno-label">Tarde</span>
+                    <div className="slots-grid">
+                      {slotsPorTurno.tarde.map((slot) => (
+                        <button
+                          type="button"
+                          key={slot.inicio}
+                          className={`slot-btn${slotSelecionado?.inicio === slot.inicio ? ' selected' : ''}`}
+                          onClick={() => setSlotSelecionado(slot)}
+                        >
+                          {slot.horario}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

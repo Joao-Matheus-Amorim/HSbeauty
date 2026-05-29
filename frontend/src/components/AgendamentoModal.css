@@ -408,6 +408,37 @@
   color: #c0394f;
 }
 
+.slots-turnos {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.slots-turno {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slots-turno-label {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #9a7060;
+  padding-left: 2px;
+}
+
+.modal-vazio-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 8px;
+  text-align: center;
+}
+
 .slots-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));

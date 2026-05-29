@@ -6,15 +6,9 @@ import {
 } from './admin-schedule-mutation-rules.js';
 import { logError, sendError } from './http-response.js';
 
-const router = express.Router();
+export function createAdminScheduleRouter({ prisma, authMiddleware }) {
+  const router = express.Router();
 
-// ─── Admin Horários (Bloqueios) ───────────────────────────────────────────────
-
-/**
- * GET /admin/horarios
- * Lista todos os bloqueios de horário
- */
-export function setupAdminHorarios(prisma, authMiddleware) {
   router.get('/horarios', authMiddleware, async (req, res) => {
     try {
       const query = buildAdminScheduleQuery(req.query);
@@ -45,19 +39,12 @@ export function setupAdminHorarios(prisma, authMiddleware) {
     }
   });
 
-  /**
-   * POST /admin/horarios
-   * Cria um novo bloqueio de horário
-   */
   router.post('/horarios', authMiddleware, async (req, res) => {
     try {
       const validation = validateAdminScheduleCreatePayload(req.body);
       if (!validation.valid) return sendError(res, validation.status, validation.message);
 
-      const novoBloqueio = await prisma.bloqueioHorario.create({
-        data: validation.data,
-      });
-
+      const novoBloqueio = await prisma.bloqueioHorario.create({ data: validation.data });
       res.status(201).json(novoBloqueio);
     } catch (error) {
       logError('POST /admin/horarios', error, req);
@@ -65,10 +52,6 @@ export function setupAdminHorarios(prisma, authMiddleware) {
     }
   });
 
-  /**
-   * PUT /admin/horarios/:id
-   * Atualiza um bloqueio de horário
-   */
   router.put('/horarios/:id', authMiddleware, async (req, res) => {
     try {
       const id = Number(req.params.id);
@@ -84,7 +67,6 @@ export function setupAdminHorarios(prisma, authMiddleware) {
         where: { id },
         data: validation.data,
       });
-
       res.json(bloqueioAtualizado);
     } catch (error) {
       logError('PUT /admin/horarios/:id', error, req);
@@ -92,10 +74,6 @@ export function setupAdminHorarios(prisma, authMiddleware) {
     }
   });
 
-  /**
-   * DELETE /admin/horarios/:id
-   * Desativa um bloqueio de horário
-   */
   router.delete('/horarios/:id', authMiddleware, async (req, res) => {
     try {
       const id = Number(req.params.id);
@@ -118,6 +96,6 @@ export function setupAdminHorarios(prisma, authMiddleware) {
       return sendError(res, 500, 'Erro ao desativar bloqueio de horário');
     }
   });
-}
 
-export default router;
+  return router;
+}

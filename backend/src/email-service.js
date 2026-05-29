@@ -1,7 +1,30 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 
+const HTML_ENTITIES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+function escapeHtml(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).replace(/[&<>"']/g, (ch) => HTML_ENTITIES[ch]);
+}
+
+const EMAIL_SEND_TIMEOUT_MS = 15000;
+
+function withTimeout(promise, ms, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timeout apos ${ms}ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 function buildAdminNotificationHtml({ nomeCliente, telefone, email, servico, dataFormatada, hora, observacoes }) {
+  const n = escapeHtml(nomeCliente);
+  const t = escapeHtml(telefone);
+  const e = escapeHtml(email);
+  const s = escapeHtml(servico);
+  const d = escapeHtml(dataFormatada);
+  const h = escapeHtml(hora);
+  const o = escapeHtml(observacoes);
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"></head>
@@ -9,13 +32,13 @@ function buildAdminNotificationHtml({ nomeCliente, telefone, email, servico, dat
   <h2 style="color:#be123c;margin-bottom:8px">Novo agendamento recebido</h2>
   <p>Um cliente acabou de solicitar um horário no site.</p>
   <table style="width:100%;border-collapse:collapse;margin:16px 0">
-    <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Cliente</td><td style="padding:8px;border-bottom:1px solid #eee"><strong>${nomeCliente}</strong></td></tr>
-    <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Telefone</td><td style="padding:8px;border-bottom:1px solid #eee"><strong>${telefone}</strong></td></tr>
-    ${email ? `<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Email</td><td style="padding:8px;border-bottom:1px solid #eee">${email}</td></tr>` : ''}
-    <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Serviço</td><td style="padding:8px;border-bottom:1px solid #eee"><strong>${servico}</strong></td></tr>
-    <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Data</td><td style="padding:8px;border-bottom:1px solid #eee"><strong>${dataFormatada}</strong></td></tr>
-    <tr><td style="padding:8px;${observacoes ? 'border-bottom:1px solid #eee;' : ''}color:#555">Horário</td><td style="padding:8px;${observacoes ? 'border-bottom:1px solid #eee;' : ''}"><strong>${hora}</strong></td></tr>
-    ${observacoes ? `<tr><td style="padding:8px;color:#555;vertical-align:top">Observações</td><td style="padding:8px">${observacoes}</td></tr>` : ''}
+    <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Cliente</td><td style="padding:8px;border-bottom:1px solid #eee"><strong>${n}</strong></td></tr>
+    <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Telefone</td><td style="padding:8px;border-bottom:1px solid #eee"><strong>${t}</strong></td></tr>
+    ${email ? `<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Email</td><td style="padding:8px;border-bottom:1px solid #eee">${e}</td></tr>` : ''}
+    <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Serviço</td><td style="padding:8px;border-bottom:1px solid #eee"><strong>${s}</strong></td></tr>
+    <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Data</td><td style="padding:8px;border-bottom:1px solid #eee"><strong>${d}</strong></td></tr>
+    <tr><td style="padding:8px;${observacoes ? 'border-bottom:1px solid #eee;' : ''}color:#555">Horário</td><td style="padding:8px;${observacoes ? 'border-bottom:1px solid #eee;' : ''}"><strong>${h}</strong></td></tr>
+    ${observacoes ? `<tr><td style="padding:8px;color:#555;vertical-align:top">Observações</td><td style="padding:8px">${o}</td></tr>` : ''}
   </table>
   <p style="font-size:13px;color:#555">Acesse o painel para confirmar ou cancelar este agendamento.</p>
 </body>
@@ -23,17 +46,21 @@ function buildAdminNotificationHtml({ nomeCliente, telefone, email, servico, dat
 }
 
 function buildBookingConfirmationHtml({ nomeCliente, servico, dataFormatada, hora }) {
+  const n = escapeHtml(nomeCliente);
+  const s = escapeHtml(servico);
+  const d = escapeHtml(dataFormatada);
+  const h = escapeHtml(hora);
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"></head>
 <body style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#1a1a1a">
   <h2 style="color:#be123c;margin-bottom:8px">Agendamento recebido!</h2>
-  <p>Olá, <strong>${nomeCliente}</strong>!</p>
+  <p>Olá, <strong>${n}</strong>!</p>
   <p>Seu pedido foi registrado e está <strong>aguardando confirmação</strong>.</p>
   <table style="width:100%;border-collapse:collapse;margin:16px 0">
-    <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Serviço</td><td style="padding:8px;border-bottom:1px solid #eee"><strong>${servico}</strong></td></tr>
-    <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Data</td><td style="padding:8px;border-bottom:1px solid #eee"><strong>${dataFormatada}</strong></td></tr>
-    <tr><td style="padding:8px;color:#555">Horário</td><td style="padding:8px"><strong>${hora}</strong></td></tr>
+    <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Serviço</td><td style="padding:8px;border-bottom:1px solid #eee"><strong>${s}</strong></td></tr>
+    <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#555">Data</td><td style="padding:8px;border-bottom:1px solid #eee"><strong>${d}</strong></td></tr>
+    <tr><td style="padding:8px;color:#555">Horário</td><td style="padding:8px"><strong>${h}</strong></td></tr>
   </table>
   <p style="font-size:13px;color:#555">Em breve entraremos em contato para confirmar seu horário.</p>
 </body>
@@ -109,14 +136,24 @@ async function sendViaResend({ to, subject, html }) {
   return { sent: true, provider: 'resend' };
 }
 
+async function tryProvider(label, fn, payload) {
+  try {
+    return await withTimeout(fn(payload), EMAIL_SEND_TIMEOUT_MS, label);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn(`[email] ${label} falhou: ${err?.message || err}`);
+    return null;
+  }
+}
+
 async function sendEmail(payload) {
-  const brevoResult = await sendViaBrevo(payload);
+  const brevoResult = await tryProvider('brevo', sendViaBrevo, payload);
   if (brevoResult) return brevoResult;
 
-  const gmailResult = await sendViaGmail(payload);
+  const gmailResult = await tryProvider('gmail', sendViaGmail, payload);
   if (gmailResult) return gmailResult;
 
-  const resendResult = await sendViaResend(payload);
+  const resendResult = await tryProvider('resend', sendViaResend, payload);
   if (resendResult) return resendResult;
 
   return { sent: false, reason: 'missing_config' };

@@ -1,5 +1,6 @@
+import { validateImagemUrl } from './url-rules.js';
+
 const NOME_MAX = 60;
-const IMAGEM_URL_MAX = 500;
 
 function validateNome(value, { required = false } = {}) {
   if (value === undefined) {
@@ -17,26 +18,6 @@ function validateNome(value, { required = false } = {}) {
   }
 
   return { valid: true, value: nome };
-}
-
-function validateImagemUrl(value) {
-  if (value === undefined) return { valid: true, value: undefined };
-  if (value === null || value === '') return { valid: true, value: null };
-
-  if (typeof value !== 'string') {
-    return { valid: false, status: 400, message: 'imagemUrl deve ser texto' };
-  }
-
-  const trimmed = value.trim();
-  if (trimmed.length > IMAGEM_URL_MAX) {
-    return { valid: false, status: 400, message: `imagemUrl excede ${IMAGEM_URL_MAX} caracteres` };
-  }
-
-  if (!/^(https?:)?\/\//i.test(trimmed) && !trimmed.startsWith('data:image/')) {
-    return { valid: false, status: 400, message: 'imagemUrl deve ser uma URL http(s) ou data URI de imagem' };
-  }
-
-  return { valid: true, value: trimmed };
 }
 
 function validateOrdem(value) {

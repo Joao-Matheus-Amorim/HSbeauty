@@ -1,5 +1,6 @@
 import express from 'express';
 import { logError, sendError } from './http-response.js';
+import { validateImagemUrl } from './url-rules.js';
 
 const SINGLETON_ID = 1;
 
@@ -45,8 +46,16 @@ export function createAdminConfigRouter({ prisma, authMiddleware }) {
       const { bannerUrl, logoUrl } = req.body || {};
 
       const data = {};
-      if (bannerUrl !== undefined) data.bannerUrl = bannerUrl || null;
-      if (logoUrl !== undefined) data.logoUrl = logoUrl || null;
+      if (bannerUrl !== undefined) {
+        const r = validateImagemUrl(bannerUrl);
+        if (!r.valid) return sendError(res, r.status, `bannerUrl: ${r.message}`);
+        data.bannerUrl = r.value ?? null;
+      }
+      if (logoUrl !== undefined) {
+        const r = validateImagemUrl(logoUrl);
+        if (!r.valid) return sendError(res, r.status, `logoUrl: ${r.message}`);
+        data.logoUrl = r.value ?? null;
+      }
 
       if (Object.keys(data).length === 0) {
         return sendError(res, 400, 'Nenhum campo informado');

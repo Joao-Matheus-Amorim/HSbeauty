@@ -391,6 +391,23 @@
   padding: 9px 12px;
 }
 
+.modal-input--erro {
+  border-color: rgba(192, 57, 79, 0.6) !important;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.92),
+    0 0 0 4px rgba(192, 57, 79, 0.12),
+    0 12px 24px rgba(96, 53, 74, 0.085) !important;
+}
+
+.modal-erro-campo {
+  display: block;
+  margin-top: 4px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #c0394f;
+}
+
 .slots-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));

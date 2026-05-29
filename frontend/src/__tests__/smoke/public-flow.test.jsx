@@ -48,7 +48,7 @@ describe('Smoke publico', () => {
     criarAgendamento.mockResolvedValue({
       id: 10,
       nomeCliente: 'Maria',
-      telefone: '21999998888',
+      telefone: '(21) 99999-8888',
       data: '2026-05-27T09:00:00.000Z',
       servico: { id: 1, nome: 'Unhas', duracao: 60, preco: 60 },
       status: 'pendente',
@@ -70,7 +70,7 @@ describe('Smoke publico', () => {
     fireEvent.click(await screen.findByRole('button', { name: /continuar/i }));
 
     fireEvent.change(await screen.findByPlaceholderText('Maria da Silva'), { target: { value: 'Maria' } });
-    fireEvent.change(await screen.findByPlaceholderText('(21) 99999-9999'), { target: { value: '21999998888' } });
+    fireEvent.change(await screen.findByPlaceholderText('(21) 99999-9999'), { target: { value: '(21) 99999-8888' } });
     fireEvent.click(await screen.findByRole('button', { name: /confirmar/i }));
 
     expect(await screen.findByText(/agendamento confirmado/i)).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('Smoke publico', () => {
     expect(await screen.findByRole('link', { name: /confirmar pelo whatsapp/i })).toBeInTheDocument();
     expect(criarAgendamento).toHaveBeenCalledWith({
       nomeCliente: 'Maria',
-      telefone: '21999998888',
+      telefone: '(21) 99999-8888',
       data: '2026-05-27T09:00:00.000Z',
       servicoId: 1,
     });

@@ -25,6 +25,26 @@ function formatPrecoFixo(valor) {
   return `R$ ${Number(valor).toFixed(2).replace('.', ',')}`;
 }
 
+function formatTelefone(value) {
+  const digits = String(value || '').replace(/\D/g, '').slice(0, 11);
+  if (!digits) return '';
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function isValidTelefone(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  return digits.length === 10 || digits.length === 11;
+}
+
+function isValidEmail(value) {
+  const v = String(value || '').trim();
+  if (!v) return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
 export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [tipo, setTipo] = useState('servico'); // 'servico' | 'combo'
   const [step, setStep] = useState(1);
@@ -40,6 +60,7 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
   const [emailCliente, setEmailCliente] = useState('');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
+  const [errosCampo, setErrosCampo] = useState({ nome: '', telefone: '', email: '' });
   const [agendado, setAgendado] = useState(null);
   const [nomeItemAgendado, setNomeItemAgendado] = useState('');
 
@@ -125,9 +146,18 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
     }
   }
 
+  function validarCampos() {
+    const novos = { nome: '', telefone: '', email: '' };
+    if (nome.trim().length < 2) novos.nome = 'Informe seu nome completo';
+    if (!isValidTelefone(telefone)) novos.telefone = 'Telefone inválido — use (11) 98765-4321';
+    if (!isValidEmail(emailCliente)) novos.email = 'Email inválido';
+    setErrosCampo(novos);
+    return !novos.nome && !novos.telefone && !novos.email;
+  }
+
   async function confirmarAgendamento() {
     if (!slotSelecionado) { setErro('Selecione um horário'); return; }
-    if (!nome.trim() || !telefone.trim()) { setErro('Preencha nome e telefone'); return; }
+    if (!validarCampos()) { setErro(''); return; }
 
     setLoading(true);
     setErro('');
@@ -327,17 +357,46 @@ export default function AgendamentoModal({ servicoInicial, onClose }) {
 
             <label className="modal-label">
               Seu nome
-              <input className="modal-input" type="text" placeholder="Maria da Silva" value={nome} onChange={(e) => setNome(e.target.value)} />
+              <input
+                className={`modal-input${errosCampo.nome ? ' modal-input--erro' : ''}`}
+                type="text"
+                placeholder="Maria da Silva"
+                value={nome}
+                onChange={(e) => { setNome(e.target.value); if (errosCampo.nome) setErrosCampo({ ...errosCampo, nome: '' }); }}
+                onBlur={() => setErrosCampo({ ...errosCampo, nome: nome.trim().length < 2 ? 'Informe seu nome completo' : '' })}
+                autoComplete="name"
+              />
+              {errosCampo.nome && <span className="modal-erro-campo">{errosCampo.nome}</span>}
             </label>
 
             <label className="modal-label">
               WhatsApp / Telefone
-              <input className="modal-input" type="tel" placeholder="(21) 99999-9999" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
+              <input
+                className={`modal-input${errosCampo.telefone ? ' modal-input--erro' : ''}`}
+                type="tel"
+                inputMode="numeric"
+                placeholder="(21) 99999-9999"
+                maxLength={15}
+                value={telefone}
+                onChange={(e) => { setTelefone(formatTelefone(e.target.value)); if (errosCampo.telefone) setErrosCampo({ ...errosCampo, telefone: '' }); }}
+                onBlur={() => setErrosCampo({ ...errosCampo, telefone: telefone && !isValidTelefone(telefone) ? 'Telefone inválido — use (11) 98765-4321' : '' })}
+                autoComplete="tel"
+              />
+              {errosCampo.telefone && <span className="modal-erro-campo">{errosCampo.telefone}</span>}
             </label>
 
             <label className="modal-label">
               Email <span style={{ fontWeight: 400, fontSize: '0.85em', color: '#888' }}>(opcional — receba confirmação por email)</span>
-              <input className="modal-input" type="email" placeholder="seu@email.com" value={emailCliente} onChange={(e) => setEmailCliente(e.target.value)} />
+              <input
+                className={`modal-input${errosCampo.email ? ' modal-input--erro' : ''}`}
+                type="email"
+                placeholder="seu@email.com"
+                value={emailCliente}
+                onChange={(e) => { setEmailCliente(e.target.value); if (errosCampo.email) setErrosCampo({ ...errosCampo, email: '' }); }}
+                onBlur={() => setErrosCampo({ ...errosCampo, email: !isValidEmail(emailCliente) ? 'Email inválido' : '' })}
+                autoComplete="email"
+              />
+              {errosCampo.email && <span className="modal-erro-campo">{errosCampo.email}</span>}
             </label>
 
             {erro && <p className="modal-erro">{erro}</p>}

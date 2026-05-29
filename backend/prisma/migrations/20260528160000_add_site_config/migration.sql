@@ -1,5 +1,6 @@
 -- CreateTable: SiteConfig (singleton, id sempre = 1)
-CREATE TABLE "SiteConfig" (
+-- Idempotente para tolerar drift onde a tabela ja existe em prod.
+CREATE TABLE IF NOT EXISTS "SiteConfig" (
   "id" INTEGER NOT NULL DEFAULT 1,
   "bannerUrl" TEXT,
   "logoUrl" TEXT,

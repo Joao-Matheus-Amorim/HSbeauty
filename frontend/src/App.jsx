@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
-import { listarServicos, listarCombos, getSiteConfig } from './services/agendamentos'
-import { WHATSAPP, SERVICOS_PADRAO } from './constants'
+import { listarServicos, listarCombos, listarCategorias, getSiteConfig } from './services/agendamentos'
+import { WHATSAPP, SERVICOS_PADRAO, CATEGORIAS_PADRAO } from './constants'
 import CategoryCarousel from './components/CategoryCarousel'
 import CategoryDrawer from './components/CategoryDrawer'
 
@@ -8,19 +8,39 @@ const AgendamentoModal = lazy(() => import('./components/AgendamentoModal'))
 
 const fallbackServices = SERVICOS_PADRAO
 
-function buildCategorias(servicos) {
+function buildCategorias(servicos, categorias) {
 	const grupos = new Map()
-	servicos.forEach((s) => {
-		const nome = String(s.categoria || '').trim()
-		if (!nome) return
-		if (!grupos.has(nome)) grupos.set(nome, { nome, servicos: [] })
-		grupos.get(nome).servicos.push(s)
+	categorias.forEach((c) => {
+		grupos.set(c.id, {
+			id: c.id,
+			nome: c.nome,
+			imagemUrl: c.imagemUrl || null,
+			ordem: c.ordem ?? 0,
+			servicos: [],
+		})
 	})
-	return Array.from(grupos.values()).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+	servicos.forEach((s) => {
+		const cat = s.categoria
+		if (!cat) return
+		if (!grupos.has(cat.id)) {
+			grupos.set(cat.id, {
+				id: cat.id,
+				nome: cat.nome,
+				imagemUrl: cat.imagemUrl || null,
+				ordem: cat.ordem ?? 0,
+				servicos: [],
+			})
+		}
+		grupos.get(cat.id).servicos.push(s)
+	})
+	return Array.from(grupos.values())
+		.filter((g) => g.servicos.length > 0)
+		.sort((a, b) => (a.ordem - b.ordem) || a.nome.localeCompare(b.nome, 'pt-BR'))
 }
 
 function App() {
 	const [services, setServices] = useState(fallbackServices)
+	const [categoriasApi, setCategoriasApi] = useState(CATEGORIAS_PADRAO)
 	const [combos, setCombos] = useState([])
 	const [siteConfig, setSiteConfig] = useState({ bannerUrl: null, logoUrl: null })
 	const [modalAberto, setModalAberto] = useState(false)
@@ -40,12 +60,15 @@ function App() {
 			}
 		}
 		loadServices()
+		listarCategorias().then((lista) => {
+			if (mounted && Array.isArray(lista) && lista.length) setCategoriasApi(lista)
+		}).catch(() => {})
 		listarCombos().then((lista) => { if (mounted && Array.isArray(lista)) setCombos(lista.filter((c) => c.ativo)) }).catch(() => {})
 		getSiteConfig().then((config) => { if (mounted && config) setSiteConfig(config) }).catch(() => {})
 		return () => { mounted = false }
 	}, [])
 
-	const categorias = useMemo(() => buildCategorias(services), [services])
+	const categorias = useMemo(() => buildCategorias(services, categoriasApi), [services, categoriasApi])
 
 	function abrirModal(servico = null) {
 		setServicoModal(servico)

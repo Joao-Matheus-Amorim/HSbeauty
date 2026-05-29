@@ -56,7 +56,7 @@ function validateDuracao(value, { required = false } = {}) {
   return { valid: true, value: duracaoNumero };
 }
 
-function validateCategoria(value, { required = false } = {}) {
+function validateCategoriaId(value, { required = false } = {}) {
   if (value === undefined) {
     if (required) return { valid: false, status: 400, message: 'Categoria é obrigatória' };
     return { valid: true, value: undefined };
@@ -66,11 +66,12 @@ function validateCategoria(value, { required = false } = {}) {
     return { valid: false, status: 400, message: 'Categoria é obrigatória' };
   }
 
-  if (typeof value !== 'string' || !value.trim()) {
-    return { valid: false, status: 400, message: 'Categoria é obrigatória' };
+  const id = Number(value);
+  if (!Number.isInteger(id) || id <= 0) {
+    return { valid: false, status: 400, message: 'Categoria inválida' };
   }
 
-  return { valid: true, value: value.trim() };
+  return { valid: true, value: id };
 }
 
 function validateAtivo(value) {
@@ -98,9 +99,9 @@ export function validateAdminServiceCreatePayload(payload = {}) {
   if (!duracaoResult.valid) return duracaoResult;
   data.duracao = duracaoResult.value;
 
-  const categoriaResult = validateCategoria(payload.categoria, { required: true });
+  const categoriaResult = validateCategoriaId(payload.categoriaId, { required: true });
   if (!categoriaResult.valid) return categoriaResult;
-  data.categoria = categoriaResult.value;
+  data.categoriaId = categoriaResult.value;
 
   for (const field of ['descricao', 'imagemUrl']) {
     const error = validateOptionalText(data, payload, field);
@@ -129,9 +130,9 @@ export function validateAdminServiceUpdatePayload(payload = {}) {
   if (!duracaoResult.valid) return duracaoResult;
   if (duracaoResult.value !== undefined) data.duracao = duracaoResult.value;
 
-  const categoriaResult = validateCategoria(payload.categoria);
+  const categoriaResult = validateCategoriaId(payload.categoriaId);
   if (!categoriaResult.valid) return categoriaResult;
-  if (categoriaResult.value !== undefined) data.categoria = categoriaResult.value;
+  if (categoriaResult.value !== undefined) data.categoriaId = categoriaResult.value;
 
   for (const field of ['descricao', 'imagemUrl']) {
     const error = validateOptionalText(data, payload, field);

@@ -124,6 +124,26 @@
   pointer-events: none;
 }
 
+.cat-card-image-wrap {
+  display: inline-flex;
+  width: 88px;
+  height: 88px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 10px 20px rgba(120, 54, 78, 0.18);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.cat-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .cat-card-glyph {
   display: inline-flex;
   align-items: center;

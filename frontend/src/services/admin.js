@@ -68,6 +68,37 @@ export async function desativarServicoAdmin(id) {
   return handleAuthResponse(response);
 }
 
+// ─── Categorias ───────────────────────────────────────────────────────────────
+
+export async function listarCategoriasAdmin(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  const response = await authorizedFetch(`${API_URL}/admin/categorias?${query}`);
+  return handleAuthResponse(response);
+}
+
+export async function criarCategoriaAdmin(dados) {
+  const response = await authorizedFetch(`${API_URL}/admin/categorias`, {
+    method: 'POST',
+    body: JSON.stringify(dados),
+  });
+  return handleAuthResponse(response);
+}
+
+export async function atualizarCategoriaAdmin(id, dados) {
+  const response = await authorizedFetch(`${API_URL}/admin/categorias/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(dados),
+  });
+  return handleAuthResponse(response);
+}
+
+export async function desativarCategoriaAdmin(id) {
+  const response = await authorizedFetch(`${API_URL}/admin/categorias/${id}`, {
+    method: 'DELETE',
+  });
+  return handleAuthResponse(response);
+}
+
 // ─── Configurações do site ────────────────────────────────────────────────────
 
 export async function getSiteConfigAdmin() {

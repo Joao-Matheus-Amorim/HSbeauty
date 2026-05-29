@@ -13,7 +13,9 @@ import {
 import {
   listarServicosAdmin,
   criarServicoAdmin,
-  atualizarServicoAdmin
+  atualizarServicoAdmin,
+  listarCategoriasAdmin,
+  criarCategoriaAdmin,
 } from '../services/admin';
 import { clsx } from 'clsx';
 import ImageUpload from './ImageUpload';
@@ -30,10 +32,39 @@ export default function ServiceManager() {
     descricao: '',
     preco: '',
     duracao: '',
-    categoria: '',
+    categoriaId: '',
     imagemUrl: '',
     ativo: true,
   });
+  const [categorias, setCategorias] = useState([]);
+  const [novaCategoriaNome, setNovaCategoriaNome] = useState('');
+  const [novaCategoriaLoading, setNovaCategoriaLoading] = useState(false);
+
+  const loadCategorias = useCallback(async () => {
+    try {
+      const data = await listarCategoriasAdmin({ ativo: 'true' });
+      setCategorias(data.categorias || []);
+    } catch {
+      setCategorias([]);
+    }
+  }, []);
+
+  async function handleCriarCategoriaInline() {
+    const nome = novaCategoriaNome.trim();
+    if (!nome) return;
+    setNovaCategoriaLoading(true);
+    setActionError(null);
+    try {
+      const criada = await criarCategoriaAdmin({ nome });
+      setNovaCategoriaNome('');
+      await loadCategorias();
+      setFormData((prev) => ({ ...prev, categoriaId: String(criada.id) }));
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setNovaCategoriaLoading(false);
+    }
+  }
 
   const loadServices = useCallback(async () => {
     setLoading(true);
@@ -51,11 +82,15 @@ export default function ServiceManager() {
   useEffect(() => {
     let ignore = false;
 
-    listarServicosAdmin()
-      .then((data) => {
+    Promise.all([
+      listarServicosAdmin(),
+      listarCategoriasAdmin({ ativo: 'true' }),
+    ])
+      .then(([servicosData, categoriasData]) => {
         if (ignore) return;
         setError(null);
-        setServices(data.servicos || []);
+        setServices(servicosData.servicos || []);
+        setCategorias(categoriasData.categorias || []);
       })
       .catch((err) => {
         if (ignore) return;
@@ -77,6 +112,7 @@ export default function ServiceManager() {
         ...formData,
         preco: parseFloat(formData.preco),
         duracao: parseInt(formData.duracao),
+        categoriaId: formData.categoriaId ? Number(formData.categoriaId) : undefined,
       };
 
       if (editingService) {
@@ -102,7 +138,7 @@ export default function ServiceManager() {
       descricao: service.descricao || '',
       preco: service.preco.toString(),
       duracao: service.duracao.toString(),
-      categoria: service.categoria || '',
+      categoriaId: service.categoria?.id ? String(service.categoria.id) : (service.categoriaId ? String(service.categoriaId) : ''),
       imagemUrl: service.imagemUrl || '',
       ativo: service.ativo,
     });
@@ -122,7 +158,8 @@ export default function ServiceManager() {
   const resetForm = () => {
     setEditingService(null);
     setActionError(null);
-    setFormData({ nome: '', descricao: '', preco: '', duracao: '', categoria: '', imagemUrl: '', ativo: true });
+    setNovaCategoriaNome('');
+    setFormData({ nome: '', descricao: '', preco: '', duracao: '', categoriaId: '', imagemUrl: '', ativo: true });
   };
 
   return (
@@ -280,16 +317,40 @@ export default function ServiceManager() {
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
                   Categoria <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   required
                   className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#b5936a]"
-                  placeholder="Ex: Unhas, Cílios, Spa Labial..."
-                  value={formData.categoria}
-                  onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
-                />
+                  value={formData.categoriaId}
+                  onChange={(e) => setFormData({ ...formData, categoriaId: e.target.value })}
+                >
+                  <option value="">Selecione uma categoria…</option>
+                  {categorias.map((c) => (
+                    <option key={c.id} value={String(c.id)}>{c.nome}</option>
+                  ))}
+                </select>
+                <div className="flex gap-2 items-stretch">
+                  <input
+                    type="text"
+                    maxLength={60}
+                    className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#b5936a]"
+                    placeholder="Nova categoria…"
+                    value={novaCategoriaNome}
+                    onChange={(e) => setNovaCategoriaNome(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); handleCriarCategoriaInline(); }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCriarCategoriaInline}
+                    disabled={!novaCategoriaNome.trim() || novaCategoriaLoading}
+                    className="px-4 py-2 rounded-xl bg-[#b5936a] text-white text-sm font-bold disabled:opacity-50"
+                  >
+                    {novaCategoriaLoading ? '...' : '+ Adicionar'}
+                  </button>
+                </div>
                 <p className="text-xs text-gray-500 ml-1">
-                  Define em qual aba do carrossel o serviço aparece. Serviços sem categoria não são exibidos no site público.
+                  Serviços sem categoria não aparecem no site público.
                 </p>
               </div>
 

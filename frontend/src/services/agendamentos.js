@@ -17,6 +17,12 @@ export async function listarCombos() {
   return response.json();
 }
 
+export async function listarCategorias() {
+  const response = await fetch(`${API_URL}/categorias`);
+  if (!response.ok) throw new Error('Erro ao carregar categorias');
+  return response.json();
+}
+
 export async function getSiteConfig() {
   const response = await fetch(`${API_URL}/config`);
   if (!response.ok) throw new Error('Erro ao carregar configuração');

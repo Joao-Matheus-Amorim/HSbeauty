@@ -6,6 +6,7 @@ import AppRoutes from '../../AppRoutes';
 vi.mock('../../services/agendamentos', () => ({
   listarServicos: vi.fn(),
   listarCombos: vi.fn(),
+  listarCategorias: vi.fn(),
   getSiteConfig: vi.fn(),
   buscarDisponibilidade: vi.fn(),
   criarAgendamento: vi.fn(),
@@ -23,19 +24,25 @@ vi.mock('../../utils/date-utils', async () => {
   };
 });
 
-import { listarServicos, listarCombos, getSiteConfig, buscarDisponibilidade, criarAgendamento } from '../../services/agendamentos';
+import { listarServicos, listarCombos, listarCategorias, getSiteConfig, buscarDisponibilidade, criarAgendamento } from '../../services/agendamentos';
+
+const CAT_UNHAS = { id: 1, nome: 'Unhas', imagemUrl: null, ordem: 0 };
+const CAT_CILIOS = { id: 2, nome: 'Cílios', imagemUrl: null, ordem: 1 };
+const CAT_SOBR = { id: 3, nome: 'Sobrancelhas', imagemUrl: null, ordem: 2 };
+const CAT_DEPIL = { id: 4, nome: 'Depilação', imagemUrl: null, ordem: 3 };
 
 describe('Smoke publico', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
     listarCombos.mockResolvedValue([]);
+    listarCategorias.mockResolvedValue([CAT_UNHAS, CAT_CILIOS, CAT_SOBR, CAT_DEPIL]);
     getSiteConfig.mockResolvedValue({ bannerUrl: null, logoUrl: null });
     listarServicos.mockResolvedValue([
-      { id: 1, nome: 'Unhas', categoria: 'Unhas', duracao: 60, preco: 60 },
-      { id: 2, nome: 'Cilios', categoria: 'Cílios', duracao: 30, preco: 50 },
-      { id: 3, nome: 'Sobrancelhas', categoria: 'Sobrancelhas', duracao: 40, preco: 45 },
-      { id: 4, nome: 'Depilacao', categoria: 'Depilação', duracao: 20, preco: 35 },
+      { id: 1, nome: 'Unhas', categoria: CAT_UNHAS, duracao: 60, preco: 60 },
+      { id: 2, nome: 'Cilios', categoria: CAT_CILIOS, duracao: 30, preco: 50 },
+      { id: 3, nome: 'Sobrancelhas', categoria: CAT_SOBR, duracao: 40, preco: 45 },
+      { id: 4, nome: 'Depilacao', categoria: CAT_DEPIL, duracao: 20, preco: 35 },
     ]);
 
     buscarDisponibilidade.mockResolvedValue({

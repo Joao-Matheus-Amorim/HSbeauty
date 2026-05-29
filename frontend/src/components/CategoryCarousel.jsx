@@ -132,14 +132,26 @@ export default function CategoryCarousel({ categorias, onSelect }) {
               aria-roledescription="slide"
             >
               <div className="cat-card-face">
-                <span className="cat-card-glyph" aria-hidden="true">{categoryInitials(cat.nome)}</span>
+                {cat.imagemUrl ? (
+                  <span className="cat-card-image-wrap" aria-hidden="true">
+                    <img className="cat-card-image" src={cat.imagemUrl} alt="" loading="lazy" />
+                  </span>
+                ) : (
+                  <span className="cat-card-glyph" aria-hidden="true">{categoryInitials(cat.nome)}</span>
+                )}
                 <h4 className="cat-card-name">{cat.nome}</h4>
                 <span className="cat-card-count">
                   {cat.servicos.length} {cat.servicos.length === 1 ? 'serviço' : 'serviços'}
                 </span>
               </div>
               <div className="cat-card-mirror" aria-hidden="true">
-                <span className="cat-card-glyph">{categoryInitials(cat.nome)}</span>
+                {cat.imagemUrl ? (
+                  <span className="cat-card-image-wrap">
+                    <img className="cat-card-image" src={cat.imagemUrl} alt="" />
+                  </span>
+                ) : (
+                  <span className="cat-card-glyph">{categoryInitials(cat.nome)}</span>
+                )}
                 <h4 className="cat-card-name">{cat.nome}</h4>
               </div>
             </button>

@@ -6,6 +6,8 @@ import adminRouter, { setupAdminHorarios } from './admin-routes.js';
 import { createAdminAppointmentRouter } from './admin-appointment-routes.js';
 import { createAdminDashboardRouter } from './admin-dashboard-routes.js';
 import { createAdminServiceRouter } from './admin-service-routes.js';
+import { createAdminCategoriaRouter } from './admin-categoria-routes.js';
+import { createPublicCategoriaRouter } from './public-categoria-routes.js';
 import { createAuthMiddleware } from './auth-middleware.js';
 import { createAuthRouter } from './auth-routes.js';
 import { createAvailabilityRouter } from './availability-routes.js';
@@ -45,6 +47,7 @@ export function createApp() {
   app.use('/auth', createAuthRouter({ prisma, jwtSecret: JWT_SECRET }));
   app.use('/servicos', createPublicServiceRouter({ prisma }));
   app.use('/combos', createPublicComboRouter({ prisma }));
+  app.use('/categorias', createPublicCategoriaRouter({ prisma }));
   app.use('/agendamentos', createPublicBookingRouter({ prisma }));
   app.use('/disponibilidade', createAvailabilityRouter({ prisma }));
   app.use('/config', createPublicConfigRouter({ prisma }));
@@ -52,6 +55,7 @@ export function createApp() {
   app.use('/admin', createAdminDashboardRouter({ prisma, authMiddleware }));
   app.use('/admin', createAdminAppointmentRouter({ prisma, authMiddleware }));
   app.use('/admin', createAdminServiceRouter({ prisma, authMiddleware }));
+  app.use('/admin', createAdminCategoriaRouter({ prisma, authMiddleware }));
   app.use('/admin', createAdminComboRouter({ prisma, authMiddleware }));
   app.use('/admin', createAdminConfigRouter({ prisma, authMiddleware }));
   setupAdminHorarios(prisma, authMiddleware);

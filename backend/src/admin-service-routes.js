@@ -24,6 +24,7 @@ export function createAdminServiceRouter({ prisma, authMiddleware }) {
           orderBy: { nome: 'asc' },
           skip: query.skip,
           take: query.limitNum,
+          include: { categoria: { select: { id: true, nome: true, imagemUrl: true } } },
         }),
         prisma.servico.count({ where: query.where }),
       ]);
@@ -52,7 +53,10 @@ export function createAdminServiceRouter({ prisma, authMiddleware }) {
       const id = Number(req.params.id);
       if (!Number.isInteger(id)) return sendError(res, 400, 'ID inválido');
 
-      const servico = await prisma.servico.findUnique({ where: { id } });
+      const servico = await prisma.servico.findUnique({
+        where: { id },
+        include: { categoria: { select: { id: true, nome: true, imagemUrl: true } } },
+      });
       if (!servico) return sendError(res, 404, 'Serviço não encontrado');
 
       res.json(servico);
@@ -73,6 +77,7 @@ export function createAdminServiceRouter({ prisma, authMiddleware }) {
 
       const novoServico = await prisma.servico.create({
         data: validation.data,
+        include: { categoria: { select: { id: true, nome: true, imagemUrl: true } } },
       });
 
       res.status(201).json(novoServico);
@@ -102,6 +107,7 @@ export function createAdminServiceRouter({ prisma, authMiddleware }) {
       const servicoAtualizado = await prisma.servico.update({
         where: { id },
         data: validation.data,
+        include: { categoria: { select: { id: true, nome: true, imagemUrl: true } } },
       });
 
       res.json(servicoAtualizado);

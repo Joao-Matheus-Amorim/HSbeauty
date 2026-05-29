@@ -8,6 +8,7 @@ import {
   Settings,
   LogOut,
   Menu,
+  FolderTree,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -20,6 +21,7 @@ export default function AdminLayout({ children, activeTab, onTabChange, admin, o
   const menuItems = [
     { id: 'agendamentos', label: 'Agenda', desktopLabel: 'Agendamentos', icon: Calendar },
     { id: 'horarios', label: 'Horários', desktopLabel: 'Horários', icon: Clock },
+    { id: 'categorias', label: 'Categorias', desktopLabel: 'Categorias', icon: FolderTree },
     { id: 'servicos', label: 'Serviços', desktopLabel: 'Serviços', icon: Scissors },
     { id: 'combos', label: 'Combos', desktopLabel: 'Combos', icon: Package },
     { id: 'configuracoes', label: 'Site', desktopLabel: 'Configurações', icon: Settings },

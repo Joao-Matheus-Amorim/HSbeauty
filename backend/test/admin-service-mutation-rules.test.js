@@ -12,7 +12,7 @@ test('validateAdminServiceCreatePayload normalizes valid payloads', () => {
       preco: '80.50',
       duracao: '45',
       descricao: '  Serviço completo  ',
-      categoria: '  Sobrancelhas  ',
+      categoriaId: 7,
       ativo: false,
     }),
     {
@@ -22,7 +22,7 @@ test('validateAdminServiceCreatePayload normalizes valid payloads', () => {
         preco: 80.5,
         duracao: 45,
         descricao: 'Serviço completo',
-        categoria: 'Sobrancelhas',
+        categoriaId: 7,
         ativo: false,
       },
     },
@@ -30,13 +30,13 @@ test('validateAdminServiceCreatePayload normalizes valid payloads', () => {
 });
 
 test('validateAdminServiceCreatePayload defaults active to true', () => {
-  assert.deepEqual(validateAdminServiceCreatePayload({ nome: 'Unha', preco: 50, duracao: 60, categoria: 'Unhas' }), {
+  assert.deepEqual(validateAdminServiceCreatePayload({ nome: 'Unha', preco: 50, duracao: 60, categoriaId: 3 }), {
     valid: true,
     data: {
       nome: 'Unha',
       preco: 50,
       duracao: 60,
-      categoria: 'Unhas',
+      categoriaId: 3,
       ativo: true,
     },
   });
@@ -67,10 +67,16 @@ test('validateAdminServiceCreatePayload rejects missing required fields', () => 
     message: 'Categoria é obrigatória',
   });
 
-  assert.deepEqual(validateAdminServiceCreatePayload({ nome: 'Unha', preco: 50, duracao: 60, categoria: '   ' }), {
+  assert.deepEqual(validateAdminServiceCreatePayload({ nome: 'Unha', preco: 50, duracao: 60, categoriaId: 'abc' }), {
     valid: false,
     status: 400,
-    message: 'Categoria é obrigatória',
+    message: 'Categoria inválida',
+  });
+
+  assert.deepEqual(validateAdminServiceCreatePayload({ nome: 'Unha', preco: 50, duracao: 60, categoriaId: 0 }), {
+    valid: false,
+    status: 400,
+    message: 'Categoria inválida',
   });
 });
 
@@ -89,13 +95,13 @@ test('validateAdminServiceCreatePayload rejects invalid numeric fields', () => {
 });
 
 test('validateAdminServiceCreatePayload rejects invalid optional field types', () => {
-  assert.deepEqual(validateAdminServiceCreatePayload({ nome: 'Unha', preco: 50, duracao: 60, categoria: 'Unhas', descricao: 123 }), {
+  assert.deepEqual(validateAdminServiceCreatePayload({ nome: 'Unha', preco: 50, duracao: 60, categoriaId: 3, descricao: 123 }), {
     valid: false,
     status: 400,
     message: 'descricao deve ser texto',
   });
 
-  assert.deepEqual(validateAdminServiceCreatePayload({ nome: 'Unha', preco: 50, duracao: 60, categoria: 'Unhas', ativo: 'true' }), {
+  assert.deepEqual(validateAdminServiceCreatePayload({ nome: 'Unha', preco: 50, duracao: 60, categoriaId: 3, ativo: 'true' }), {
     valid: false,
     status: 400,
     message: 'Ativo deve ser true ou false',
@@ -109,7 +115,7 @@ test('validateAdminServiceUpdatePayload normalizes valid updates', () => {
       preco: '120',
       duracao: '90',
       descricao: '',
-      categoria: '  Sobrancelhas  ',
+      categoriaId: 7,
       ativo: true,
     }),
     {
@@ -119,7 +125,7 @@ test('validateAdminServiceUpdatePayload normalizes valid updates', () => {
         preco: 120,
         duracao: 90,
         descricao: null,
-        categoria: 'Sobrancelhas',
+        categoriaId: 7,
         ativo: true,
       },
     },
@@ -151,16 +157,16 @@ test('validateAdminServiceUpdatePayload rejects invalid updates', () => {
     message: 'Ativo deve ser true ou false',
   });
 
-  assert.deepEqual(validateAdminServiceUpdatePayload({ categoria: null }), {
+  assert.deepEqual(validateAdminServiceUpdatePayload({ categoriaId: null }), {
     valid: false,
     status: 400,
     message: 'Categoria é obrigatória',
   });
 
-  assert.deepEqual(validateAdminServiceUpdatePayload({ categoria: '   ' }), {
+  assert.deepEqual(validateAdminServiceUpdatePayload({ categoriaId: 'abc' }), {
     valid: false,
     status: 400,
-    message: 'Categoria é obrigatória',
+    message: 'Categoria inválida',
   });
 });
 

@@ -6,15 +6,28 @@ vi.mock('../../services/admin', () => ({
   listarServicosAdmin: vi.fn(),
   criarServicoAdmin: vi.fn(),
   atualizarServicoAdmin: vi.fn(),
+  listarCategoriasAdmin: vi.fn(),
+  criarCategoriaAdmin: vi.fn(),
 }));
 
-import { listarServicosAdmin, criarServicoAdmin } from '../../services/admin';
+import { listarServicosAdmin, criarServicoAdmin, listarCategoriasAdmin } from '../../services/admin';
 
-const SERVICO_MOCK = { id: 1, nome: 'Unhas', preco: 35, duracao: 60, ativo: true, descricao: '', categoria: '' };
+const CATEGORIA_MOCK = { id: 1, nome: 'Unhas', imagemUrl: null, ordem: 0, ativo: true };
+const SERVICO_MOCK = {
+  id: 1,
+  nome: 'Unhas',
+  preco: 35,
+  duracao: 60,
+  ativo: true,
+  descricao: '',
+  categoria: CATEGORIA_MOCK,
+  categoriaId: 1,
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
   listarServicosAdmin.mockResolvedValue({ servicos: [SERVICO_MOCK] });
+  listarCategoriasAdmin.mockResolvedValue({ categorias: [CATEGORIA_MOCK] });
 });
 
 describe('ServiceManager — renderização', () => {
@@ -67,7 +80,7 @@ describe('ServiceManager — criação de serviço', () => {
     fireEvent.change(screen.getByPlaceholderText(/Ex: Unhas em Gel/i), { target: { value: 'Pedicure' } });
     fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '40' } });
     fireEvent.change(screen.getByPlaceholderText('60'), { target: { value: '45' } });
-    fireEvent.change(screen.getByPlaceholderText(/Ex: Unhas, C[ií]lios/i), { target: { value: 'Unhas' } });
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '1' } });
 
     fireEvent.click(screen.getByRole('button', { name: /criar serviço/i }));
 

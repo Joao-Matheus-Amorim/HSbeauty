@@ -13,11 +13,18 @@ export const WHATSAPP = resolveWhatsApp();
 export const SEMANAS_DISPONIVEIS = 3;
 
 // ─── Serviços padrão (fallback quando a API não responde) ─────────────────────
+export const CATEGORIAS_PADRAO = [
+  { id: 1, nome: 'Unhas',        imagemUrl: null, ordem: 0 },
+  { id: 2, nome: 'Cílios',       imagemUrl: null, ordem: 1 },
+  { id: 3, nome: 'Sobrancelhas', imagemUrl: null, ordem: 2 },
+  { id: 4, nome: 'Depilação',    imagemUrl: null, ordem: 3 },
+];
+
 export const SERVICOS_PADRAO = [
-  { id: 1, nome: 'Unhas',        categoria: 'Unhas',        preco: 35,  duracao: 150, ativo: true },
-  { id: 2, nome: 'Cílios',       categoria: 'Cílios',       preco: 140, duracao: 150, ativo: true },
-  { id: 3, nome: 'Sobrancelhas', categoria: 'Sobrancelhas', preco: 70,  duracao: 150, ativo: true },
-  { id: 4, nome: 'Depilação',    categoria: 'Depilação',    preco: 50,  duracao: 150, ativo: true },
+  { id: 1, nome: 'Unhas',        categoria: CATEGORIAS_PADRAO[0], preco: 35,  duracao: 150, ativo: true },
+  { id: 2, nome: 'Cílios',       categoria: CATEGORIAS_PADRAO[1], preco: 140, duracao: 150, ativo: true },
+  { id: 3, nome: 'Sobrancelhas', categoria: CATEGORIAS_PADRAO[2], preco: 70,  duracao: 150, ativo: true },
+  { id: 4, nome: 'Depilação',    categoria: CATEGORIAS_PADRAO[3], preco: 50,  duracao: 150, ativo: true },
 ];
 
 // ─── Status de agendamento ────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ import AdminLayout from '../components/AdminLayout';
 import Dashboard from '../components/Dashboard';
 import AppointmentManager from '../components/AppointmentManager';
 import ServiceManager from '../components/ServiceManager';
+import CategoriaManager from '../components/CategoriaManager';
 import ComboManager from '../components/ComboManager';
 import SiteConfigManager from '../components/SiteConfigManager';
 import ScheduleManager from '../components/ScheduleManager';
@@ -69,6 +70,7 @@ export default function Admin() {
       {tab === 'dashboard' && <Dashboard onNavigate={setTab} />}
       {tab === 'agendamentos' && <AppointmentManager />}
       {tab === 'horarios' && <ScheduleManager />}
+      {tab === 'categorias' && <CategoriaManager />}
       {tab === 'servicos' && <ServiceManager />}
       {tab === 'combos' && <ComboManager />}
       {tab === 'configuracoes' && <SiteConfigManager />}

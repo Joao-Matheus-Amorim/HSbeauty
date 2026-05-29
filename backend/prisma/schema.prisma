@@ -12,14 +12,29 @@ model Servico {
   descricao    String?
   preco        Float
   duracao      Int            // Duração em minutos
-  categoria    String?
+  categoriaId  Int?
   imagemUrl    String?
   ativo        Boolean        @default(true)
   criadoEm     DateTime       @default(now())
   atualizadoEm DateTime       @updatedAt
 
+  categoria    Categoria?     @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
   agendamentos Agendamento[]
   comboItens   ComboItem[]
+
+  @@index([categoriaId])
+}
+
+model Categoria {
+  id           Int       @id @default(autoincrement())
+  nome         String    @unique
+  imagemUrl    String?
+  ordem        Int       @default(0)
+  ativo        Boolean   @default(true)
+  criadoEm     DateTime  @default(now())
+  atualizadoEm DateTime  @updatedAt
+
+  servicos     Servico[]
 }
 
 model Combo {

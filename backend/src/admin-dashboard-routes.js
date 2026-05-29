@@ -19,33 +19,28 @@ export function createAdminDashboardRouter({ prisma, authMiddleware }) {
       const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
       const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
 
-      // Buscar agendamentos do mês
-      const agendamentosMes = await prisma.agendamento.findMany({
-        where: {
-          data: {
-            gte: inicioMes,
-            lte: fimMes,
-          },
-        },
-        include: { servico: true, combo: true },
-      });
-
-      // Buscar agendamentos de hoje
       const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
       const fimHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 1);
 
-      const agendamentosHoje = await prisma.agendamento.findMany({
-        where: {
-          data: {
-            gte: inicioHoje,
-            lt: fimHoje,
-          },
-        },
-        include: { servico: true, combo: true },
-      });
+      const mesWhere = { data: { gte: inicioMes, lte: fimMes } };
+      const hojeWhere = { data: { gte: inicioHoje, lt: fimHoje } };
 
-      // Total de serviços
-      const totalServicos = await prisma.servico.count({ where: { ativo: true } });
+      // Buscamos apenas o estritamente necessario:
+      // - status para statusCount
+      // - servico.nome para topServices (rank por contagem)
+      // - servico.preco / combo.preco para calculo de receita
+      const [agendamentosMes, agendamentosHoje, totalServicos] = await Promise.all([
+        prisma.agendamento.findMany({
+          where: mesWhere,
+          select: {
+            status: true,
+            servico: { select: { nome: true, preco: true } },
+            combo: { select: { nome: true, preco: true } },
+          },
+        }),
+        prisma.agendamento.count({ where: hojeWhere }),
+        prisma.servico.count({ where: { ativo: true } }),
+      ]);
 
       res.json({
         periodo: {

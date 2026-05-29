@@ -18,7 +18,10 @@ export function createAdminAppointmentRouter({ prisma, authMiddleware }) {
       const [agendamentos, total] = await Promise.all([
         prisma.agendamento.findMany({
           where: query.where,
-          include: { servico: true, combo: true },
+          include: {
+          servico: { select: { id: true, nome: true, preco: true, duracao: true, imagemUrl: true, categoria: { select: { id: true, nome: true } } } },
+          combo: { select: { id: true, nome: true, preco: true } },
+        },
           orderBy: { data: 'desc' },
           skip: query.skip,
           take: query.limitNum,
@@ -53,7 +56,10 @@ export function createAdminAppointmentRouter({ prisma, authMiddleware }) {
 
       const agendamentos = await prisma.agendamento.findMany({
         where: query.where,
-        include: { servico: true, combo: true },
+        include: {
+          servico: { select: { id: true, nome: true, preco: true, duracao: true, imagemUrl: true, categoria: { select: { id: true, nome: true } } } },
+          combo: { select: { id: true, nome: true, preco: true } },
+        },
         orderBy: { data: 'desc' },
         take: 1000,
       });
@@ -101,7 +107,10 @@ export function createAdminAppointmentRouter({ prisma, authMiddleware }) {
 
       const agendamento = await prisma.agendamento.findUnique({
         where: { id },
-        include: { servico: true, combo: true },
+        include: {
+          servico: { select: { id: true, nome: true, preco: true, duracao: true, imagemUrl: true, categoria: { select: { id: true, nome: true } } } },
+          combo: { select: { id: true, nome: true, preco: true } },
+        },
       });
 
       if (!agendamento) return sendError(res, 404, 'Agendamento não encontrado');
@@ -131,7 +140,10 @@ export function createAdminAppointmentRouter({ prisma, authMiddleware }) {
       const agendamentoAtualizado = await prisma.agendamento.update({
         where: { id },
         data: validation.data,
-        include: { servico: true, combo: true },
+        include: {
+          servico: { select: { id: true, nome: true, preco: true, duracao: true, imagemUrl: true, categoria: { select: { id: true, nome: true } } } },
+          combo: { select: { id: true, nome: true, preco: true } },
+        },
       });
 
       res.json(agendamentoAtualizado);
@@ -157,7 +169,10 @@ export function createAdminAppointmentRouter({ prisma, authMiddleware }) {
       const agendamentoAtualizado = await prisma.agendamento.update({
         where: { id },
         data: { status: 'cancelado' },
-        include: { servico: true, combo: true },
+        include: {
+          servico: { select: { id: true, nome: true, preco: true, duracao: true, imagemUrl: true, categoria: { select: { id: true, nome: true } } } },
+          combo: { select: { id: true, nome: true, preco: true } },
+        },
       });
 
       res.json({

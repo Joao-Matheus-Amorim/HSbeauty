@@ -39,10 +39,15 @@ export function buildTopServices(agendamentos = [], limit = 5) {
     .map(([nome, quantidade]) => ({ nome, quantidade }));
 }
 
-export function buildDashboardSummary({ agendamentosMes = [], agendamentosHoje = [], totalServicos = 0 } = {}) {
+export function buildDashboardSummary({
+  agendamentosMes = [],
+  agendamentosHoje = [],
+  totalServicos = 0,
+} = {}) {
+  const totalHoje = typeof agendamentosHoje === 'number' ? agendamentosHoje : agendamentosHoje.length;
   return {
     totalAgendamentos: agendamentosMes.length,
-    agendamentosHoje: agendamentosHoje.length,
+    agendamentosHoje: totalHoje,
     receitaMes: calculateRevenue(agendamentosMes),
     totalServicos,
   };

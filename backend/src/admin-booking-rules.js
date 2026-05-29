@@ -1,4 +1,4 @@
-import { isValidTelefone, OBSERVACOES_MAX_LENGTH } from './booking-rules.js';
+import { isSlotStepAligned, isValidTelefone, OBSERVACOES_MAX_LENGTH, parsePublicBookingDateTime } from './booking-rules.js';
 
 export const BOOKING_STATUS = {
   PENDENTE: 'pendente',
@@ -18,8 +18,27 @@ export function normalizeBookingStatus(status) {
 }
 
 export function validateAdminBookingUpdatePayload(payload) {
-  const { status, observacoes, nomeCliente, telefone, email } = payload || {};
+  const { status, observacoes, nomeCliente, telefone, email, data: novaData, hora } = payload || {};
   const data = {};
+
+  if (novaData !== undefined) {
+    const parsed = parsePublicBookingDateTime(novaData);
+    if (!parsed) return { valid: false, status: 400, message: 'Nova data inválida (envie ISO 8601)' };
+    if (!isSlotStepAligned(parsed)) return { valid: false, status: 400, message: 'Nova data deve estar alinhada ao slot de 30 minutos' };
+    data.data = parsed;
+  }
+
+  if (hora !== undefined) {
+    if (typeof hora !== 'string' || !/^\d{2}:\d{2}$/.test(hora)) {
+      return { valid: false, status: 400, message: 'hora deve estar no formato HH:mm' };
+    }
+    data.hora = hora;
+  } else if (data.data) {
+    // Mantem hora coerente com a nova data
+    const hh = String(data.data.getHours()).padStart(2, '0');
+    const mm = String(data.data.getMinutes()).padStart(2, '0');
+    data.hora = `${hh}:${mm}`;
+  }
 
   if (status !== undefined) {
     const normalizedStatus = normalizeBookingStatus(status);

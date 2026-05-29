@@ -100,6 +100,9 @@ function createPrismaMock(options = {}) {
         bloqueioHorario: {
           findMany: async () => [],
         },
+        siteConfig: {
+          findUnique: async () => ({ aberturaHora: 9, fechamentoHora: 18, diasFechados: [] }),
+        },
       };
       return fn(tx);
     },

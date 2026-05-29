@@ -43,7 +43,7 @@ export function createAdminConfigRouter({ prisma, authMiddleware }) {
 
   router.put('/config', authMiddleware, async (req, res) => {
     try {
-      const { bannerUrl, logoUrl } = req.body || {};
+      const { bannerUrl, logoUrl, aberturaHora, fechamentoHora, diasFechados } = req.body || {};
 
       const data = {};
       if (bannerUrl !== undefined) {
@@ -55,6 +55,29 @@ export function createAdminConfigRouter({ prisma, authMiddleware }) {
         const r = validateImagemUrl(logoUrl);
         if (!r.valid) return sendError(res, r.status, `logoUrl: ${r.message}`);
         data.logoUrl = r.value ?? null;
+      }
+      if (aberturaHora !== undefined) {
+        const n = Number(aberturaHora);
+        if (!Number.isInteger(n) || n < 0 || n > 23) return sendError(res, 400, 'aberturaHora deve ser inteiro entre 0 e 23');
+        data.aberturaHora = n;
+      }
+      if (fechamentoHora !== undefined) {
+        const n = Number(fechamentoHora);
+        if (!Number.isInteger(n) || n < 1 || n > 24) return sendError(res, 400, 'fechamentoHora deve ser inteiro entre 1 e 24');
+        data.fechamentoHora = n;
+      }
+      if (data.aberturaHora !== undefined && data.fechamentoHora !== undefined && data.fechamentoHora <= data.aberturaHora) {
+        return sendError(res, 400, 'fechamentoHora deve ser maior que aberturaHora');
+      }
+      if (diasFechados !== undefined) {
+        if (!Array.isArray(diasFechados)) return sendError(res, 400, 'diasFechados deve ser uma lista de inteiros 0-6');
+        const dias = [];
+        for (const d of diasFechados) {
+          const n = Number(d);
+          if (!Number.isInteger(n) || n < 0 || n > 6) return sendError(res, 400, 'diasFechados deve conter inteiros 0-6 (0=domingo)');
+          if (!dias.includes(n)) dias.push(n);
+        }
+        data.diasFechados = dias.sort((a, b) => a - b);
       }
 
       if (Object.keys(data).length === 0) {

@@ -98,10 +98,13 @@ model BloqueioHorario {
 }
 
 model SiteConfig {
-  id           Int      @id @default(1)
-  bannerUrl    String?
-  logoUrl      String?
-  atualizadoEm DateTime @updatedAt
+  id              Int      @id @default(1)
+  bannerUrl       String?
+  logoUrl         String?
+  aberturaHora    Int      @default(9)   // 0-23, hora de abertura local (BRT)
+  fechamentoHora  Int      @default(18)  // 0-23, hora de fechamento (slot deve terminar ate aqui)
+  diasFechados    Int[]    @default([])  // 0=domingo, 1=segunda, ..., 6=sabado
+  atualizadoEm    DateTime @updatedAt
 }
 
 model Admin {

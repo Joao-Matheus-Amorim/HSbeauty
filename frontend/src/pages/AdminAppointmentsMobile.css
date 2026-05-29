@@ -389,6 +389,7 @@
 .admin-mini-action.confirm { color: #fff; background: linear-gradient(145deg, #22c55e, #15803d); box-shadow: 0 8px 16px rgba(21, 128, 61, 0.18); }
 .admin-mini-action.done { color: #fff; background: linear-gradient(145deg, #3b82f6, #1d4ed8); box-shadow: 0 8px 16px rgba(29, 78, 216, 0.18); }
 .admin-mini-action.cancel { color: #fff; background: linear-gradient(145deg, #fb7185, #b91c1c); box-shadow: 0 8px 16px rgba(185, 28, 28, 0.16); }
+.admin-mini-action.reschedule { color: #5b2e1c; background: linear-gradient(145deg, #f5deb3, #d9a244); box-shadow: 0 8px 16px rgba(154, 103, 32, 0.18); border-color: rgba(217, 162, 68, 0.45); }
 
 .admin-mini-action:active,
 .admin-status-tab:active,

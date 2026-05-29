@@ -16,6 +16,7 @@ import {
   Download,
   LayoutList,
   CalendarRange,
+  CalendarClock,
 } from 'lucide-react';
 import { listarAgendamentosAdmin, atualizarAgendamentoAdmin, cancelarAgendamentoAdmin, exportarAgendamentosCSV } from '../services/admin';
 import { STATUS } from '../constants';
@@ -84,7 +85,7 @@ function formatFullDate(value) {
   return new Date(value).toLocaleDateString('pt-BR');
 }
 
-function AppointmentCard({ appointment, onConfirm, onComplete, onCancel }) {
+function AppointmentCard({ appointment, onConfirm, onComplete, onCancel, onReschedule }) {
   const status = STATUS_CONFIG[appointment.status] || STATUS_CONFIG[STATUS.PENDENTE];
   const phone = cleanPhone(appointment.telefone);
   const whatsappHref = phone ? `https://wa.me/55${phone}` : null;
@@ -176,10 +177,16 @@ function AppointmentCard({ appointment, onConfirm, onComplete, onCancel }) {
         )}
 
         {appointment.status !== STATUS.CANCELADO && (
-          <button type="button" onClick={() => onCancel(appointment.id)} className="admin-mini-action cancel">
-            <X className="w-4 h-4" />
-            Cancelar
-          </button>
+          <>
+            <button type="button" onClick={() => onReschedule(appointment)} className="admin-mini-action reschedule">
+              <CalendarClock className="w-4 h-4" />
+              Reagendar
+            </button>
+            <button type="button" onClick={() => onCancel(appointment.id)} className="admin-mini-action cancel">
+              <X className="w-4 h-4" />
+              Cancelar
+            </button>
+          </>
         )}
       </div>
     </article>
@@ -194,6 +201,9 @@ export default function AppointmentManager() {
   const [actionError, setActionError] = useState(null);
   const [confirmCancelId, setConfirmCancelId] = useState(null);
   const [exporting, setExporting] = useState(false);
+  const [rescheduleTarget, setRescheduleTarget] = useState(null);
+  const [rescheduleValue, setRescheduleValue] = useState('');
+  const [rescheduleSaving, setRescheduleSaving] = useState(false);
 
   const [filters, setFilters] = useState({
     status: STATUS.PENDENTE,
@@ -268,6 +278,30 @@ export default function AppointmentManager() {
   const handleCancelRequest = (id) => {
     setConfirmCancelId(id);
     setActionError(null);
+  };
+
+  const handleRescheduleOpen = (appointment) => {
+    setRescheduleTarget(appointment);
+    setActionError(null);
+    const d = new Date(appointment.data);
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    setRescheduleValue(local);
+  };
+
+  const handleRescheduleSave = async () => {
+    if (!rescheduleTarget || !rescheduleValue) return;
+    setRescheduleSaving(true);
+    setActionError(null);
+    try {
+      await atualizarAgendamentoAdmin(rescheduleTarget.id, { data: rescheduleValue });
+      setRescheduleTarget(null);
+      setRescheduleValue('');
+      await loadAppointments({ silent: true });
+    } catch (err) {
+      setActionError('Erro ao reagendar: ' + err.message);
+    } finally {
+      setRescheduleSaving(false);
+    }
   };
 
   const handleCancelConfirm = async () => {
@@ -426,6 +460,47 @@ export default function AppointmentManager() {
         </div>
       )}
 
+      {rescheduleTarget && (
+        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-label="Reagendar">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-gray-800 mb-1">Reagendar</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              <strong>{rescheduleTarget.nomeCliente}</strong> — {rescheduleTarget.servico?.nome || 'Serviço'}
+            </p>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+              Nova data e hora
+            </label>
+            <input
+              type="datetime-local"
+              step="1800"
+              value={rescheduleValue}
+              onChange={(e) => setRescheduleValue(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-[#b5936a]"
+              disabled={rescheduleSaving}
+            />
+            <p className="text-xs text-gray-500 mt-2">Use intervalos de 30 minutos. O sistema valida horário de funcionamento e conflito.</p>
+            <div className="flex gap-3 mt-5">
+              <button
+                type="button"
+                onClick={() => { setRescheduleTarget(null); setRescheduleValue(''); }}
+                disabled={rescheduleSaving}
+                className="flex-1 py-3 rounded-2xl border border-gray-200 font-bold disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleRescheduleSave}
+                disabled={rescheduleSaving || !rescheduleValue}
+                className="flex-1 py-3 rounded-2xl bg-[#b5936a] text-white font-bold disabled:opacity-50"
+              >
+                {rescheduleSaving ? 'Salvando…' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="admin-error-card">
           <AlertCircle className="w-5 h-5" />
@@ -445,6 +520,7 @@ export default function AppointmentManager() {
             onConfirm={(id) => handleStatusUpdate(id, STATUS.CONFIRMADO)}
             onComplete={(id) => handleStatusUpdate(id, STATUS.CONCLUIDO)}
             onCancel={handleCancelRequest}
+            onReschedule={handleRescheduleOpen}
           />
         ))}
       </section>

@@ -6,15 +6,18 @@ import {
   getCurrentWeekRange,
   getHoraFromDate,
   hasConflict,
+  isClosedDay,
   isDateInWeek,
   parseDateOnly,
   parseDayBounds,
   SLOT_STEP_MINUTES,
 } from './booking-rules.js';
 
-export function buildAvailableSlots(baseDay, servico, ocupados, now = null) {
-  const inicioExpediente = buildDateTime(baseDay, BUSINESS_OPEN_HOUR, 0);
-  const fimExpediente = buildDateTime(baseDay, BUSINESS_CLOSE_HOUR, 0);
+export function buildAvailableSlots(baseDay, servico, ocupados, now = null, opts = {}) {
+  const openHour = opts.aberturaHora ?? BUSINESS_OPEN_HOUR;
+  const closeHour = opts.fechamentoHora ?? BUSINESS_CLOSE_HOUR;
+  const inicioExpediente = buildDateTime(baseDay, openHour, 0);
+  const fimExpediente = buildDateTime(baseDay, closeHour, 0);
   const slotsDisponiveis = [];
 
   for (
@@ -78,14 +81,37 @@ export async function getDayOccupancy({ prisma, dateString }) {
   return { dayStart, dayEnd, agendamentos, bloqueios, ocupados };
 }
 
+async function loadBusinessConfig(prisma) {
+  try {
+    const cfg = await prisma.siteConfig.findUnique({
+      where: { id: 1 },
+      select: { aberturaHora: true, fechamentoHora: true, diasFechados: true },
+    });
+    if (!cfg) return { aberturaHora: 9, fechamentoHora: 18, diasFechados: [] };
+    return {
+      aberturaHora: cfg.aberturaHora ?? 9,
+      fechamentoHora: cfg.fechamentoHora ?? 18,
+      diasFechados: cfg.diasFechados ?? [],
+    };
+  } catch {
+    return { aberturaHora: 9, fechamentoHora: 18, diasFechados: [] };
+  }
+}
+
+function pad2(n) {
+  return String(n).padStart(2, '0');
+}
+
 export async function calculateAvailability({ prisma, dateString, servico, referenceDate = new Date() }) {
   const baseDay = parseDateOnly(dateString);
   const semanaAtual = getCurrentWeekRange(referenceDate);
   const duracaoMinutos = servico.duracao;
+  const config = await loadBusinessConfig(prisma);
+  const expediente = { inicio: `${pad2(config.aberturaHora)}:00`, fim: `${pad2(config.fechamentoHora)}:00` };
 
   if (!isDateInWeek(baseDay, referenceDate)) {
     return {
-      expediente: { inicio: '09:00', fim: '18:00' },
+      expediente,
       semanaAtual,
       duracaoServicoMinutos: duracaoMinutos,
       total: 0,
@@ -94,11 +120,25 @@ export async function calculateAvailability({ prisma, dateString, servico, refer
     };
   }
 
+  if (isClosedDay(baseDay, config.diasFechados)) {
+    return {
+      expediente,
+      semanaAtual,
+      duracaoServicoMinutos: duracaoMinutos,
+      total: 0,
+      slotsDisponiveis: [],
+      mensagem: 'Fechado neste dia.',
+    };
+  }
+
   const { ocupados } = await getDayOccupancy({ prisma, dateString });
-  const slotsDisponiveis = buildAvailableSlots(baseDay, servico, ocupados, referenceDate);
+  const slotsDisponiveis = buildAvailableSlots(baseDay, servico, ocupados, referenceDate, {
+    aberturaHora: config.aberturaHora,
+    fechamentoHora: config.fechamentoHora,
+  });
 
   return {
-    expediente: { inicio: '09:00', fim: '18:00' },
+    expediente,
     semanaAtual,
     duracaoServicoMinutos: duracaoMinutos,
     total: slotsDisponiveis.length,

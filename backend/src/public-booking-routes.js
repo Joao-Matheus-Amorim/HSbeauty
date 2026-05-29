@@ -5,6 +5,7 @@ import {
   buildPublicBookingLockKey,
   formatDateOnly,
   getHoraFromDate,
+  isClosedDay,
   isDateInCurrentWeek,
   isWithinBusinessHours,
   PUBLIC_BOOKING_INITIAL_STATUS,
@@ -54,10 +55,26 @@ export function createPublicBookingRouter({ prisma }) {
           nomeServico = combo.nome;
         }
 
+        const config = await tx.siteConfig.findUnique({
+          where: { id: 1 },
+          select: { aberturaHora: true, fechamentoHora: true, diasFechados: true },
+        });
+        const aberturaHora = config?.aberturaHora ?? 9;
+        const fechamentoHora = config?.fechamentoHora ?? 18;
+        const diasFechados = config?.diasFechados ?? [];
+
         const inicioSlot = new Date(dataAgendamento);
         const fimSlot = addMinutes(inicioSlot, duracaoMinutos);
-        if (!isWithinBusinessHours(inicioSlot, fimSlot)) {
-          return { erro: { status: 400, message: 'Horário fora do expediente (09:00–18:00)' } };
+        if (isClosedDay(inicioSlot, diasFechados)) {
+          return { erro: { status: 400, message: 'Não atendemos neste dia' } };
+        }
+        if (!isWithinBusinessHours(inicioSlot, fimSlot, aberturaHora, fechamentoHora)) {
+          return {
+            erro: {
+              status: 400,
+              message: `Horário fora do expediente (${String(aberturaHora).padStart(2, '0')}:00–${String(fechamentoHora).padStart(2, '0')}:00)`,
+            },
+          };
         }
 
         const disponibilidade = await calculateAvailability({

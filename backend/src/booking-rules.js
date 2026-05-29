@@ -141,6 +141,16 @@ export function isWithinBusinessHours(
   return start >= open && end <= close;
 }
 
+/**
+ * Verifica se o dia da semana de `date` esta na lista de dias fechados.
+ * 0 = domingo, 6 = sabado.
+ */
+export function isClosedDay(date, diasFechados = []) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return false;
+  if (!Array.isArray(diasFechados) || diasFechados.length === 0) return false;
+  return diasFechados.includes(date.getDay());
+}
+
 export function overlaps(startA, endA, startB, endB) {
   return startA < endB && endA > startB;
 }

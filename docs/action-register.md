@@ -1,6 +1,6 @@
 # Registro de acoes tecnicas
 
-Atualizado em: 29/05/2026
+Atualizado em: 29/05/2026 (turno tarde)
 
 ## Legenda
 
@@ -77,3 +77,6 @@ Atualizado em: 29/05/2026
 | C-045 | 2026-05-29 | Migration `20260529150000_agendamento_slot_unique` cria unique parcial em `Agendamento(data) WHERE status <> 'cancelado'`. Fecha gap historico de A-013 (restava reforco a nivel de DB). |
 | C-046 | 2026-05-29 | Refator: helpers de formato (`utils/booking-format.js`) e hook `useDisponibilidadeCache.js` extraidos do AgendamentoModal; App.jsx unifica fetches publicos com `Promise.allSettled`. |
 | C-047 | 2026-05-29 | Cobertura nova: `url-rules`, `email-service-escape` (anti-XSS), `booking-format`. Backend 135 + frontend 92. |
+| C-048 | 2026-05-29 | SiteConfig ganha `aberturaHora`, `fechamentoHora` e `diasFechados`. `availability-service` e `public-booking-routes` passam a respeitar essas regras dinamicamente (substitui constantes hardcoded 9-18). Mensagem 'Fechado neste dia.' quando dia da semana esta na lista. |
+| C-049 | 2026-05-29 | Admin pode reagendar via `PUT /admin/agendamentos/:id { data }`. `validateAdminBookingUpdatePayload` aceita nova data (ISO + slot 30min), atualiza `hora` para coerencia. Frontend: botao 'Reagendar' no card + modal datetime-local. |
+| C-050 | 2026-05-29 | SiteConfigManager admin ganha 3 secoes novas: horario de abertura/fechamento (inputs numericos) e dias fechados (botoes toggle por dia). |

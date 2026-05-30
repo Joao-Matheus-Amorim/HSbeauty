@@ -135,19 +135,7 @@ function App() {
 			<section className="phone-frame" aria-label="Landing page HSBeauty">
 				{siteConfig.bannerUrl ? (
 					<section className="banner-hero" aria-label="HS Beauty Studio">
-						<div className="banner-hero-image" aria-hidden="true">
-							<img src={siteConfig.bannerUrl} alt="HS Beauty" className="banner-hero-img" />
-						</div>
-						<header className="banner-topbar">
-							<span className="banner-mark">
-								{siteConfig.logoUrl
-									? <img src={siteConfig.logoUrl} alt="HS Beauty" />
-									: <span className="banner-wordmark">HS Beauty</span>}
-							</span>
-							<button type="button" className="banner-cta" onClick={irParaServicos}>
-								Marcar horário
-							</button>
-						</header>
+						<img src={siteConfig.bannerUrl} alt="HS Beauty" className="banner-hero-img" />
 					</section>
 				) : (
 					<section className="editorial-hero" aria-label="HS Beauty Studio">

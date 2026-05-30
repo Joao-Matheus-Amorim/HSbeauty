@@ -194,56 +194,144 @@
   background: linear-gradient(160deg, #efe3d2, #d4bda0);
 }
 
-/* Pattern de beauty animado — duas camadas drift em direcoes
-   opostas pra dar parallax + presenca visivel. Icones grandes
-   em ouro escuro, opacidade real (nao subliminal). */
-.cat-card-image-wrap::before,
-.cat-card-image-wrap::after {
-  content: '';
+/* Particulas beauty individuais — cada icone flutua, gira e
+   pulsa em trajetoria propria. Loop infinito staggered. */
+.cat-card-particles {
   position: absolute;
-  inset: -20%;
-  width: 140%;
-  height: 140%;
-  background-repeat: repeat;
+  inset: 0;
   pointer-events: none;
   z-index: 0;
+  overflow: hidden;
 }
 
-/* Camada 1 — icones maiores em borgonha (estampa principal) */
-.cat-card-image-wrap::before {
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cg fill='none' stroke='%235C2B3A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(30 35) rotate(-18)'%3E%3Crect width='14' height='24' rx='2'/%3E%3Cpath d='M3 0v-10h8v10'/%3E%3C/g%3E%3Cg transform='translate(120 40)'%3E%3Cpath d='M0-9l2 7 7 2-7 2-2 7-2-7-7-2 7-2z'/%3E%3C/g%3E%3Cg transform='translate(75 80)'%3E%3Cpath d='M-14 0q6-7 14-3q8-4 14 3q-6 6-14 3q-8 3-14-3z'/%3E%3C/g%3E%3Cg transform='translate(135 110) rotate(32)'%3E%3Crect x='0' y='-3' width='10' height='6' rx='1.5'/%3E%3Cpath d='M10 0h22'/%3E%3Cpath d='M13 -3v6M17 -3v6M21 -3v6M25 -3v6M29 -3v6'/%3E%3C/g%3E%3Cg transform='translate(40 135)'%3E%3Ccircle r='10'/%3E%3Cpath d='M0 10v12M-7 22h14'/%3E%3C/g%3E%3Cg transform='translate(140 165)'%3E%3Cpath d='M-12 3q12-5 24 0'/%3E%3Cpath d='M-8 1v-6M-3 0v-7M3 0v-7M8 1v-6'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  background-size: 180px 180px;
-  opacity: 0.18;
-  animation: cat-pattern-a 22s linear infinite;
+.cat-particle {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  background: center/contain no-repeat;
+  opacity: 0;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 2px 4px rgba(92, 43, 58, 0.18));
 }
 
-/* Camada 2 — sparkles e bolinhas em dourado (acento) */
-.cat-card-image-wrap::after {
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='%23C19660'%3E%3Cpath d='M30 30l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z'/%3E%3Cpath d='M120 50l1 3 3 1-3 1-1 3-1-3-3-1 3-1z'/%3E%3Cpath d='M60 110l1.2 3.5 3.5 1.2-3.5 1.2-1.2 3.5-1.2-3.5-3.5-1.2 3.5-1.2z'/%3E%3Cpath d='M135 135l0.8 2.5 2.5 0.8-2.5 0.8-0.8 2.5-0.8-2.5-2.5-0.8 2.5-0.8z'/%3E%3Ccircle cx='90' cy='25' r='2'/%3E%3Ccircle cx='25' cy='80' r='1.5'/%3E%3Ccircle cx='100' cy='90' r='1.8'/%3E%3Ccircle cx='15' cy='140' r='1.5'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 160px 160px;
-  opacity: 0.35;
-  animation: cat-pattern-b 16s linear infinite;
+.cat-card.is-focus .cat-particle {
+  filter: drop-shadow(0 2px 6px rgba(193, 150, 96, 0.42));
 }
 
-@keyframes cat-pattern-a {
-  from { transform: translate(0, 0); }
-  to   { transform: translate(-180px, 90px); }
+/* batom */
+.p-lipstick {
+  top: 14%; left: 16%;
+  width: 26px; height: 32px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 32' fill='none' stroke='%235C2B3A' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='6' y='12' width='14' height='18' rx='2' fill='%23f1d8b4' fill-opacity='0.4'/%3E%3Cpath d='M9 12V3a3 3 0 0 1 3-3h2a3 3 0 0 1 3 3v9'/%3E%3C/svg%3E");
+  animation: cat-float-a 16s ease-in-out infinite;
 }
 
-@keyframes cat-pattern-b {
-  from { transform: translate(0, 0); }
-  to   { transform: translate(160px, -100px); }
+/* sparkle dourado */
+.p-sparkle {
+  top: 22%; left: 70%;
+  width: 22px; height: 22px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22' fill='%23C19660'%3E%3Cpath d='M11 0l1.6 7.4L20 9l-7.4 1.6L11 18l-1.6-7.4L2 9l7.4-1.6z'/%3E%3C/svg%3E");
+  animation: cat-twinkle 4.4s ease-in-out infinite;
 }
 
-.cat-card.is-focus .cat-card-image-wrap::before {
-  opacity: 0.28;
-  animation-duration: 14s;
+/* lips */
+.p-lips {
+  top: 40%; left: 22%;
+  width: 30px; height: 18px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 18' fill='%235C2B3A' fill-opacity='0.7'%3E%3Cpath d='M15 4 Q10 -2 4 2 Q0 6 4 11 Q9 16 15 13 Q21 16 26 11 Q30 6 26 2 Q20 -2 15 4Z'/%3E%3C/svg%3E");
+  animation: cat-float-b 18s ease-in-out infinite 1s;
 }
 
-.cat-card.is-focus .cat-card-image-wrap::after {
-  opacity: 0.55;
-  animation-duration: 10s;
+/* mascara wand */
+.p-mascara {
+  top: 60%; left: 62%;
+  width: 36px; height: 14px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 14' fill='none' stroke='%235C2B3A' stroke-width='1.6' stroke-linecap='round'%3E%3Crect x='0' y='4' width='8' height='6' rx='1' fill='%23C19660' fill-opacity='0.4'/%3E%3Cpath d='M8 7h26'/%3E%3Cpath d='M11 3v8M15 3v8M19 3v8M23 3v8M27 3v8M31 3v8'/%3E%3C/svg%3E");
+  animation: cat-float-c 20s ease-in-out infinite 2s;
 }
+
+/* espelho de mao */
+.p-mirror {
+  top: 70%; left: 18%;
+  width: 24px; height: 34px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 34' fill='none' stroke='%235C2B3A' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10' fill='%23f1d8b4' fill-opacity='0.3'/%3E%3Cpath d='M12 22v8M8 32h8'/%3E%3C/svg%3E");
+  animation: cat-float-d 22s ease-in-out infinite 0.5s;
+}
+
+/* perfume */
+.p-bottle {
+  top: 12%; left: 48%;
+  width: 22px; height: 28px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 28' fill='none' stroke='%235C2B3A' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='10' width='16' height='16' rx='2' fill='%23C19660' fill-opacity='0.32'/%3E%3Crect x='7' y='4' width='8' height='6' rx='1'/%3E%3Cpath d='M9 2h4'/%3E%3C/svg%3E");
+  animation: cat-float-e 19s ease-in-out infinite 3s;
+}
+
+/* sparkle 2 */
+.p-sparkle-2 {
+  top: 80%; left: 72%;
+  width: 16px; height: 16px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23C19660'%3E%3Cpath d='M8 0l1 5 5 1-5 1-1 5-1-5-5-1 5-1z'/%3E%3C/svg%3E");
+  animation: cat-twinkle 5.6s ease-in-out infinite 1.4s;
+}
+
+/* lash */
+.p-lash {
+  top: 52%; left: 78%;
+  width: 28px; height: 18px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 18' fill='none' stroke='%235C2B3A' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M2 14q12-4 24 0'/%3E%3Cpath d='M5 12L4 4M9 12L8 2M13 12L13 1M17 12L18 2M21 12L22 4'/%3E%3C/svg%3E");
+  animation: cat-float-f 21s ease-in-out infinite 2.4s;
+}
+
+@keyframes cat-float-a {
+  0%, 100% { transform: translate(0, 0) rotate(-12deg); opacity: 0; }
+  10%      { opacity: 0.6; }
+  50%      { transform: translate(28px, -22px) rotate(4deg); opacity: 0.7; }
+  90%      { opacity: 0.55; }
+}
+@keyframes cat-float-b {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  15%      { opacity: 0.5; }
+  50%      { transform: translate(-18px, 20px) rotate(-6deg); opacity: 0.62; }
+  85%      { opacity: 0.4; }
+}
+@keyframes cat-float-c {
+  0%, 100% { transform: translate(0, 0) rotate(22deg); opacity: 0; }
+  20%      { opacity: 0.5; }
+  60%      { transform: translate(-24px, -16px) rotate(36deg); opacity: 0.7; }
+  90%      { opacity: 0.4; }
+}
+@keyframes cat-float-d {
+  0%, 100% { transform: translate(0, 0) rotate(-4deg); opacity: 0; }
+  15%      { opacity: 0.45; }
+  55%      { transform: translate(16px, -24px) rotate(8deg); opacity: 0.65; }
+  90%      { opacity: 0.35; }
+}
+@keyframes cat-float-e {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  18%      { opacity: 0.55; }
+  60%      { transform: translate(-20px, 28px) rotate(-10deg); opacity: 0.72; }
+  88%      { opacity: 0.4; }
+}
+@keyframes cat-float-f {
+  0%, 100% { transform: translate(0, 0) rotate(8deg); opacity: 0; }
+  15%      { opacity: 0.5; }
+  55%      { transform: translate(-22px, -18px) rotate(-4deg); opacity: 0.68; }
+  88%      { opacity: 0.42; }
+}
+@keyframes cat-twinkle {
+  0%, 100% { transform: scale(0.5) rotate(0deg); opacity: 0; }
+  20%      { transform: scale(0.9) rotate(45deg); opacity: 0.7; }
+  50%      { transform: scale(1.1) rotate(90deg); opacity: 1; }
+  80%      { transform: scale(0.9) rotate(135deg); opacity: 0.55; }
+}
+
+.cat-card.is-focus .cat-particle { opacity: 1; }
+.cat-card.is-focus .p-lipstick { animation-duration: 11s; }
+.cat-card.is-focus .p-lips { animation-duration: 12s; }
+.cat-card.is-focus .p-mascara { animation-duration: 14s; }
+.cat-card.is-focus .p-mirror { animation-duration: 15s; }
+.cat-card.is-focus .p-bottle { animation-duration: 13s; }
+.cat-card.is-focus .p-lash { animation-duration: 14s; }
 
 .cat-card-image {
   position: relative;

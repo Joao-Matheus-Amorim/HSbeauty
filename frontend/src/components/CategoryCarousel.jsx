@@ -138,6 +138,16 @@ export default function CategoryCarousel({ categorias, onSelect }) {
                   ) : (
                     <span className="cat-card-glyph">{categoryInitials(cat.nome)}</span>
                   )}
+                  <div className="cat-card-particles" aria-hidden="true">
+                    <span className="cat-particle p-lipstick" />
+                    <span className="cat-particle p-sparkle" />
+                    <span className="cat-particle p-lips" />
+                    <span className="cat-particle p-mascara" />
+                    <span className="cat-particle p-mirror" />
+                    <span className="cat-particle p-bottle" />
+                    <span className="cat-particle p-sparkle-2" />
+                    <span className="cat-particle p-lash" />
+                  </div>
                 </div>
                 <div className="cat-card-body">
                   <h4 className="cat-card-name">{cat.nome}</h4>

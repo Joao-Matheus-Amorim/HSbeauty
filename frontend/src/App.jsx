@@ -133,37 +133,61 @@ function App() {
 			)}
 
 			<section className="phone-frame" aria-label="Landing page HSBeauty">
-				<section className="hero hero-art">
-					<div className="topbar topbar-overlay glass-panel">
-						<button className="icon-button" aria-label="Abrir menu" type="button">
-							<span className="menu-icon" />
-						</button>
-						<button className="gold-pill" type="button" onClick={irParaServicos}>
-							Agendar ›
-						</button>
+				<section className="editorial-hero" aria-label="HS Beauty Studio">
+					<div className="editorial-hero-image" aria-hidden="true">
+						{siteConfig.bannerUrl ? (
+							<img src={siteConfig.bannerUrl} alt="" className="editorial-hero-img" />
+						) : (
+							<img
+								src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200&q=85&auto=format&fit=crop"
+								alt=""
+								className="editorial-hero-img"
+							/>
+						)}
+						<div className="editorial-hero-gradient" />
 					</div>
-					{siteConfig.bannerUrl ? (
-						<div className="hero-banner-art" aria-hidden="true">
-							<img src={siteConfig.bannerUrl} alt="HSBeauty" className="hero-banner-img" />
+
+					<header className="editorial-topbar">
+						<span className="editorial-mark">
+							{siteConfig.logoUrl
+								? <img src={siteConfig.logoUrl} alt="HS Beauty" />
+								: <span className="editorial-wordmark">HS Beauty</span>}
+						</span>
+						<span className="editorial-place">Piabetá · Magé</span>
+					</header>
+
+					<div className="editorial-hero-content">
+						<span className="editorial-eyebrow">Studio · desde 2019</span>
+						<h1 className="editorial-title">
+							<em>Cuidado</em><br/>que se sente.
+						</h1>
+						<p className="editorial-sub">
+							Unhas, cílios, sobrancelhas, depilação e spa labial — feitos com tempo, no seu tempo.
+						</p>
+						<div className="editorial-cta-row">
+							<button type="button" className="editorial-cta" onClick={irParaServicos}>
+								Marcar horário
+							</button>
+							<span className="editorial-rating">5,0 · 150+ clientes</span>
 						</div>
-					) : (
-						<div className="hero-banner-art hero-banner-placeholder" aria-hidden="true">
-							<span>HSBeauty</span>
-						</div>
-					)}
+					</div>
 				</section>
 
-				<div className="hero-dots" aria-hidden="true">
-					<span className="dot active" />
-					<span className="dot" />
-				</div>
-
-				<section className="meta-row glass-panel">
-					<span>5.0 (150+)</span>
-					<span>Piabeta / Mage</span>
-					<button type="button" className="meta-row-cta" onClick={irParaServicos}>
-						Agendar agora
-					</button>
+				<section className="storyteller">
+					<div className="storyteller-portrait" aria-hidden="true">
+						<img
+							src="https://images.unsplash.com/photo-1559599101-f09722fb4948?w=600&q=85&auto=format&fit=crop"
+							alt=""
+						/>
+					</div>
+					<div className="storyteller-body">
+						<span className="storyteller-eyebrow">Oi, eu sou a HS.</span>
+						<p className="storyteller-text">
+							Aqui em Piabetá, há mais de cinco anos, atendo de uma cliente por vez. Sem fila, sem pressa.
+							Cada cuidado é uma conversa — e cada cliente sai parecendo um pouco mais ela mesma.
+						</p>
+						<span className="storyteller-signature">— Hellen Silva</span>
+					</div>
 				</section>
 
 				<section className="services-section" id="services">

@@ -87,7 +87,7 @@ Nunca puxar uma branch remota em cima da `main` com `git pull origin nome-da-bra
 Padrao correto:
 
 ```powershell
-cd E:\HSbeauty
+cd E:\HSBeauty\HSbeauty
 
 git fetch origin
 git switch main
@@ -99,7 +99,7 @@ git switch -c nome-da-branch origin/nome-da-branch
 Se a branch local ja existir:
 
 ```powershell
-cd E:\HSbeauty
+cd E:\HSBeauty\HSbeauty
 
 git fetch origin
 git switch nome-da-branch

@@ -27,11 +27,12 @@ Campos administrativos enviados pelo cliente público devem ser ignorados pela c
 A criação pública deve respeitar as mesmas regras usadas por `GET /disponibilidade`:
 
 1. O serviço precisa existir e estar ativo.
-2. A data deve pertencer à semana atual calculada pelo backend.
-3. O horário deve estar dentro do expediente configurado: `09:00` até `18:00`.
-4. O início do horário deve estar alinhado ao grid operacional de 30 minutos.
-5. A duração do serviço não pode ultrapassar o fim do expediente.
-6. O horário não pode conflitar com agendamentos não cancelados nem bloqueios ativos.
+2. A data deve pertencer à janela pública de agendamento: semana atual + `BOOKING_WEEKS_AHEAD` semanas seguintes (hoje: **3 semanas** total, semana atual + 2). Validada por `isDateInBookingWindow` em `backend/src/booking-rules.js` e detalhada em [`booking-window.md`](booking-window.md). Substitui a regra antiga "apenas semana atual" desde C-054.
+3. O dia da semana não pode estar listado em `SiteConfig.diasFechados`. Quando estiver, a resposta é `409 — Fechado neste dia.`
+4. O horário deve estar dentro do expediente dinâmico definido em `SiteConfig.aberturaHora` e `SiteConfig.fechamentoHora` (default `9` e `18`, BRT). Antes era hardcoded; desde C-048 vem do banco e o admin altera no painel.
+5. O início do horário deve estar alinhado ao grid operacional de 30 minutos.
+6. A duração do serviço não pode ultrapassar o fim do expediente.
+7. O horário não pode conflitar com agendamentos não cancelados nem bloqueios ativos. Lock advisory PostgreSQL por dia (`pg_advisory_xact_lock`) + unique parcial `Agendamento(data) WHERE status <> 'cancelado'` (C-045) garantem que nem mesmo corrida concorrente burla a regra.
 
 ## Fluxo esperado
 

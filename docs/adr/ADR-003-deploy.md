@@ -40,7 +40,7 @@ Beneficios:
 
 Custos / riscos:
 
-- Bug que passe pelo CI vai pra producao em segundos. Mitigacao: cobertura de testes (108 backend, 81 frontend, e2e Playwright) deve estar verde antes de merge.
+- Bug que passe pelo CI vai pra producao em segundos. Mitigacao: cobertura de testes (150 backend, 95 frontend, e2e Playwright) deve estar verde antes de merge.
 - Variaveis de ambiente em producao (Vercel + Render) precisam ficar em dia.
 
 ## Politica operacional

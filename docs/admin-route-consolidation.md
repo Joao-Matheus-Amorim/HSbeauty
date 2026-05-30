@@ -1,47 +1,33 @@
 # Consolidação das rotas administrativas
 
-## Objetivo
+Atualizado em: 30/05/2026
 
-Definir a superfície canônica das rotas administrativas do HSBeauty sem quebrar compatibilidade imediatamente.
+## Estado atual
 
-## Decisão
+As rotas sob `/admin/*` são o **contrato exclusivo** do painel administrativo. As rotas legadas protegidas fora de `/admin` foram **removidas em C-029 / A-014**.
 
-As rotas sob `/admin/*` são o contrato canônico para o painel administrativo.
-
-Rotas protegidas antigas fora de `/admin` continuam existindo apenas como compatibilidade temporária até que a aplicação esteja totalmente migrada e haja validação suficiente para remoção segura.
-
-## Mapeamento atual
+## Superfície canônica
 
 ### Agendamentos
 
-Contrato canônico:
-
 - `GET /admin/agendamentos`
+- `GET /admin/agendamentos/export` (CSV com filtros ativos)
 - `GET /admin/agendamentos/:id`
-- `PUT /admin/agendamentos/:id`
+- `PUT /admin/agendamentos/:id` (status, observações ou reagendamento via `data`)
 - `DELETE /admin/agendamentos/:id`
 
-Rotas legadas protegidas:
-
-- `GET /agendamentos`
-- `GET /agendamentos/:id`
-- `PUT /agendamentos/:id`
-- `DELETE /agendamentos/:id`
-
-Rota pública preservada:
+Rota pública preservada (não admin):
 
 - `POST /agendamentos`
 
-`POST /agendamentos` não é rota administrativa. Ela pertence ao fluxo público de reserva e deve continuar fora de `/admin`.
-
 ### Serviços
 
-Contrato público preservado:
+Pública (preservada):
 
 - `GET /servicos`
 - `GET /servicos/:id`
 
-Contrato canônico administrativo:
+Admin:
 
 - `GET /admin/servicos`
 - `GET /admin/servicos/:id`
@@ -49,61 +35,68 @@ Contrato canônico administrativo:
 - `PUT /admin/servicos/:id`
 - `DELETE /admin/servicos/:id`
 
-Rotas legadas protegidas:
+### Categorias
 
-- `POST /servicos`
-- `PUT /servicos/:id`
-- `DELETE /servicos/:id`
+Pública:
 
-As rotas públicas de leitura de serviços devem continuar disponíveis para landing/agendamento.
+- `GET /categorias`
+
+Admin:
+
+- `GET /admin/categorias`
+- `POST /admin/categorias`
+- `PUT /admin/categorias/:id`
+- `DELETE /admin/categorias/:id`
+
+### Combos
+
+Pública:
+
+- `GET /combos`
+
+Admin:
+
+- `GET /admin/combos`
+- `POST /admin/combos`
+- `PUT /admin/combos/:id`
+- `DELETE /admin/combos/:id`
 
 ### Bloqueios / Horários
-
-Contrato canônico administrativo:
 
 - `GET /admin/horarios`
 - `POST /admin/horarios`
 - `PUT /admin/horarios/:id`
 - `DELETE /admin/horarios/:id`
 
-Rotas legadas protegidas:
+### SiteConfig
 
-- `GET /bloqueios`
-- `POST /bloqueios`
-- `DELETE /bloqueios/:id`
+Pública:
+
+- `GET /site/config` (banner, logo, horários, dias fechados)
+
+Admin:
+
+- `GET /admin/config`
+- `PUT /admin/config`
+
+### Dashboard admin
+
+- `GET /admin/dashboard`
 
 ## Frontend
 
-O painel administrativo novo deve usar `frontend/src/services/admin.js`, que aponta para `/admin/*`.
+- `frontend/src/services/admin.js`: chamadas autenticadas para `/admin/*`.
+- `frontend/src/services/agendamentos.js`: chamadas públicas (`/servicos`, `/categorias`, `/combos`, `/agendamentos`, `/disponibilidade`, `/site/config`).
+- `frontend/src/services/auth.js`: `POST /auth/login`, `/auth/refresh`, `/auth/logout`.
 
-`frontend/src/services/agendamentos.js` deve ficar restrito ao fluxo público. Funções administrativas devem viver em `frontend/src/services/admin.js`.
+## Rotas legadas
 
-## Headers de depreciação
+Removidas em C-029 / A-014 junto com:
 
-Rotas administrativas legadas devem receber aviso HTTP não disruptivo enquanto continuarem disponíveis.
+- `protected-appointment-routes.js`
+- `protected-service-routes.js`
+- `block-routes.js`
+- `legacy-route-deprecation.js`
+- `appointment-mutation-rules.js`
 
-Headers esperados:
-
-- `Deprecation: true`
-- `Sunset: Wed, 30 Sep 2026 23:59:59 GMT`
-- `X-HSBeauty-Deprecated-Route: Use the equivalent /admin route`
-
-Esses headers não devem ser aplicados em rotas públicas reais, como `GET /servicos`, `GET /servicos/:id`, `POST /agendamentos` e `GET /disponibilidade`.
-
-## Política de depreciação
-
-1. Não remover rotas legadas sem confirmar que nenhum fluxo produtivo depende delas.
-2. Não misturar remoção de rota com mudança de UI ou banco.
-3. Preferir um bloco intermediário para adicionar aviso de depreciação não disruptivo nas respostas HTTP.
-4. Só remover rotas legadas depois de documentação, PR dedicado e CI verde.
-
-## Fora do escopo deste bloco
-
-- Remover rotas legadas.
-- Alterar UI.
-- Alterar banco ou migrations.
-- Alterar contrato público de agendamento.
-
-## Próximo bloco recomendado
-
-Remover rotas administrativas legadas somente depois de confirmar uso zero e manter um PR dedicado para remoção.
+Sem janela de depreciação ativa. Qualquer cliente externo que ainda chame uma rota legada recebe 404.

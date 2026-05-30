@@ -1,6 +1,6 @@
 # Governanca de CI e manutencao
 
-Atualizado em: 27/05/2026
+Atualizado em: 30/05/2026
 
 ---
 
@@ -14,7 +14,7 @@ Roda em: PR para `main` e push para `main`.
 npm ci
 npm audit --audit-level=high
 npm run lint
-npm test            # 81 testes Vitest
+npm test            # 95 testes Vitest
 npm run build
 ```
 
@@ -26,7 +26,7 @@ Roda em: PR para `main` e push para `main`.
 npm ci
 npm audit --audit-level=high
 npx prisma generate --schema=prisma/schema.prisma
-npm test            # 117 testes Node.js native
+npm test            # 150 testes Node.js native (4 integracao com skip sem DATABASE_URL_INTEGRATION)
 ```
 
 ### Job `frontend-e2e`
@@ -36,7 +36,7 @@ Roda em: PR para `main` e push para `main`.
 ```
 npm ci
 npx playwright install --with-deps chromium
-npm run test:e2e    # 6 testes Playwright com SNAPSHOT_CHANNEL=product
+npm run test:e2e    # Playwright com SNAPSHOT_CHANNEL=product
 ```
 
 ---
@@ -88,6 +88,6 @@ npm run test:e2e    # 6 testes Playwright com SNAPSHOT_CHANNEL=product
 
 ## Deploy e custos
 
-- Deploy automatico Vercel permanece desabilitado para preservar limite de builds (decisao D006).
-- Build de CI valida o codigo; nao e autorizacao automatica de deploy.
-- Deploy intencional: seguir `docs/deploy-manual-checklist.md`.
+- Deploy automatico ativo em Vercel (frontend) e Render (backend) desde D010, a partir de `main`.
+- CI verde e o gate: bug que passe pelo CI vai pra producao em segundos.
+- Pausa emergencial: `docs/deploy-manual-checklist.md`.

@@ -1,6 +1,6 @@
 # Roadmap - HSBeauty
 
-Atualizado em: 27/05/2026
+Atualizado em: 30/05/2026
 
 ---
 
@@ -83,11 +83,11 @@ Estado: concluida.
 Estado: operacional.
 
 - [x] CI roda em PR para `main` e em push para `main`.
-- [x] Frontend executa audit, lint, test (81 testes) e build.
-- [x] Backend executa audit, Prisma generate e testes (105 testes, 4 de integracao com skip automatico).
+- [x] Frontend executa audit, lint, test (95 testes) e build.
+- [x] Backend executa audit, Prisma generate e testes (150 testes, 4 de integracao com skip automatico).
 - [x] Script raiz `npm run quality` valida backend e frontend.
 - [x] Dependabot habilitado com cadencia semanal controlada.
-- [x] Quality gate E2E Playwright ativo no CI (job `frontend-e2e`, 10 testes visuais).
+- [x] Quality gate E2E Playwright ativo no CI (job `frontend-e2e`, snapshots `product`).
 - [x] Contrato de snapshots visuais versionados por `SNAPSHOT_CHANNEL=product` (Linux/CI) e `windows` (dev local).
 - [x] `forbidOnly: true` no CI para bloquear `test.only` acidental.
 - [x] Workflow `update-snapshots.yml` para atualizacao de snapshots canonicos via GitHub Actions.
@@ -182,8 +182,8 @@ Objetivo: formalizar versao de produto e preparar para escala.
 | 3 - Backend | Concluida |
 | 4 - Frontend | Concluida |
 | 5 - CI e qualidade | Operacional |
-| 6 - Deploy | Manual/controlado |
-| 7 - Notificacoes | Parcialmente concluida |
+| 6 - Deploy | Automatico em main (D010) |
+| 7 - Notificacoes | Parcialmente concluida (email cliente + admin OK; WhatsApp pendente) |
 | 8 - UX avancada | Parcialmente concluida |
 | 9 - Infraestrutura | Parcialmente concluida |
 | 10 - Release formal | Parcialmente iniciada |

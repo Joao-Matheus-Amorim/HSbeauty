@@ -1,55 +1,77 @@
-# Checklist de deploy manual
+# Procedimento de pausa emergencial e rollback
 
-Atualizado em: 27/05/2026
+Atualizado em: 30/05/2026
 
-## 1) Preflight
+> **Estado atual: deploy é AUTOMÁTICO em `main`** desde D010 (2026-05-29). Este documento cobre apenas pausa emergencial e rollback. Para o checklist operacional histórico, ver o git log deste arquivo antes de 2026-05-29.
 
-- [ ] Branch `main` sincronizada localmente:
-  - `git switch main`
-  - `git pull --ff-only origin main`
-- [ ] CI do commit alvo em verde no GitHub Actions.
-- [ ] Validacao local executada:
-  - `npm test --prefix backend`
-  - `npm test --prefix frontend`
-  - `npm run lint --prefix frontend`
-  - `npm run build --prefix frontend`
-- [ ] Variaveis de ambiente conferidas:
-  - `VITE_API_URL`
-  - `VITE_WHATSAPP`
-  - `DATABASE_URL`
-  - `JWT_SECRET`
-  - `FRONTEND_URL`
-  - `RESEND_API_KEY` (opcional — necessario para email de confirmacao)
-  - `RESEND_FROM_EMAIL` (opcional — necessario para email de confirmacao)
+## Estado canônico de deploy
 
-## 2) Publicacao no frontend (Vercel)
+- **Frontend** publicado em Vercel — push em `main` publica produção. Branches diferentes geram Preview Deployments.
+- **Backend** hospedado em Render — push em `main` redeploya. `npm start` roda `prisma migrate deploy && node src/server.js`, aplicando migrations pendentes no boot.
+- **Banco** Neon/PostgreSQL (sa-east-1 oficial).
+- Política completa em [`adr/ADR-003-deploy.md`](adr/ADR-003-deploy.md) e [`decisoes.md`](decisoes.md#d010--auto-deploy-frontend-e-backend-a-partir-de-main-2026-05-29).
 
-- [ ] Confirmar que `git.deploymentEnabled` permanece `false` em `vercel.json`.
-- [ ] Iniciar deploy manual da versao candidata no painel da Vercel.
-- [ ] Registrar no log operacional:
-  - SHA publicado
-  - data/hora do deploy
-  - responsavel
+## Antes de mergear em `main`
 
-## 3) Smoke check pos-deploy
+CI valida automaticamente. Se quiser validar local:
 
-- [ ] Site publico abre sem erro de carregamento.
-- [ ] Fluxo minimo de agendamento:
-  - selecionar servico
-  - selecionar dia/horario
-  - concluir envio
+```powershell
+npm run quality
+```
+
+Variáveis obrigatórias em produção:
+
+- **Vercel (frontend):** `VITE_API_URL`, `VITE_WHATSAPP`, `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET`
+- **Render (backend):** `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, `BREVO_API_KEY`, `BREVO_FROM_EMAIL`, `ADMIN_NOTIFICATION_EMAIL`
+
+## Smoke check pós-deploy
+
+Quando quiser validar manualmente que o deploy entrou bem:
+
+- [ ] Site público abre sem erro.
+- [ ] Carrossel de categorias carrega.
+- [ ] Fluxo público de agendamento (selecionar serviço → dia → horário → enviar) funciona.
 - [ ] Login admin funciona.
-- [ ] Lista de agendamentos no admin carrega sem erro.
-- [ ] Endpoint de API responde para origem publicada.
+- [ ] Listagem de agendamentos no admin carrega.
+- [ ] Endpoint backend responde (`GET /servicos` na origem publicada).
 
-## 4) Rollback
+## Pausa emergencial (incidente em andamento)
 
-- [ ] Identificar ultimo SHA estavel em `main`.
-- [ ] Reimplantar manualmente o SHA estavel na Vercel.
-- [ ] Validar smoke check novamente.
-- [ ] Registrar causa, impacto e acao corretiva em `docs/action-register.md`.
+### Vercel (frontend)
 
-## 5) Encerramento
+Editar `vercel.json`:
 
-- [ ] Atualizar `docs/roadmap.md` e `docs/action-register.md` quando houver mudanca de status.
-- [ ] Se houver incidente, abrir item especifico no backlog tecnico.
+```json
+"git": {
+  "deploymentEnabled": false
+}
+```
+
+Commit + push. A partir desse push, novos commits em `main` não publicam.
+
+Reabilitar revertendo o ajuste para `true`.
+
+### Render (backend)
+
+Pausar o serviço pelo painel Render (Settings → Suspend Service) ou desconectar o GitHub temporariamente.
+
+## Rollback rápido
+
+### Vercel
+
+1. Painel Vercel → Deployments → escolher último deployment estável.
+2. Menu (⋯) → **Promote to Production**.
+3. Validar smoke check.
+
+### Render
+
+1. Painel Render → Service → Deploys.
+2. Escolher último deploy estável → **Redeploy this deploy**.
+3. `prisma migrate deploy` roda automaticamente; reverter migration manualmente se for o caso.
+4. Validar smoke check.
+
+## Encerramento do incidente
+
+- [ ] Registrar causa, impacto e ação corretiva em [`action-register.md`](action-register.md).
+- [ ] Se houver mudança de estado de bloco, atualizar [`block-register.md`](block-register.md).
+- [ ] Se houver mudança de fase, atualizar [`roadmap.md`](roadmap.md).

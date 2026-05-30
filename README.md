@@ -25,24 +25,27 @@ Clientes agendam serviços pelo navegador sem instalar nada — basta um link.
 A proprietária gerencia agendamentos, serviços e bloqueios de horário via painel administrativo protegido por JWT.
 
 **Funcionalidades do cliente:**
-- Carrossel 3D glassmorph espelhado de **categorias** (Unhas, Cílios, Sobrancelhas, Depilação, Spa Labial — totalmente configurável pelo admin)
-- Drawer com sub-serviços de cada categoria (nome, descrição, preço, duração)
+- Hero editorial com foto da proprietária + tipografia premium (Bodoni Moda / Italiana / Inter Tight) — ver [`docs/editorial-design-system.md`](docs/editorial-design-system.md)
+- Carrossel 3D tilt de **categorias** (Unhas, Cílios, Sobrancelhas, Depilação, Spa Labial — totalmente configurável pelo admin, com botão "Criar categorias padrão" no painel)
+- Página dedicada por categoria em `/c/:categoriaId` com lista de sub-serviços (substituiu o antigo drawer — C-052) e estado vazio editorial "Em breve" com CTA WhatsApp
 - Combos (pacotes de serviços) listados em seção própria
-- Escolher dia (semana atual no calendário; semanas seguintes em sub-modal "+ Mais datas") e horário inline na mesma tela
+- Escolher dia dentro da janela pública de **3 semanas** (atual + 2 — ver [`docs/booking-window.md`](docs/booking-window.md)) e horário inline na mesma tela
+- Expediente dinâmico via SiteConfig (`aberturaHora`, `fechamentoHora`, `diasFechados`) — admin altera no painel sem mexer no código
 - Disponibilidade pré-buscada em paralelo: dias sem vaga aparecem riscados com badge "cheio"
 - Máscara automática de telefone, validação de email e telefone por campo
-- Receber email de confirmação automático após agendamento (quando email informado)
+- Email de confirmação automático ao cliente após agendamento (cadeia Brevo → Gmail → Resend, D011)
 
 **Funcionalidades do painel admin:**
 - Dashboard com KPIs do mês (total, status, receita, top serviços, total hoje)
-- Listagem e gerenciamento de agendamentos com filtros, busca, export CSV
-- Badge numérico no nav com contagem de pendentes (atualizado a cada 30s)
-- CRUD de **Categorias** (nome, imagem, ordem, ativo) — categoria é obrigatória para serviço aparecer no site público
+- Listagem e gerenciamento de agendamentos com filtros, busca, export CSV, **reagendar** via modal (C-049)
+- Badge numérico no nav com contagem de pendentes (polling 30s) + email de notificação ao admin a cada novo agendamento
+- CRUD de **Categorias** (nome, imagem, ordem, ativo) com botão "Criar categorias padrão" (seed 1-clique, C-053) — categoria é obrigatória para serviço aparecer no carrossel público
 - CRUD de **Serviços** com seleção de categoria via dropdown dinâmico e botão "+ Adicionar" inline
 - CRUD de **Combos** com itens
-- CRUD de **Site Config** (banner e logo via Cloudinary)
+- CRUD de **Site Config** (banner e logo via Cloudinary + expediente `aberturaHora`/`fechamentoHora` + `diasFechados` toggle por dia)
 - Bloqueio de horários (férias, folga, manutenção)
 - Visualização de agenda semanal (WeekCalendar) com toggle lista/calendário
+- Drawer mobile com hamburger funcional no `AdminLayout`
 
 ---
 
@@ -52,16 +55,18 @@ A proprietária gerencia agendamentos, serviços e bloqueios de horário via pai
 |---|---|---|
 | Frontend | React | 19.x |
 | Frontend | Vite | 8.x |
-| Frontend | Tailwind CSS | 3.x |
+| Frontend | Tailwind CSS (admin) | 3.x |
 | Frontend | React Router DOM | 7.x |
 | Frontend | Recharts | 3.x |
 | Frontend | Lucide React | 1.x |
 | Backend | Node.js (ESM) | 22.x |
 | Backend | Express | 5.x |
-| Backend | Prisma ORM | 7.x |
-| Banco | PostgreSQL (Neon) | 16.x |
-| Auth | JWT + bcryptjs | — |
-| Deploy | Vercel (frontend + API) | — |
+| Backend | Prisma ORM | 7.7-7.8 |
+| Banco | PostgreSQL (Neon, sa-east-1 oficial) | 16.x |
+| Auth | JWT + bcryptjs + refresh token rotativo | — |
+| Email | Brevo (HTTP) → Gmail SMTP → Resend (fallback chain, D011) | — |
+| Deploy frontend | Vercel (auto em `main`) | — |
+| Deploy backend | Render (auto em `main`, `prisma migrate deploy` no boot) | — |
 
 ---
 
@@ -199,10 +204,10 @@ cd frontend && npm run dev  # http://localhost:5173
 ## Deploy
 
 - **Frontend** publicado no **Vercel** (`hsbeauty.vercel.app`) — auto-deploy ativo a cada push em `main`.
-- **Backend** hospedado no **Render** — auto-deploy ativo; `npm start` roda `prisma migrate deploy` antes de subir o servidor.
+- **Backend** hospedado no **Render** — auto-deploy ativo; `npm start` roda `prisma migrate deploy && node src/server.js`.
 - Branches diferentes de `main` geram Preview Deployments na Vercel; produção só muda quando `main` muda.
 
-Consulte [`docs/adr/ADR-003-deploy.md`](docs/adr/ADR-003-deploy.md) para a decisão atualizada e o procedimento de pausar publicações em caso de incidente.
+Consulte [`docs/adr/ADR-003-deploy.md`](docs/adr/ADR-003-deploy.md) para a decisão atualizada e [`docs/deploy-manual-checklist.md`](docs/deploy-manual-checklist.md) para pausa emergencial e rollback.
 
 ---
 
@@ -213,10 +218,21 @@ Consulte [`docs/adr/ADR-003-deploy.md`](docs/adr/ADR-003-deploy.md) para a decis
 | [`docs/roadmap.md`](docs/roadmap.md) | Fases, entregas e status atual |
 | [`docs/technical-audit-pmbok.md`](docs/technical-audit-pmbok.md) | Auditoria técnica operacional em formato PMBOK |
 | [`docs/block-register.md`](docs/block-register.md) | Registro dos blocos técnicos e seus contratos |
-| [`docs/action-register.md`](docs/action-register.md) | Registro priorizado de ações técnicas |
-| [`docs/deploy-manual-checklist.md`](docs/deploy-manual-checklist.md) | Checklist operacional de deploy manual |
-| [`docs/decisoes.md`](docs/decisoes.md) | Decisões de produto e contexto |
-| [`docs/adr/`](docs/adr/) | Architecture Decision Records |
+| [`docs/action-register.md`](docs/action-register.md) | Registro priorizado de ações técnicas (P0–P3) |
+| [`docs/decisoes.md`](docs/decisoes.md) | Decisões de produto e contexto (D001–D011) |
+| [`docs/booking-window.md`](docs/booking-window.md) | Regra da janela pública de 3 semanas (atual + 2) |
+| [`docs/public-booking-integrity.md`](docs/public-booking-integrity.md) | Contrato do agendamento público |
+| [`docs/admin-route-consolidation.md`](docs/admin-route-consolidation.md) | Superfície canônica `/admin/*` |
+| [`docs/admin-auth.md`](docs/admin-auth.md) | Contrato de auth admin (login/refresh/logout) |
+| [`docs/error-handling.md`](docs/error-handling.md) | Padrão de erros e logging do backend |
+| [`docs/editorial-design-system.md`](docs/editorial-design-system.md) | Paleta, tipografia e componentes editoriais do site público |
+| [`docs/BACKEND_GOVERNANCE.md`](docs/BACKEND_GOVERNANCE.md) | Governança do backend (DoR/DoD, gates) |
+| [`docs/BACKEND_REFACTOR_ROADMAP.md`](docs/BACKEND_REFACTOR_ROADMAP.md) | Histórico do refactor `server.js` → `app.js` |
+| [`docs/ci-governance.md`](docs/ci-governance.md) | Jobs ativos, política de audit, snapshots |
+| [`docs/visual-regression-contract.md`](docs/visual-regression-contract.md) | Canais `product` / `windows` de snapshots Playwright |
+| [`docs/deploy-manual-checklist.md`](docs/deploy-manual-checklist.md) | Procedimento de pausa emergencial e rollback |
+| [`docs/adr/ADR-003-deploy.md`](docs/adr/ADR-003-deploy.md) | ADR da estratégia de deploy (auto em `main`) |
+| [`docs/plano_arquitetura_admin.md`](docs/plano_arquitetura_admin.md) | Histórico de planejamento do painel admin |
 
 ---
 

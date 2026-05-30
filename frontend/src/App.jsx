@@ -169,11 +169,12 @@ function App() {
 								<span className="editorial-rating">5,0 · 150+ clientes</span>
 							</div>
 						</div>
-						<span className="editorial-hero-bee bee-1" aria-hidden="true" />
-						<span className="editorial-hero-bee bee-2" aria-hidden="true" />
-						<span className="editorial-hero-bee bee-3" aria-hidden="true" />
-						<span className="editorial-hero-honey honey-1" aria-hidden="true" />
-						<span className="editorial-hero-honey honey-2" aria-hidden="true" />
+						<span className="editorial-hero-icon spark s-1" aria-hidden="true" />
+						<span className="editorial-hero-icon spark s-2" aria-hidden="true" />
+						<span className="editorial-hero-icon spark s-3" aria-hidden="true" />
+						<span className="editorial-hero-icon spark s-4" aria-hidden="true" />
+						<span className="editorial-hero-icon lipstick lip-1" aria-hidden="true" />
+						<span className="editorial-hero-icon lash lash-1" aria-hidden="true" />
 					</section>
 				)}
 

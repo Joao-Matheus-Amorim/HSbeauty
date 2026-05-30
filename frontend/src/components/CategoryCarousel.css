@@ -195,13 +195,16 @@
 }
 
 /* Particulas beauty individuais — cada icone flutua, gira e
-   pulsa em trajetoria propria. Loop infinito staggered. */
+   pulsa em trajetoria propria. Loop infinito staggered.
+   z-index 2 fica acima da imagem (z-index 1), por isso as
+   particles aparecem por cima da foto da categoria. */
 .cat-card-particles {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 0;
+  z-index: 2;
   overflow: hidden;
+  mix-blend-mode: normal;
 }
 
 .cat-particle {

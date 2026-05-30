@@ -211,35 +211,28 @@ body {
   aspect-ratio: 4 / 5;
   overflow: hidden;
   background:
-    radial-gradient(ellipse 70% 60% at 25% 25%, #fbe7dc 0%, transparent 60%),
+    radial-gradient(ellipse 70% 60% at 22% 28%, #fbe7dc 0%, transparent 60%),
     radial-gradient(ellipse 80% 70% at 80% 80%, #f1cdb7 0%, transparent 65%),
     linear-gradient(180deg, #fcf2ec 0%, #f4dccb 100%);
   color: var(--ink);
   isolation: isolate;
-  display: grid;
-  grid-template-columns: 54% 46%;
-  grid-template-rows: auto 1fr;
 }
 
 .editorial-hero-image {
-  position: relative;
-  grid-column: 2;
-  grid-row: 1 / span 2;
+  position: absolute;
+  right: -6%;
+  bottom: 0;
+  height: 92%;
   z-index: 1;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
   pointer-events: none;
-  min-width: 0;
-  min-height: 0;
 }
 
 .editorial-hero-img {
-  width: 100%;
   height: 100%;
+  width: auto;
   object-fit: contain;
   object-position: bottom right;
-  filter: drop-shadow(-14px 22px 32px rgba(92, 43, 58, 0.22));
+  filter: drop-shadow(-18px 26px 36px rgba(92, 43, 58, 0.22));
   animation: editorialFloat 7s ease-in-out infinite alternate;
 }
 
@@ -257,10 +250,11 @@ body {
 }
 
 .editorial-topbar {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 3;
-  grid-column: 1 / -1;
-  grid-row: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -298,17 +292,20 @@ body {
 }
 
 .editorial-hero-content {
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 2;
-  grid-column: 1;
-  grid-row: 2;
-  padding: 8px 10px 28px 24px;
+  padding: 0 24px 30px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  gap: 12px;
-  min-width: 0;
+  gap: 14px;
+  max-width: 62%;
+  pointer-events: none;
 }
+
+.editorial-hero-content > * { pointer-events: auto; }
 
 .editorial-eyebrow {
   font-family: 'Inter', sans-serif;
@@ -322,12 +319,12 @@ body {
 .editorial-title {
   font-family: 'Cormorant Garamond', serif;
   font-weight: 500;
-  font-size: clamp(1.9rem, 8.5vw, 2.8rem);
-  line-height: 0.98;
+  font-size: clamp(2.4rem, 10vw, 3.4rem);
+  line-height: 0.96;
   color: var(--ink);
   margin: 0;
   letter-spacing: -0.01em;
-  text-shadow: 0 1px 18px rgba(251, 240, 232, 0.6);
+  text-shadow: 0 1px 22px rgba(252, 242, 236, 0.85);
 }
 
 .editorial-title em {
@@ -399,11 +396,9 @@ body {
 }
 
 @media (max-width: 380px) {
-  .editorial-hero {
-    aspect-ratio: 3 / 4;
-    grid-template-columns: 52% 48%;
-  }
-  .editorial-hero-content { padding: 6px 6px 22px 18px; gap: 10px; }
+  .editorial-hero { aspect-ratio: 3 / 4; }
+  .editorial-hero-image { right: -8%; height: 88%; }
+  .editorial-hero-content { padding: 0 18px 22px; max-width: 66%; gap: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

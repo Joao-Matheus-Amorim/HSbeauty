@@ -187,22 +187,6 @@ function App() {
 					</section>
 				)}
 
-				<section className="storyteller">
-					<div className="storyteller-portrait" aria-hidden="true">
-						<img
-							src="https://images.unsplash.com/photo-1559599101-f09722fb4948?w=600&q=85&auto=format&fit=crop"
-							alt=""
-						/>
-					</div>
-					<div className="storyteller-body">
-						<span className="storyteller-eyebrow">Oi, eu sou a HS.</span>
-						<p className="storyteller-text">
-							Aqui em Piabetá, há mais de cinco anos, atendo de uma cliente por vez. Sem fila, sem pressa.
-							Cada cuidado é uma conversa — e cada cliente sai parecendo um pouco mais ela mesma.
-						</p>
-						<span className="storyteller-signature">— Hellen Silva</span>
-					</div>
-				</section>
 
 				<section className="services-section" id="services">
 					<h3>Nossos Serviços</h3>

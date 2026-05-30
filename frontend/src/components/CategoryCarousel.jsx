@@ -108,6 +108,22 @@ export default function CategoryCarousel({ categorias, onSelect }) {
 
   return (
     <div className="cat-carousel">
+      <div className="cat-carousel-backdrop" aria-hidden="true">
+        <span className="bp bp-lipstick" />
+        <span className="bp bp-sparkle" />
+        <span className="bp bp-lips-1" />
+        <span className="bp bp-lips-2" />
+        <span className="bp bp-eye-1" />
+        <span className="bp bp-eye-2" />
+        <span className="bp bp-nail-1" />
+        <span className="bp bp-nail-2" />
+        <span className="bp bp-mascara" />
+        <span className="bp bp-mirror" />
+        <span className="bp bp-bottle" />
+        <span className="bp bp-sparkle-2" />
+        <span className="bp bp-sparkle-3" />
+        <span className="bp bp-lash" />
+      </div>
       <div
         className="cat-carousel-viewport"
         role="region"
@@ -138,16 +154,6 @@ export default function CategoryCarousel({ categorias, onSelect }) {
                   ) : (
                     <span className="cat-card-glyph">{categoryInitials(cat.nome)}</span>
                   )}
-                  <div className="cat-card-particles" aria-hidden="true">
-                    <span className="cat-particle p-lipstick" />
-                    <span className="cat-particle p-sparkle" />
-                    <span className="cat-particle p-lips" />
-                    <span className="cat-particle p-mascara" />
-                    <span className="cat-particle p-mirror" />
-                    <span className="cat-particle p-bottle" />
-                    <span className="cat-particle p-sparkle-2" />
-                    <span className="cat-particle p-lash" />
-                  </div>
                 </div>
                 <div className="cat-card-body">
                   <h4 className="cat-card-name">{cat.nome}</h4>

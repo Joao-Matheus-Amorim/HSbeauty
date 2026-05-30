@@ -59,13 +59,15 @@ function App() {
 		]).then(([servResult, catResult, comboResult, configResult]) => {
 			if (!mounted) return
 
-			if (servResult.status === 'fulfilled' && Array.isArray(servResult.value) && servResult.value.length) {
+			// Sucesso (mesmo array vazio) substitui o fallback —
+			// nao queremos mostrar categorias fantasmas que nao existem no DB.
+			if (servResult.status === 'fulfilled' && Array.isArray(servResult.value)) {
 				setServices(servResult.value)
 			} else if (servResult.status === 'rejected') {
 				setServices(fallbackServices)
 			}
 
-			if (catResult.status === 'fulfilled' && Array.isArray(catResult.value) && catResult.value.length) {
+			if (catResult.status === 'fulfilled' && Array.isArray(catResult.value)) {
 				setCategoriasApi(catResult.value)
 			}
 
@@ -172,10 +174,16 @@ function App() {
 						<span className="editorial-section-eyebrow">Catálogo</span>
 						<h3 className="editorial-section-title">Escolha o cuidado.</h3>
 					</header>
-					<CategoryCarousel
-						categorias={categorias}
-						onSelect={abrirCategoria}
-					/>
+					{categorias.length > 0 ? (
+						<CategoryCarousel
+							categorias={categorias}
+							onSelect={abrirCategoria}
+						/>
+					) : (
+						<p className="editorial-empty-catalog">
+							O catálogo está sendo preparado. Volte em instantes ou fale com a gente no WhatsApp.
+						</p>
+					)}
 				</section>
 
 				{combos.length > 0 && (

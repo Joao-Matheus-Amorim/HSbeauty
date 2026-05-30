@@ -783,6 +783,20 @@ body {
   background: var(--paper);
 }
 
+.editorial-empty-catalog {
+  padding: 32px 32px 48px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 1.02rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  text-align: center;
+  margin: 0;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* ============================================================
    ONDA 2 — Galeria bento editorial
    ============================================================ */

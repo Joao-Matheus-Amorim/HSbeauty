@@ -125,6 +125,32 @@ export function isDateInCurrentWeek(date) {
   return isDateInWeek(date, new Date());
 }
 
+/**
+ * Quantas semanas a frente o agendamento publico aceita (alem da semana corrente).
+ * Total visivel: BOOKING_WEEKS + 1. Alinhar com SEMANAS_DISPONIVEIS do frontend.
+ */
+export const BOOKING_WEEKS_AHEAD = 2; // semana atual + 2 = 3 semanas no total
+
+/**
+ * Verifica se `date` cai entre o inicio da semana corrente e o fim
+ * da (semana corrente + weeksAhead). Substitui isDateInWeek para a
+ * janela de booking publica.
+ */
+export function isDateInBookingWindow(date, referenceDate = new Date(), weeksAhead = BOOKING_WEEKS_AHEAD) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return false;
+
+  const { start } = getWeekBounds(referenceDate);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 7 * (weeksAhead + 1) - 1);
+  end.setHours(23, 59, 59, 999);
+
+  return date >= start && date <= end;
+}
+
+export function isDateInPublicBookingWindow(date) {
+  return isDateInBookingWindow(date, new Date());
+}
+
 export function isWithinBusinessHours(
   start,
   end,

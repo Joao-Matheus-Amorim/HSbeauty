@@ -1,6 +1,6 @@
 # Registro de acoes tecnicas
 
-Atualizado em: 29/05/2026 (turno tarde)
+Atualizado em: 30/05/2026
 
 ## Legenda
 
@@ -80,3 +80,9 @@ Atualizado em: 29/05/2026 (turno tarde)
 | C-048 | 2026-05-29 | SiteConfig ganha `aberturaHora`, `fechamentoHora` e `diasFechados`. `availability-service` e `public-booking-routes` passam a respeitar essas regras dinamicamente (substitui constantes hardcoded 9-18). Mensagem 'Fechado neste dia.' quando dia da semana esta na lista. |
 | C-049 | 2026-05-29 | Admin pode reagendar via `PUT /admin/agendamentos/:id { data }`. `validateAdminBookingUpdatePayload` aceita nova data (ISO + slot 30min), atualiza `hora` para coerencia. Frontend: botao 'Reagendar' no card + modal datetime-local. |
 | C-050 | 2026-05-29 | SiteConfigManager admin ganha 3 secoes novas: horario de abertura/fechamento (inputs numericos) e dias fechados (botoes toggle por dia). |
+| C-051 | 2026-05-30 | Redesign editorial completo (paleta off-white/dourado escovado/borgonha + Cormorant Garamond italic + Inter). Hero, carrossel, galeria bento, CTA borgonha, rodape, AgendamentoModal — tudo reescrito sem glassmorphism cafona. |
+| C-052 | 2026-05-30 | Categoria virou pagina dedicada (/c/:categoriaId, route + CategoriaPage.jsx) — substitui o CategoryDrawer que foi removido. URL passa a ser compartilhavel. |
+| C-053 | 2026-05-30 | CategoriaManager admin ganha botao 'Criar categorias padrao' (1 clique) que faz seed de Unhas, Cilios, Sobrancelhas, Depilacao, Spa Labial. ServiceManager mostra aviso ambar quando dropdown de categorias esta vazio. |
+| C-054 | 2026-05-30 | Janela publica de agendamento ampliada de 1 para 3 semanas (semana atual + 2). Backend: isDateInBookingWindow substitui isDateInWeek na availability-service e public-booking-routes. BOOKING_WEEKS_AHEAD=2. Tests cobrindo as 3 semanas + fora da janela. |
+| C-055 | 2026-05-30 | Cleanup tecnico: removidos CategoryDrawer.jsx/.css orfaos; ~280 linhas de CSS legado (hero-art, topbar-overlay, gold-pill, meta-row, cta-button, results-section, gallery-strip, bottom-note, storyteller) dropadas. Frontend: API vazia agora sobrescreve fallback (App.jsx, CategoriaPage.jsx) para nao mostrar servicos fantasma. |
+| C-056 | 2026-05-30 | Novos testes: pages/CategoriaPage.test.jsx (3 cenarios), booking-rules.test.js (isDateInBookingWindow), availability-service.test.js (janela 3 semanas). Total: backend 150 + frontend 95. |

@@ -65,23 +65,27 @@ test('getDayOccupancy loads appointments and blocks for the requested day', asyn
   assert.equal(occupancy.ocupados[0].fim.toISOString(), new Date('2026-05-25T10:00:00').toISOString());
 });
 
-test('calculateAvailability returns empty slots outside the current week without querying occupancy', async () => {
+test('calculateAvailability returns empty slots outside the booking window (3 weeks)', async () => {
   const prisma = {
+    siteConfig: {
+      async findUnique() { return { aberturaHora: 9, fechamentoHora: 18, diasFechados: [] }; },
+    },
     agendamento: {
       async findMany() {
-        throw new Error('should not query appointments outside current week');
+        throw new Error('should not query appointments outside booking window');
       },
     },
     bloqueioHorario: {
       async findMany() {
-        throw new Error('should not query blocks outside current week');
+        throw new Error('should not query blocks outside booking window');
       },
     },
   };
 
+  // 2026-06-22 (segunda da semana 5 a partir de 2026-05-25) — fora da janela
   const availability = await calculateAvailability({
     prisma,
-    dateString: '2026-06-01',
+    dateString: '2026-06-22',
     servico: { duracao: 60 },
     referenceDate: new Date('2026-05-25T12:00:00'),
   });
@@ -92,8 +96,28 @@ test('calculateAvailability returns empty slots outside the current week without
     duracaoServicoMinutos: 60,
     total: 0,
     slotsDisponiveis: [],
-    mensagem: 'Agendamentos disponíveis apenas para a semana atual.',
+    mensagem: 'Data fora da janela de agendamento.',
   });
+});
+
+test('calculateAvailability aceita data na semana seguinte (dentro da janela 3 semanas)', async () => {
+  const prisma = {
+    siteConfig: {
+      async findUnique() { return { aberturaHora: 9, fechamentoHora: 18, diasFechados: [] }; },
+    },
+    agendamento: { async findMany() { return []; } },
+    bloqueioHorario: { async findMany() { return []; } },
+  };
+
+  // 2026-06-01 e segunda da semana seguinte a 2026-05-25 — esta dentro
+  const availability = await calculateAvailability({
+    prisma,
+    dateString: '2026-06-01',
+    servico: { duracao: 60 },
+    referenceDate: new Date('2026-05-25T12:00:00'),
+  });
+
+  assert.equal(availability.total, 17); // 9h-17h em slots de 30min, servico 60min = 17 slots
 });
 
 test('calculateAvailability returns available slots for dates inside the current week', async () => {

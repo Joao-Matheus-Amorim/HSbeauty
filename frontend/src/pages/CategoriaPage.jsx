@@ -32,10 +32,12 @@ export default function CategoriaPage() {
       listarCategorias(),
     ]).then(([servResult, catResult]) => {
       if (!mounted) return;
-      if (servResult.status === 'fulfilled' && Array.isArray(servResult.value) && servResult.value.length) {
+      // Sucesso (mesmo com array vazio) substitui o fallback —
+      // evita renderizar servicos fantasma que nao existem no banco.
+      if (servResult.status === 'fulfilled' && Array.isArray(servResult.value)) {
         setServicos(servResult.value);
       }
-      if (catResult.status === 'fulfilled' && Array.isArray(catResult.value) && catResult.value.length) {
+      if (catResult.status === 'fulfilled' && Array.isArray(catResult.value)) {
         setCategorias(catResult.value);
       }
       setLoading(false);

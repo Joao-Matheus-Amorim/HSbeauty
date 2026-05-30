@@ -7,7 +7,7 @@ import {
   getHoraFromDate,
   hasConflict,
   isClosedDay,
-  isDateInWeek,
+  isDateInBookingWindow,
   parseDateOnly,
   parseDayBounds,
   SLOT_STEP_MINUTES,
@@ -109,14 +109,14 @@ export async function calculateAvailability({ prisma, dateString, servico, refer
   const config = await loadBusinessConfig(prisma);
   const expediente = { inicio: `${pad2(config.aberturaHora)}:00`, fim: `${pad2(config.fechamentoHora)}:00` };
 
-  if (!isDateInWeek(baseDay, referenceDate)) {
+  if (!isDateInBookingWindow(baseDay, referenceDate)) {
     return {
       expediente,
       semanaAtual,
       duracaoServicoMinutos: duracaoMinutos,
       total: 0,
       slotsDisponiveis: [],
-      mensagem: 'Agendamentos disponíveis apenas para a semana atual.',
+      mensagem: 'Data fora da janela de agendamento.',
     };
   }
 

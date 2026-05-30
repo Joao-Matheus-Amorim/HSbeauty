@@ -7,6 +7,7 @@ import {
   getCurrentWeekRange,
   getHoraFromDate,
   hasConflict,
+  isDateInBookingWindow,
   isDateInWeek,
   isSlotStepAligned,
   isValidTelefone,
@@ -116,6 +117,28 @@ test('isDateInWeek validates against an explicit reference date', () => {
   assert.equal(isDateInWeek(new Date('2026-05-25T09:00:00'), reference), true);
   assert.equal(isDateInWeek(new Date('2026-05-31T18:00:00'), reference), true);
   assert.equal(isDateInWeek(new Date('2026-06-01T09:00:00'), reference), false);
+});
+
+test('isDateInBookingWindow aceita semana atual + 2 a frente', () => {
+  const reference = new Date('2026-05-25T12:00:00');
+
+  // Semana atual: 25-31/05
+  assert.equal(isDateInBookingWindow(new Date('2026-05-25T09:00:00'), reference), true);
+  assert.equal(isDateInBookingWindow(new Date('2026-05-31T18:00:00'), reference), true);
+  // Semana +1: 01-07/06
+  assert.equal(isDateInBookingWindow(new Date('2026-06-01T09:00:00'), reference), true);
+  assert.equal(isDateInBookingWindow(new Date('2026-06-07T18:00:00'), reference), true);
+  // Semana +2: 08-14/06
+  assert.equal(isDateInBookingWindow(new Date('2026-06-14T18:00:00'), reference), true);
+  // Semana +3 (fora): 15-21/06
+  assert.equal(isDateInBookingWindow(new Date('2026-06-15T09:00:00'), reference), false);
+});
+
+test('isDateInBookingWindow aceita weeksAhead customizado', () => {
+  const reference = new Date('2026-05-25T12:00:00');
+  // Com weeksAhead=0, so a semana atual
+  assert.equal(isDateInBookingWindow(new Date('2026-06-01T09:00:00'), reference, 0), false);
+  assert.equal(isDateInBookingWindow(new Date('2026-05-31T18:00:00'), reference, 0), true);
 });
 
 test('addMinutes returns a new date with the expected offset', () => {

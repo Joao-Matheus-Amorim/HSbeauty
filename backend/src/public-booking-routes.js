@@ -6,7 +6,7 @@ import {
   formatDateOnly,
   getHoraFromDate,
   isClosedDay,
-  isDateInCurrentWeek,
+  isDateInPublicBookingWindow,
   isWithinBusinessHours,
   PUBLIC_BOOKING_INITIAL_STATUS,
   validatePublicBookingPayload,
@@ -25,7 +25,7 @@ export function createPublicBookingRouter({ prisma }) {
       const { nomeCliente, telefone, dataAgendamento, servicoIdNumero, comboIdNumero, observacoes, email } =
         validation.data;
 
-      if (!isDateInCurrentWeek(dataAgendamento)) return sendError(res, 400, 'Agendamentos disponíveis apenas para a semana atual');
+      if (!isDateInPublicBookingWindow(dataAgendamento)) return sendError(res, 400, 'Data fora da janela de agendamento (3 semanas a frente)');
 
       const result = await prisma.$transaction(async (tx) => {
         const dataString = formatDateOnly(dataAgendamento);

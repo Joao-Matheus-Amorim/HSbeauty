@@ -133,6 +133,8 @@ function App() {
 					</section>
 				) : (
 					<section className="editorial-hero" aria-label="HS Beauty Studio">
+						<span className="editorial-hero-word" aria-hidden="true">beleza</span>
+						<span className="editorial-hero-volume" aria-hidden="true">Vol. I · 2026</span>
 						<div className="editorial-hero-image" aria-hidden="true">
 							<img
 								src="/hero-maiara.svg"
@@ -153,6 +155,7 @@ function App() {
 
 						<div className="editorial-hero-content">
 							<span className="editorial-eyebrow">Studio · desde 2019</span>
+							<span className="editorial-hero-rule" aria-hidden="true" />
 							<h1 className="editorial-title">
 								<em>Cuidado</em><br/>que se sente.
 							</h1>
@@ -165,6 +168,7 @@ function App() {
 								</button>
 								<span className="editorial-rating">5,0 · 150+ clientes</span>
 							</div>
+							<span className="editorial-hero-credit">por <em>Hilda Maiara</em></span>
 						</div>
 					</section>
 				)}

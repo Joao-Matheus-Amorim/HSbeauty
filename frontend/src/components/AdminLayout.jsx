@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   Calendar,
@@ -8,6 +8,7 @@ import {
   Settings,
   LogOut,
   Menu,
+  X,
   FolderTree,
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -18,6 +19,8 @@ function cn(...inputs) {
 }
 
 export default function AdminLayout({ children, activeTab, onTabChange, admin, onLogout, pendingCount = 0 }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const menuItems = [
     { id: 'agendamentos', label: 'Agenda', desktopLabel: 'Agendamentos', icon: Calendar },
     { id: 'horarios', label: 'Horários', desktopLabel: 'Horários', icon: Clock },
@@ -29,6 +32,20 @@ export default function AdminLayout({ children, activeTab, onTabChange, admin, o
   ];
 
   const activeItem = menuItems.find((item) => item.id === activeTab);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+    return undefined;
+  }, [mobileOpen]);
+
+  function handleTabChange(id) {
+    onTabChange(id);
+    setMobileOpen(false);
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f5f2] font-sans text-[#2c1810] md:flex admin-shell">
@@ -42,7 +59,7 @@ export default function AdminLayout({ children, activeTab, onTabChange, admin, o
           </div>
         </div>
 
-        <nav className="flex-1 p-4 flex flex-col gap-2">
+        <nav className="flex-1 p-4 flex flex-col gap-2 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const badge = item.id === 'agendamentos' && activeTab !== 'agendamentos' && pendingCount > 0;
@@ -87,52 +104,90 @@ export default function AdminLayout({ children, activeTab, onTabChange, admin, o
         </div>
       </aside>
 
-      {/* Mobile right rail */}
-      <aside className="admin-right-rail md:hidden" aria-label="Menu do painel">
-        <div className="admin-rail-logo">HS</div>
-        <nav className="admin-rail-nav">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            const badge = item.id === 'agendamentos' && activeTab !== 'agendamentos' && pendingCount > 0;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onTabChange(item.id)}
-                className={cn('admin-rail-btn', isActive && 'is-active')}
-                aria-label={item.desktopLabel}
-                title={item.desktopLabel}
-              >
-                <div className="relative">
-                  <Icon className="w-5 h-5" />
-                  {badge && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-0.5 leading-none">
-                      {pendingCount > 99 ? '99+' : pendingCount}
-                    </span>
-                  )}
-                </div>
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-        <button onClick={onLogout} className="admin-rail-logout" aria-label="Sair">
-          <LogOut className="w-5 h-5" />
-        </button>
-      </aside>
-
       {/* Mobile top bar */}
       <header className="admin-mobile-header md:hidden">
-        <div>
+        <div className="admin-mobile-header-info">
           <span className="admin-mobile-eyebrow">HSBeauty</span>
           <h1>{activeItem?.desktopLabel || 'Painel'}</h1>
           <p>{admin?.email}</p>
         </div>
-        <Menu className="w-6 h-6 text-[#b5936a]" />
+        <button
+          type="button"
+          className="admin-mobile-menu-btn"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Abrir menu"
+          aria-expanded={mobileOpen}
+        >
+          <Menu className="w-6 h-6" />
+          {pendingCount > 0 && activeTab !== 'agendamentos' && (
+            <span className="admin-mobile-menu-badge">{pendingCount > 99 ? '99+' : pendingCount}</span>
+          )}
+        </button>
       </header>
 
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="admin-mobile-drawer md:hidden" role="dialog" aria-modal="true" aria-label="Menu">
+          <button
+            type="button"
+            className="admin-mobile-drawer-backdrop"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Fechar menu"
+          />
+          <aside className="admin-mobile-drawer-panel" aria-label="Menu do painel">
+            <header className="admin-mobile-drawer-head">
+              <div>
+                <span className="admin-mobile-drawer-eyebrow">HSBeauty</span>
+                <p className="admin-mobile-drawer-email">{admin?.email}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                className="admin-mobile-drawer-close"
+                aria-label="Fechar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </header>
+
+            <nav className="admin-mobile-drawer-nav">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                const badge = item.id === 'agendamentos' && activeTab !== 'agendamentos' && pendingCount > 0;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => handleTabChange(item.id)}
+                    className={cn('admin-mobile-drawer-item', isActive && 'is-active')}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{item.desktopLabel}</span>
+                    {badge && (
+                      <span className="admin-mobile-drawer-badge">
+                        {pendingCount > 99 ? '99+' : pendingCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+
+            <button
+              type="button"
+              onClick={() => { onLogout(); setMobileOpen(false); }}
+              className="admin-mobile-drawer-logout"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Sair</span>
+            </button>
+          </aside>
+        </div>
+      )}
+
       {/* Main Content */}
-      <main className="flex-1 min-w-0 pt-16 pb-24 md:pt-0 md:pb-0 admin-main">
+      <main className="flex-1 min-w-0 admin-main">
         <header className="hidden md:flex h-20 items-center justify-between px-8 bg-white border-b border-[#ede8e1] sticky top-0 z-30">
           <div>
             <h1 className="text-2xl font-bold capitalize">{activeItem?.desktopLabel}</h1>
@@ -147,7 +202,7 @@ export default function AdminLayout({ children, activeTab, onTabChange, admin, o
           </div>
         </header>
 
-        <div className="p-3 sm:p-4 md:p-8 overflow-x-hidden admin-content">
+        <div className="admin-content">
           {children}
         </div>
       </main>

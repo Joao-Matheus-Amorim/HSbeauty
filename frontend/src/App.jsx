@@ -168,8 +168,12 @@ function App() {
 								</button>
 								<span className="editorial-rating">5,0 · 150+ clientes</span>
 							</div>
-							<span className="editorial-hero-credit">por <em>Hilda Maiara</em></span>
 						</div>
+						<span className="editorial-hero-bee bee-1" aria-hidden="true" />
+						<span className="editorial-hero-bee bee-2" aria-hidden="true" />
+						<span className="editorial-hero-bee bee-3" aria-hidden="true" />
+						<span className="editorial-hero-honey honey-1" aria-hidden="true" />
+						<span className="editorial-hero-honey honey-2" aria-hidden="true" />
 					</section>
 				)}
 

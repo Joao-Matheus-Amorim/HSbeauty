@@ -1,8 +1,8 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { listarServicos, listarCombos, listarCategorias, getSiteConfig } from './services/agendamentos'
 import { WHATSAPP, SERVICOS_PADRAO, CATEGORIAS_PADRAO } from './constants'
 import CategoryCarousel from './components/CategoryCarousel'
-import CategoryDrawer from './components/CategoryDrawer'
 
 const AgendamentoModal = lazy(() => import('./components/AgendamentoModal'))
 
@@ -39,6 +39,7 @@ function buildCategorias(servicos, categorias) {
 }
 
 function App() {
+	const navigate = useNavigate()
 	const [services, setServices] = useState(fallbackServices)
 	const [categoriasApi, setCategoriasApi] = useState(CATEGORIAS_PADRAO)
 	const [combos, setCombos] = useState([])
@@ -46,7 +47,6 @@ function App() {
 	const [modalAberto, setModalAberto] = useState(false)
 	const [servicoModal, setServicoModal] = useState(null)
 	const [categoriaModal, setCategoriaModal] = useState(null)
-	const [categoriaAberta, setCategoriaAberta] = useState(null)
 
 	useEffect(() => {
 		let mounted = true
@@ -97,10 +97,9 @@ function App() {
 		abrirModal(servico, null)
 	}
 
-	function handleSelecionarServicoDaCategoria(servico) {
-		const cat = categoriaAberta
-		setCategoriaAberta(null)
-		abrirModal(servico, cat)
+	function abrirCategoria(categoria) {
+		if (!categoria?.id) return
+		navigate(`/c/${categoria.id}`)
 	}
 
 	function irParaServicos(event) {
@@ -122,14 +121,6 @@ function App() {
 						onClose={() => { setModalAberto(false); setCategoriaModal(null); }}
 					/>
 				</Suspense>
-			)}
-
-			{categoriaAberta && (
-				<CategoryDrawer
-					categoria={categoriaAberta}
-					onClose={() => setCategoriaAberta(null)}
-					onSelectServico={handleSelecionarServicoDaCategoria}
-				/>
 			)}
 
 			<section className="phone-frame" aria-label="Landing page HSBeauty">
@@ -183,7 +174,7 @@ function App() {
 					</header>
 					<CategoryCarousel
 						categorias={categorias}
-						onSelect={(cat) => setCategoriaAberta(cat)}
+						onSelect={abrirCategoria}
 					/>
 				</section>
 

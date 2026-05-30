@@ -94,7 +94,92 @@
   box-shadow:
     0 1px 0 rgba(151, 112, 61, 0.18),
     0 18px 36px -12px rgba(60, 32, 18, 0.22);
-  transition: box-shadow 0.5s ease;
+  transition: box-shadow 0.5s ease, transform 0.5s ease;
+  isolation: isolate;
+}
+
+/* Aurora glow atras do card focado — visivel via blur/glow */
+.cat-card::before {
+  content: '';
+  position: absolute;
+  inset: -28px;
+  border-radius: 18px;
+  background:
+    radial-gradient(60% 50% at 30% 30%, rgba(193, 150, 96, 0.5), transparent 70%),
+    radial-gradient(50% 55% at 75% 75%, rgba(92, 43, 58, 0.42), transparent 70%);
+  filter: blur(34px);
+  opacity: 0;
+  transition: opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.cat-card.is-focus::before {
+  opacity: 0.85;
+  animation: cat-aurora 9s ease-in-out infinite alternate;
+}
+
+@keyframes cat-aurora {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-4%, 3%) scale(1.06); }
+}
+
+/* Light sweep diagonal sobre o card focado */
+.cat-card-face::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    transparent 30%,
+    rgba(255, 255, 255, 0.42) 50%,
+    transparent 70%,
+    transparent 100%
+  );
+  transform: translateX(-130%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: overlay;
+}
+
+.cat-card.is-focus .cat-card-face::before {
+  opacity: 1;
+  animation: cat-sweep 4.2s ease-in-out 0.6s infinite;
+}
+
+@keyframes cat-sweep {
+  0%   { transform: translateX(-130%); }
+  60%  { transform: translateX(130%); }
+  100% { transform: translateX(130%); }
+}
+
+/* Borda dourada gradient delicada no card focado */
+.cat-card-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(160deg, rgba(241, 216, 180, 0.0), rgba(193, 150, 96, 0.0) 40%, rgba(193, 150, 96, 0.0));
+  mask:
+    linear-gradient(#000, #000) content-box,
+    linear-gradient(#000, #000);
+  -webkit-mask:
+    linear-gradient(#000, #000) content-box,
+    linear-gradient(#000, #000);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 3;
+  transition: background 0.5s ease;
+}
+
+.cat-card.is-focus .cat-card-face::after {
+  background: linear-gradient(160deg, rgba(241, 216, 180, 0.7), rgba(193, 150, 96, 0.32) 45%, rgba(92, 43, 58, 0.42));
 }
 
 /* área da imagem (top do card) */
@@ -168,13 +253,26 @@
 /* foco no card central */
 .cat-card.is-focus .cat-card-face {
   box-shadow:
-    0 1px 0 rgba(151, 112, 61, 0.28),
-    0 30px 58px -14px rgba(60, 32, 18, 0.32),
-    0 0 0 1px rgba(151, 112, 61, 0.16);
+    0 2px 0 rgba(151, 112, 61, 0.36),
+    0 40px 70px -16px rgba(60, 32, 18, 0.4),
+    0 16px 30px -10px rgba(92, 43, 58, 0.22),
+    0 0 0 1px rgba(193, 150, 96, 0.32);
 }
 
 .cat-card.is-focus .cat-card-image {
-  filter: grayscale(0) contrast(1.06);
+  filter: grayscale(0) contrast(1.08) saturate(1.06);
+  animation: cat-breathe 7s ease-in-out infinite alternate;
+}
+
+@keyframes cat-breathe {
+  0%   { transform: scale(1.0); }
+  100% { transform: scale(1.045); }
+}
+
+/* glyph fallback ganha brilho discreto quando focado */
+.cat-card.is-focus .cat-card-glyph {
+  color: var(--burgundy-deep);
+  text-shadow: 0 2px 18px rgba(193, 150, 96, 0.42);
 }
 
 .cat-card:focus-visible .cat-card-face {

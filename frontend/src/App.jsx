@@ -134,27 +134,21 @@ function App() {
 
 			<section className="phone-frame" aria-label="Landing page HSBeauty">
 				{siteConfig.bannerUrl ? (
-					<>
-						<section className="banner-hero" aria-label="HS Beauty Studio">
-							<div className="banner-hero-image" aria-hidden="true">
-								<img src={siteConfig.bannerUrl} alt="HS Beauty" className="banner-hero-img" />
-							</div>
-							<header className="banner-topbar">
-								<span className="banner-mark">
-									{siteConfig.logoUrl
-										? <img src={siteConfig.logoUrl} alt="HS Beauty" />
-										: <span className="banner-wordmark">HS Beauty</span>}
-								</span>
-								<button type="button" className="banner-cta" onClick={irParaServicos}>
-									Marcar horário
-								</button>
-							</header>
-						</section>
-						<section className="banner-meta">
-							<span className="banner-meta-place">Piabetá · Magé</span>
-							<span className="banner-meta-rating">5,0 · 150+ clientes</span>
-						</section>
-					</>
+					<section className="banner-hero" aria-label="HS Beauty Studio">
+						<div className="banner-hero-image" aria-hidden="true">
+							<img src={siteConfig.bannerUrl} alt="HS Beauty" className="banner-hero-img" />
+						</div>
+						<header className="banner-topbar">
+							<span className="banner-mark">
+								{siteConfig.logoUrl
+									? <img src={siteConfig.logoUrl} alt="HS Beauty" />
+									: <span className="banner-wordmark">HS Beauty</span>}
+							</span>
+							<button type="button" className="banner-cta" onClick={irParaServicos}>
+								Marcar horário
+							</button>
+						</header>
+					</section>
 				) : (
 					<section className="editorial-hero" aria-label="HS Beauty Studio">
 						<div className="editorial-hero-image" aria-hidden="true">

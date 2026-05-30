@@ -844,18 +844,251 @@ body {
 
 @media (max-width: 380px) {
   .editorial-hero { aspect-ratio: 3 / 4; }
-  .storyteller {
-    grid-template-columns: 1fr;
-    gap: 18px;
-    padding: 36px 24px 30px;
-  }
-  .storyteller-portrait {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    height: auto;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .editorial-hero-img { animation: none; }
+}
+
+/* ============================================================
+   ONDA 2 — Section heads (Serviços, Galeria, CTA)
+   ============================================================ */
+
+.editorial-section-head {
+  padding: 44px 28px 18px;
+  text-align: left;
+}
+
+.editorial-section-eyebrow {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.26em;
+  color: var(--gold-deep);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.editorial-section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.9rem;
+  color: var(--ink);
+  margin: 0;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.editorial-services {
+  background: var(--paper);
+}
+
+/* ============================================================
+   ONDA 2 — Galeria bento editorial
+   ============================================================ */
+
+.editorial-gallery {
+  background: var(--paper);
+  padding-bottom: 20px;
+}
+
+.editorial-bento {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: 140px;
+  gap: 6px;
+  padding: 0 12px;
+}
+
+.editorial-bento-tile {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--paper-soft);
+}
+
+.editorial-bento-tile.is-tall { grid-row: span 2; }
+.editorial-bento-tile.is-wide { grid-column: span 2; }
+
+.editorial-bento-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(0.5) contrast(1.05) brightness(0.96);
+  transition: filter 0.6s ease, transform 0.8s ease;
+}
+
+.editorial-bento-tile:hover img {
+  filter: grayscale(0) contrast(1.04);
+  transform: scale(1.04);
+}
+
+.editorial-bento-tile figcaption {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 0.92rem;
+  color: var(--paper);
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.48);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.editorial-bento-tile:hover figcaption,
+.editorial-bento-tile:focus-visible figcaption {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================================
+   ONDA 2 — CTA final em borgonha
+   ============================================================ */
+
+.editorial-final-cta {
+  margin-top: 8px;
+  padding: 56px 28px 56px;
+  background: var(--burgundy);
+  color: var(--paper);
+  text-align: center;
+  position: relative;
+  isolation: isolate;
+}
+
+.editorial-final-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(193, 150, 96, 0.18), transparent 70%),
+    radial-gradient(50% 40% at 50% 100%, rgba(64, 28, 40, 0.4), transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.editorial-final-cta-inner {
+  max-width: 420px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.editorial-eyebrow-light {
+  color: rgba(251, 246, 240, 0.72) !important;
+}
+
+.editorial-final-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  font-size: clamp(2.4rem, 9vw, 3rem);
+  color: var(--paper);
+  margin: 0;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.editorial-final-title em {
+  font-style: italic;
+  color: #f1d8b4;
+}
+
+.editorial-final-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  color: rgba(251, 246, 240, 0.84);
+  margin: 4px 0 0;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+.editorial-final-button {
+  margin-top: 12px;
+  padding: 16px 32px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(140deg, #d8ad75, var(--gold) 60%, var(--gold-deep));
+  color: var(--burgundy-deep);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 14px 30px rgba(20, 12, 10, 0.42);
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s;
+}
+
+.editorial-final-button:hover,
+.editorial-final-button:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 18px 34px rgba(20, 12, 10, 0.5);
+  outline: none;
+}
+
+.editorial-final-help {
+  margin-top: 8px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 0.92rem;
+  color: rgba(251, 246, 240, 0.78);
+  text-decoration: underline;
+  text-decoration-color: rgba(251, 246, 240, 0.3);
+  text-underline-offset: 4px;
+}
+
+.editorial-final-help:hover { color: var(--paper); }
+
+/* ============================================================
+   ONDA 2 — Rodapé editorial
+   ============================================================ */
+
+.editorial-footer {
+  background: var(--paper);
+  padding: 30px 28px 36px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid rgba(151, 112, 61, 0.16);
+}
+
+.editorial-footer-mark img {
+  height: 40px;
+  width: auto;
+  opacity: 0.86;
+}
+
+.editorial-footer-mark span {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.4rem;
+  color: var(--ink);
+}
+
+.editorial-footer-place {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--ink-muted);
+  margin: 6px 0 0;
+  font-weight: 500;
+}
+
+.editorial-footer-credit {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  margin: 4px 0 0;
 }

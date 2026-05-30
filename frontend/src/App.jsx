@@ -188,11 +188,11 @@ function App() {
 				)}
 
 
-				<section className="services-section" id="services">
-					<h3>Nossos Serviços</h3>
-					<p className="services-caption">
-						Deslize as categorias e toque para ver os serviços.
-					</p>
+				<section className="editorial-services" id="services">
+					<header className="editorial-section-head">
+						<span className="editorial-section-eyebrow">Catálogo</span>
+						<h3 className="editorial-section-title">Escolha o cuidado.</h3>
+					</header>
 					<CategoryCarousel
 						categorias={categorias}
 						onSelect={(cat) => setCategoriaAberta(cat)}
@@ -238,29 +238,53 @@ function App() {
 					</section>
 				)}
 
-				<section className="results-section glass-panel">
-					<h3>Galeria de Resultados</h3>
-					<p>Resultados reais com acabamento de alta definição para valorizar seu estilo.</p>
-					<div className="gallery-strip">
-						<div className="gallery-placeholder" aria-hidden="true"><span>Resultado A</span></div>
-						<div className="gallery-placeholder" aria-hidden="true"><span>Resultado B</span></div>
+				<section className="editorial-gallery" aria-label="Galeria de trabalhos">
+					<header className="editorial-section-head">
+						<span className="editorial-section-eyebrow">Trabalhos recentes</span>
+						<h3 className="editorial-section-title">Cada cuidado, um detalhe.</h3>
+					</header>
+					<div className="editorial-bento">
+						<figure className="editorial-bento-tile is-tall">
+							<img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=900&q=85&auto=format&fit=crop" alt="" loading="lazy" />
+							<figcaption>Unhas</figcaption>
+						</figure>
+						<figure className="editorial-bento-tile">
+							<img src="https://images.unsplash.com/photo-1583241800698-9c2e8e0d4d6f?w=600&q=85&auto=format&fit=crop" alt="" loading="lazy" />
+							<figcaption>Cílios</figcaption>
+						</figure>
+						<figure className="editorial-bento-tile">
+							<img src="https://images.unsplash.com/photo-1571875257727-256c39da42af?w=600&q=85&auto=format&fit=crop" alt="" loading="lazy" />
+							<figcaption>Sobrancelhas</figcaption>
+						</figure>
+						<figure className="editorial-bento-tile is-wide">
+							<img src="https://images.unsplash.com/photo-1607779097040-26e80aa78e66?w=1200&q=85&auto=format&fit=crop" alt="" loading="lazy" />
+							<figcaption>Spa labial</figcaption>
+						</figure>
 					</div>
-					<div className="cta-stack">
-						<button className="cta-button cta-primary" type="button" onClick={irParaServicos}>
-							<span>Agendar agora</span>
-							<small>Escolha serviço, dia e horário em 1 minuto</small>
+				</section>
+
+				<section className="editorial-final-cta">
+					<div className="editorial-final-cta-inner">
+						<span className="editorial-section-eyebrow editorial-eyebrow-light">Comece quando quiser</span>
+						<h3 className="editorial-final-title"><em>Reserve</em> seu cuidado.</h3>
+						<p className="editorial-final-sub">Em um minuto. Sem fila, sem ligação, sem complicação.</p>
+						<button type="button" className="editorial-final-button" onClick={irParaServicos}>
+							Marcar horário
 						</button>
-						<a className="cta-help" href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer">
-							Tem alguma dúvida? Fala com a gente no WhatsApp
+						<a className="editorial-final-help" href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer">
+							ou fale com a gente no WhatsApp
 						</a>
 					</div>
 				</section>
 
-				<footer className="bottom-note">
-					<div className="bottom-note-avatar" aria-hidden="true">
-						{siteConfig.logoUrl ? <img src={siteConfig.logoUrl} alt="HSBeauty" /> : 'HS'}
+				<footer className="editorial-footer">
+					<div className="editorial-footer-mark">
+						{siteConfig.logoUrl
+							? <img src={siteConfig.logoUrl} alt="HS Beauty" />
+							: <span>HS Beauty</span>}
 					</div>
-					<p>HSBeauty Studio - atendimento para clientes</p>
+					<p className="editorial-footer-place">Studio · Piabetá, Magé — RJ</p>
+					<p className="editorial-footer-credit">Feito com carinho.</p>
 				</footer>
 			</section>
 		</main>

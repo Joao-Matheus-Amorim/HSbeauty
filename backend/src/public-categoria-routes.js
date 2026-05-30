@@ -6,16 +6,14 @@ export function createPublicCategoriaRouter({ prisma }) {
 
   /**
    * GET /categorias
-   * Retorna apenas categorias ativas que possuem ao menos um servico ativo.
+   * Retorna todas as categorias ativas (mesmo sem servicos cadastrados).
+   * O frontend renderiza estado vazio editorial 'em breve' nesses casos.
    * Public — sem auth.
    */
   router.get('/', async (req, res) => {
     try {
       const categorias = await prisma.categoria.findMany({
-        where: {
-          ativo: true,
-          servicos: { some: { ativo: true } },
-        },
+        where: { ativo: true },
         orderBy: [{ ordem: 'asc' }, { nome: 'asc' }],
         select: {
           id: true,

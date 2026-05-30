@@ -135,9 +135,10 @@ function App() {
 					<section className="editorial-hero" aria-label="HS Beauty Studio">
 						<div className="editorial-hero-image" aria-hidden="true">
 							<img
-								src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1200&q=85&auto=format&fit=crop"
+								src="/hero-maiara.jpg"
 								alt=""
 								className="editorial-hero-img"
+								style={{ objectPosition: 'center 18%' }}
 							/>
 							<div className="editorial-hero-gradient" />
 						</div>

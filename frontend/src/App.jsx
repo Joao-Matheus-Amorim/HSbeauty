@@ -135,7 +135,7 @@ function App() {
 					<section className="editorial-hero" aria-label="HS Beauty Studio">
 						<div className="editorial-hero-image" aria-hidden="true">
 							<img
-								src="/hero-maiara.png"
+								src="/hero-maiara.svg"
 								alt=""
 								className="editorial-hero-img"
 							/>

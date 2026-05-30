@@ -317,6 +317,11 @@ export default function ServiceManager() {
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
                   Categoria <span className="text-red-500">*</span>
                 </label>
+                {categorias.length === 0 && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-1">
+                    Nenhuma categoria criada ainda. Crie agora no campo abaixo ou vá em <strong>Categorias</strong> no menu para cadastrar Unhas, Cílios, Sobrancelhas, Depilação e Spa Labial em 1 clique.
+                  </p>
+                )}
                 <select
                   required
                   className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#b5936a]"

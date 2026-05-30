@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, X, AlertCircle, Eye, EyeOff, FolderTree } from 'lucide-react';
+import { Plus, Edit2, X, AlertCircle, Eye, EyeOff, FolderTree, Sparkles } from 'lucide-react';
 import {
   listarCategoriasAdmin,
   criarCategoriaAdmin,
@@ -9,6 +9,14 @@ import { clsx } from 'clsx';
 import ImageUpload from './ImageUpload';
 
 const EMPTY_FORM = { nome: '', imagemUrl: '', ordem: '0', ativo: true };
+
+const CATEGORIAS_PADRAO_HS = [
+  { nome: 'Unhas', ordem: 0 },
+  { nome: 'Cílios', ordem: 1 },
+  { nome: 'Sobrancelhas', ordem: 2 },
+  { nome: 'Depilação', ordem: 3 },
+  { nome: 'Spa Labial', ordem: 4 },
+];
 
 export default function CategoriaManager() {
   const [categorias, setCategorias] = useState([]);
@@ -97,6 +105,25 @@ export default function CategoriaManager() {
     }
   }
 
+  const [seeding, setSeeding] = useState(false);
+
+  async function handleSeedPadrao() {
+    setSeeding(true);
+    setActionError(null);
+    const existentes = new Set(categorias.map((c) => c.nome.toLowerCase().trim()));
+    const aCriar = CATEGORIAS_PADRAO_HS.filter((c) => !existentes.has(c.nome.toLowerCase()));
+    try {
+      for (const cat of aCriar) {
+        await criarCategoriaAdmin({ nome: cat.nome, ordem: cat.ordem, ativo: true });
+      }
+      await loadCategorias();
+    } catch (err) {
+      setActionError('Erro ao criar categorias padrão: ' + err.message);
+    } finally {
+      setSeeding(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -128,8 +155,25 @@ export default function CategoriaManager() {
         {loading ? (
           <div className="col-span-full py-12 text-center text-gray-400">Carregando categorias...</div>
         ) : categorias.length === 0 ? (
-          <div className="col-span-full py-12 text-center text-gray-400">
-            Nenhuma categoria cadastrada. Crie a primeira para começar a organizar seus serviços.
+          <div className="col-span-full py-12 px-6 flex flex-col items-center text-center gap-4">
+            <p className="text-gray-500 max-w-md">
+              Você ainda não tem categorias. Comece pelas <strong>5 categorias padrão da HS Beauty</strong> em 1 clique — você pode editar nome, ordem e imagem depois.
+            </p>
+            <button
+              type="button"
+              onClick={handleSeedPadrao}
+              disabled={seeding}
+              className="bg-[#b5936a] hover:bg-[#9a7a55] text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-colors disabled:opacity-50 shadow-lg shadow-[#b5936a]/20"
+            >
+              <Sparkles className="w-5 h-5" />
+              {seeding ? 'Criando...' : 'Criar categorias padrão'}
+            </button>
+            <p className="text-xs text-gray-400">
+              Unhas · Cílios · Sobrancelhas · Depilação · Spa Labial
+            </p>
+            <p className="text-xs text-gray-400 mt-2">
+              Ou crie uma do zero clicando em <strong>Nova Categoria</strong> no topo.
+            </p>
           </div>
         ) : (
           categorias.map((categoria) => {

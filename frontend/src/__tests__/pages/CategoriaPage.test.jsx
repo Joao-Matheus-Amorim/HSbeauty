@@ -48,7 +48,7 @@ describe('CategoriaPage', () => {
     expect(screen.queryByText('Fio a fio')).not.toBeInTheDocument();
   });
 
-  it('exibe estado vazio quando categoria nao tem servicos', async () => {
+  it('exibe estado vazio editorial quando categoria nao tem servicos', async () => {
     listarServicos.mockResolvedValue([]);
     render(
       <MemoryRouter initialEntries={['/c/1']}>
@@ -56,7 +56,11 @@ describe('CategoriaPage', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText(/nenhum servi/i)).toBeInTheDocument();
+    // Eyebrow + titulo + CTAs
+    expect(await screen.findByText(/em breve/i)).toBeInTheDocument();
+    expect(await screen.findByText(/sendo preparada/i)).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /ver outras categorias/i })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /falar no whatsapp/i })).toBeInTheDocument();
   });
 
   it('exibe mensagem quando id de categoria nao existe', async () => {

@@ -33,8 +33,9 @@ function buildCategorias(servicos, categorias) {
 		}
 		grupos.get(cat.id).servicos.push(s)
 	})
+	// Mostra todas as categorias ativas, mesmo sem servicos cadastrados —
+	// a pagina de categoria exibe um estado vazio editorial nesses casos.
 	return Array.from(grupos.values())
-		.filter((g) => g.servicos.length > 0)
 		.sort((a, b) => (a.ordem - b.ordem) || a.nome.localeCompare(b.nome, 'pt-BR'))
 }
 

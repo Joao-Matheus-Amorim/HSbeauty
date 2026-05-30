@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { listarServicos, listarCategorias } from '../services/agendamentos';
-import { SERVICOS_PADRAO, CATEGORIAS_PADRAO } from '../constants';
+import { SERVICOS_PADRAO, CATEGORIAS_PADRAO, WHATSAPP } from '../constants';
 import { formatDuracao } from '../utils/date-utils';
 import './CategoriaPage.css';
 
@@ -123,7 +123,32 @@ export default function CategoriaPage() {
 
       <section className="cat-page-list" aria-label={`Serviços de ${categoria.nome}`}>
         {servicosDaCategoria.length === 0 ? (
-          <p className="cat-page-empty">Nenhum serviço cadastrado nesta categoria ainda.</p>
+          <div className="cat-page-empty-state" role="status">
+            <div className="cat-page-empty-ornament" aria-hidden="true">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+            </div>
+            <span className="cat-page-empty-eyebrow">Em breve</span>
+            <h2 className="cat-page-empty-title">Esta categoria está sendo preparada.</h2>
+            <p className="cat-page-empty-sub">
+              Os serviços de <em>{categoria.nome.toLowerCase()}</em> estarão disponíveis em instantes. Enquanto isso, escolha outra categoria ou fale com a gente.
+            </p>
+            <div className="cat-page-empty-actions">
+              <button type="button" className="cat-page-empty-btn primary" onClick={() => navigate('/')}>
+                Ver outras categorias
+              </button>
+              <a
+                href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Olá! Tenho interesse em serviços de ${categoria.nome}.`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="cat-page-empty-btn secondary"
+              >
+                Falar no WhatsApp
+              </a>
+            </div>
+          </div>
         ) : (
           <ul className="cat-service-list">
             {servicosDaCategoria.map((s) => (

@@ -1,5 +1,16 @@
 import { test, expect } from '@playwright/test';
 
+/**
+ * No mobile (<768px), as abas ficam num drawer aberto pelo hamburger.
+ * Helper abre o drawer e clica no item.
+ */
+async function openMobileTab(page, labelRegex) {
+  await page.locator('.admin-mobile-menu-btn').click();
+  await page.locator('.admin-mobile-drawer-panel').waitFor({ state: 'visible' });
+  await page.locator('.admin-mobile-drawer-item').filter({ hasText: labelRegex }).click();
+  await page.locator('.admin-mobile-drawer-panel').waitFor({ state: 'hidden' });
+}
+
 async function mockPublicServices(page) {
   await page.route('**/servicos*', async (route) => {
     await route.fulfill({
@@ -181,7 +192,7 @@ test('visual mobile: painel logado tabs principais', async ({ page }) => {
     maxDiffPixelRatio: 0.05,
   });
 
-  await page.getByRole('button', { name: /servi/i }).click();
+  await openMobileTab(page, /servi/i);
   await expect(page.getByRole('button', { name: /novo/i })).toBeVisible();
   await expect(page).toHaveScreenshot('admin-mobile-servicos.png', {
     fullPage: true,
@@ -189,7 +200,7 @@ test('visual mobile: painel logado tabs principais', async ({ page }) => {
     maxDiffPixelRatio: 0.05,
   });
 
-  await page.getByRole('button', { name: /hor/i }).click();
+  await openMobileTab(page, /hor/i);
   await expect(page.getByRole('button', { name: /bloquear/i })).toBeVisible();
   await expect(page).toHaveScreenshot('admin-mobile-horarios.png', {
     fullPage: true,
@@ -197,7 +208,7 @@ test('visual mobile: painel logado tabs principais', async ({ page }) => {
     maxDiffPixelRatio: 0.05,
   });
 
-  await page.getByRole('button', { name: /resumo/i }).click();
+  await openMobileTab(page, /resumo/i);
   await expect(page.getByText('Serviços Populares')).toBeVisible();
   await expect(page.getByTestId('admin-dashboard-kpis')).toHaveScreenshot('admin-mobile-dashboard.png', {
     animations: 'disabled',
@@ -239,7 +250,7 @@ test('visual mobile: dashboard vazio', async ({ page }) => {
   await page.getByRole('button', { name: /^entrar$/i }).click();
   await expect(page.getByText('Ana Lima')).toBeVisible();
 
-  await page.getByRole('button', { name: /resumo/i }).click();
+  await openMobileTab(page, /resumo/i);
   await expect(page.getByText('Serviços Populares')).toBeVisible();
   await expect(page.getByTestId('admin-dashboard-kpis')).toHaveScreenshot('admin-mobile-dashboard-empty.png', {
     animations: 'disabled',

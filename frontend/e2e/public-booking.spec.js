@@ -57,7 +57,7 @@ test('publico: conclui fluxo minimo de agendamento', async ({ page }) => {
 
   // Carrossel -> categoria Unhas -> drawer -> sub-servico
   await page.locator('.cat-card').first().click();
-  await page.locator('.cat-drawer-item').first().click();
+  await page.locator('.cat-service-button').first().click();
   // Modal abre ja com servico pre-selecionado
   await page.locator('.week-day-btn').first().click();
   await page.getByRole('button', { name: '09:00' }).click();
@@ -84,7 +84,7 @@ test('publico: horario indisponivel exibe erro', async ({ page }) => {
   await page.goto('/');
 
   await page.locator('.cat-card').first().click();
-  await page.locator('.cat-drawer-item').first().click();
+  await page.locator('.cat-service-button').first().click();
   await page.locator('.week-day-btn').first().click();
   await page.getByRole('button', { name: '09:00' }).click();
   await page.getByRole('button', { name: /continuar/i }).click();

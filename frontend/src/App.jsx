@@ -103,6 +103,15 @@ function App() {
 		abrirModal(servico, cat)
 	}
 
+	function irParaServicos(event) {
+		if (event) {
+			event.preventDefault()
+			event.stopPropagation()
+		}
+		const alvo = document.getElementById('services')
+		if (alvo) alvo.scrollIntoView({ behavior: 'smooth', block: 'start' })
+	}
+
 	return (
 		<main className="beauty-app">
 			{modalAberto && (
@@ -129,7 +138,7 @@ function App() {
 						<button className="icon-button" aria-label="Abrir menu" type="button">
 							<span className="menu-icon" />
 						</button>
-						<button className="gold-pill" type="button" onClick={(event) => reservar(null, event)}>
+						<button className="gold-pill" type="button" onClick={irParaServicos}>
 							Agendar ›
 						</button>
 					</div>
@@ -152,7 +161,7 @@ function App() {
 				<section className="meta-row glass-panel">
 					<span>5.0 (150+)</span>
 					<span>Piabeta / Mage</span>
-					<button type="button" className="meta-row-cta" onClick={(event) => reservar(null, event)}>
+					<button type="button" className="meta-row-cta" onClick={irParaServicos}>
 						Agendar agora
 					</button>
 				</section>
@@ -215,7 +224,7 @@ function App() {
 						<div className="gallery-placeholder" aria-hidden="true"><span>Resultado B</span></div>
 					</div>
 					<div className="cta-stack">
-						<button className="cta-button cta-primary" type="button" onClick={(event) => reservar(null, event)}>
+						<button className="cta-button cta-primary" type="button" onClick={irParaServicos}>
 							<span>Agendar agora</span>
 							<small>Escolha serviço, dia e horário em 1 minuto</small>
 						</button>
